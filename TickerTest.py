@@ -4,6 +4,7 @@ import GetTicker
 
 test = GetTicker.GetAllTicker()
 stocks = test.GetListingStocks("20240313")
-print(stocks)
+#stocks.head()
+#print(stocks)
 
 
