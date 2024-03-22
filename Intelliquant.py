@@ -36,8 +36,6 @@ class Intelliquant:
         self.path_chrome = config['path']['path_chrome']
         self.port = config['path']['port']
         self.argument = config['path']['argument']
-        #self.page = config['intelliquant']['page']
-        #self.name = config['intelliquant']['name']
         self.page = json.loads(config['intelliquant']['page'])
         self.name = json.loads(config['intelliquant']['name'])
 

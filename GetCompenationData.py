@@ -5,47 +5,54 @@ from Intelliquant import Intelliquant
 from DateManage import DateManage
 from datetime import datetime
 import configparser
+from UseIntelliquant import UseIntelliquant
+import json
 
-class GetCompensationData:
-    '''
-    인텔리퀀트에서 데이터 가져오는 기능
-    '''
+class GetCompensationData(UseIntelliquant):
     def __init__(self):
-        self.startday = datetime(2000, 1, 4)
-        self.workday = datetime(2024, 3, 21) # 이거 날짜 관리 어떻게 하지? datemanage를 쓴다? 그럼 클래스 생성자 인수로 받아야지
-        self.finalday = self.workday
-        self.startday_string = self.startday.strftime('%Y-%m-%d')
-        self.workday_string = self.workday.strftime('%Y-%m-%d')
-        self.finalday_string = self.finalday.strftime('%Y-%m-%d')
-
-        self.intel = Intelliquant()
-        self.BatchSize_NoOfShares = 20 # 인텔리퀀트 시뮬레이션 종목수 조회시 한번에 돌리는 종목 수
-        self.BatchSize_Financial = 10 # 인텔리퀀트 시뮬레이션 재무정보 조회시 한번에 돌리는 종목 수
-
-        # 설정 로드
-        self.LoadConfig()
+        super().__init__()
+        self.batchsize = 20  # 인텔리퀀트 시뮬레이션 종목수 조회시 한번에 돌리는 종목 수
 
     def LoadConfig(self):
-        self.cur_dir = os.getcwd()
-        path = self.cur_dir + '\\' + 'config_GetCompensationData.ini'
+        super().LoadConfig()
 
+        #self.cur_dir = os.getcwd() # 부모 클래스에서 선언됨
+        path = self.cur_dir + '\\' + 'config_GetCompensationData.ini'
         # 설정파일 읽기
         config = configparser.ConfigParser()
         config.read(path, encoding='utf-8')
+        self.page = json.loads(config['intelliquant']['page'])
+        self.name = json.loads(config['intelliquant']['name'])
 
-        # 설정값 읽기
-        self.path_data = config['path']['path_data']
-        self.path_CodeLists = config['path']['path_CodeLists']
-        self.path_Compensation = config['path']['path_Compensation']
+    def LoadCodeList(self, datemanage: DateManage, listed: str, index: int): # index에 해당하는 code, listing date, delisting date 합성하여 str 리턴
+        path_dir = self.path_codeLists + '\\' + listed + '\\For_Intelliquant\\' + datemanage.workday_str + '\\'
+        path_code = path_dir + 'A_Code_' + datemanage.workday_str + '_' + str(index) + '.txt'
+        path_listingdate = path_dir + 'A_ListingDate_' + datemanage.workday_str + '_' + str(index) + '.txt'
+        path_delistingdate = path_dir + 'A_DelistingDate_' + datemanage.workday_str + '_' + str(index) + '.txt'
 
-    def LoadCodeList(self, listed, index): # index에 해당하는 code, listing date, delisting date 합성하여 str 리턴
-        path_dir = self.path_CodeLists + '\\' + listed + '\\For_Intelliquant\\' + self.workday_string + '\\'
-        path_code = path_dir + 'A_Code_' + self.workday_string + '_' + str(index) + '.txt'
-        print(path_dir)
-        print(path_code)
+        with open(path_code, 'r') as file:
+            code_content = file.read()
+        #print(code_content)
+        with open(path_listingdate, 'r') as file:
+            listingdate_content = file.read()
+        #print(listingdate_content)
+        with open(path_delistingdate, 'r') as file:
+            delistingdate_content = file.read()
+        #print(delistingdate_content)
 
-        return
+        self.js_code = self.create_js_code(datemanage.startday_str, datemanage.workday_str, code_content, listingdate_content, delistingdate_content)
+        #print(self.js_code)
 
+    def create_js_code(self, startday, workday, code, listingdate, delistingdate):
+        return (
+            f"Dataset Begin\n"
+            f"var StartDate = new Date('{startday}');\n"
+            f"var FinalDate = new Date('{workday}');\n\n"
+            f"var code = [\n{code}\n];\n"
+            f"var ListingDate = [\n{listingdate}\n];\n"
+            f"var DelistingDate = [\n{delistingdate}\n];"
+            f"Dataset End\n"
+        )
 
 '''
 오늘(log용), 기준일(tikerlist 받아온 작업일) 정보 필요
@@ -63,8 +70,11 @@ class GetCompensationData:
 
 
 filename = os.path.splitext(os.path.basename(__file__))[0]  # 실행하고 있는 스크립트 파일 이름 가져오기
+startday = datetime(2000, 1, 4)
 workday = datetime(2024, 3, 21)
-datemanage = DateManage(filename, workday)
+datemanage = DateManage(filename)
+datemanage.SetStartday(startday)
+datemanage.SetWorkday(workday)
 
 logger = logging.getLogger('GetCompensationData')
 logger.setLevel(logging.INFO)
@@ -79,4 +89,4 @@ file_handler_info.setFormatter(formatter)
 logger.addHandler(file_handler_info)
 
 GetCompData = GetCompensationData()
-GetCompData.LoadCodeList('Delisted', 1)
+GetCompData.LoadCodeList(datemanage, 'Delisted', 1)

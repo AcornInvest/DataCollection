@@ -10,16 +10,13 @@ class DateManage:
     '''
     오늘 및 구동과 관련된 날짜를 얻고, 이를 이용하여 각종 파일 이름 string을 생성, 관리하는 클래스
     '''
-    def __init__(self, filename, workday):
-        self.today = datetime.date.today()
-        # 기준일 변수 필요
-
+    def __init__(self, filename):
         # 설정 로드
         self.LoadConfig()
 
         # day Strings
+        self.today = datetime.date.today()
         self.today_string = self.today.strftime('%Y-%m-%d') # 로그파일명에 쓸 것
-        self.workday_string = workday.strftime('%Y-%m-%d')
 
         # 로그 파일 - 오늘
         self.file_log = '\\' + self.today_string + '_' + filename + '_log_info.log'
@@ -35,4 +32,13 @@ class DateManage:
 
         # 설정값 읽기
         self.path_data = config['path']['path_data']
+
+    def SetStartday(self, startday:datetime): # 작업시작일 --> 수집하는 데이터의 첫번째 날짜
+        self.startday = startday
+        self.startday_str = self.startday.strftime('%Y-%m-%d')
+
+    def SetWorkday(self, workday:datetime): # 작업기준일 --> 수집하는 데이터의 마지막 날짜
+        self.workday = workday
+        self.workday_str = self.workday.strftime('%Y-%m-%d')
+
 
