@@ -13,8 +13,8 @@ class GetCompensationData(UseIntelliquant):
         super().__init__()
         self.batchsize = 20  # 인텔리퀀트 시뮬레이션 종목수 조회시 한번에 돌리는 종목 수
 
-    def LoadConfig(self):
-        super().LoadConfig()
+    def load_config(self):
+        super().load_config()
 
         #self.cur_dir = os.getcwd() # 부모 클래스에서 선언됨
         path = self.cur_dir + '\\' + 'config_GetCompensationData.ini'
@@ -24,11 +24,11 @@ class GetCompensationData(UseIntelliquant):
         self.page = json.loads(config['intelliquant']['page'])
         self.name = json.loads(config['intelliquant']['name'])
 
-    def LoadCodeList(self, datemanage: DateManage, listed: str, index: int): # index에 해당하는 code, listing date, delisting date 합성하여 str 리턴
+    def load_dataset_code(self, datemanage: DateManage, listed: str, file_index: int, start_num:int, end_num:int): # index에 해당하는 code, listing date, delisting date 합성하여 str 리턴
         path_dir = self.path_codeLists + '\\' + listed + '\\For_Intelliquant\\' + datemanage.workday_str + '\\'
-        path_code = path_dir + 'A_Code_' + datemanage.workday_str + '_' + str(index) + '.txt'
-        path_listingdate = path_dir + 'A_ListingDate_' + datemanage.workday_str + '_' + str(index) + '.txt'
-        path_delistingdate = path_dir + 'A_DelistingDate_' + datemanage.workday_str + '_' + str(index) + '.txt'
+        path_code = path_dir + 'A_Code_' + datemanage.workday_str + '_' + str(file_index) + '.txt'
+        path_listingdate = path_dir + 'A_ListingDate_' + datemanage.workday_str + '_' + str(file_index) + '.txt'
+        path_delistingdate = path_dir + 'A_DelistingDate_' + datemanage.workday_str + '_' + str(file_index) + '.txt'
 
         with open(path_code, 'r') as file:
             code_content = file.read()
@@ -40,19 +40,9 @@ class GetCompensationData(UseIntelliquant):
             delistingdate_content = file.read()
         #print(delistingdate_content)
 
-        self.js_code = self.create_js_code(datemanage.startday_str, datemanage.workday_str, code_content, listingdate_content, delistingdate_content)
-        #print(self.js_code)
-
-    def create_js_code(self, startday, workday, code, listingdate, delistingdate):
-        return (
-            f"Dataset Begin\n"
-            f"var StartDate = new Date('{startday}');\n"
-            f"var FinalDate = new Date('{workday}');\n\n"
-            f"var code = [\n{code}\n];\n"
-            f"var ListingDate = [\n{listingdate}\n];\n"
-            f"var DelistingDate = [\n{delistingdate}\n];"
-            f"Dataset End\n"
-        )
+        js_code_dataset = self.create_js_code_dataset(datemanage.startday_str, datemanage.workday_str, code_content, listingdate_content, delistingdate_content)
+        return js_code_dataset
+        #financial 에서는 batch에 따른 구조 변경 필요
 
 '''
 오늘(log용), 기준일(tikerlist 받아온 작업일) 정보 필요
@@ -89,4 +79,6 @@ file_handler_info.setFormatter(formatter)
 logger.addHandler(file_handler_info)
 
 GetCompData = GetCompensationData()
-GetCompData.LoadCodeList(datemanage, 'Delisted', 1)
+GetCompData.intel.chrome_on(logger, GetCompData.page, GetCompData.name)
+js_code = GetCompData.make_js_code(datemanage, 'Delisted', 1, 0, 19)
+GetCompData.intel.update_code(js_code)

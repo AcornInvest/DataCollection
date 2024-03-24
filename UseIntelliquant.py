@@ -12,9 +12,9 @@ class UseIntelliquant:
         self.intel = Intelliquant()
 
         # 설정 로드
-        self.LoadConfig()
+        self.load_config()
 
-    def LoadConfig(self):
+    def load_config(self):
         self.cur_dir = os.getcwd()
         path = self.cur_dir + '\\' + 'config_UseIntelliquant.ini'
 
@@ -28,14 +28,35 @@ class UseIntelliquant:
         self.path_compensation = config['path']['path_compensation']
         self.path_financial  = config['path']['path_financial']
 
+    '''
     def IntelliquantOn(self, page, name): # 크롬 켜고 전략 페이지 열기
         pass
+        # 필요없어 보인다
+    '''
+    def load_base_code(self, path_base_code):
+        with open(path_base_code, 'r', encoding='utf-8') as file:
+            js_code_base = file.read()
+        #print(js_code_base)
+        return js_code_base
 
-    def UpdateCode(self, js_code): # 이건 자식 클래스에서 할까..아니면 intelliquant class 에서 할까? 그게 나을 것 같기도..
-        # 이미 인텔리퀀트 열어서 해당 전략 페이지가 열어진 상태임을 가정함.
-        textedit 선택 후, ctrl+A, delete 후 js_code 값 입력
-        저장 버튼, 확인 버튼 누르기
-        pass
+    def make_js_code(self, datemanage: DateManage, listed: str, file_index: int, start_num:int, end_num:int):
+        path_base_code = self.cur_dir + '\\' + 'GetNoOfShares_base.js'
+        js_code_base = self.load_base_code(path_base_code)
+        js_code_dataset = self.load_dataset_code(datemanage, listed, file_index, start_num, end_num)
+        js_code = js_code_dataset + js_code_base
+        #print(js_code)
+        return js_code
+
+    def create_js_code_dataset(self, startday, workday, code, listingdate, delistingdate):
+        return (
+            f"//Dataset Begin\n"
+            f"var StartDate = new Date('{startday}');\n"
+            f"var FinalDate = new Date('{workday}');\n\n"
+            f"var code = [\n{code}\n];\n"
+            f"var ListingDate = [\n{listingdate}\n];\n"
+            f"var DelistingDate = [\n{delistingdate}\n];\n"
+            f"//Dataset End\n\n"
+        )
 
 
 
