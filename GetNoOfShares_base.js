@@ -41,8 +41,7 @@ function initialize() {
 			var _stock = IQStock.getStock(code[list_index]);                
             if (_stock != null)
             {
-                target_stock[NumOfStocks] = _stock;
-                //logger.info(target_stock[NumOfStocks].name);
+                target_stock[NumOfStocks] = _stock;                
                 NoShare_old[NumOfStocks] = 0; // NoShare_old 초기화
                 NumOfStocks++;
             }
@@ -71,8 +70,7 @@ function onDayClose(now){
 			var _stock = IQStock.getStock(code[list_index]);                
             if (_stock != null)
             {
-                target_stock[NumOfStocks] = _stock;
-                //logger.info(target_stock[NumOfStocks].name);
+                target_stock[NumOfStocks] = _stock;                
                 NoShare_old[NumOfStocks] = 0; // NoShare_old 초기화
                 NumOfStocks++;
             }
@@ -91,8 +89,7 @@ function onDayClose(now){
     	for (var i=numBusinessDay; i>=0 ;i--){
         	for (var j=0;  j<NumOfStocks; j++){                            
                 NoShare[j] = target_stock[j].getNoOfShare(i);
-                if (NoShare[j] != NoShare_old[j]){
-                    //logger.info('날짜: '+ stock_listed.getDate(i) + '종목: ' + target_stock[j].code + ', 기존주식수: ' + NoShare_old[j] + ', 새주식수: ' + NoShare[j]);
+                if (NoShare[j] != NoShare_old[j]){                    
                     logger.info(ModifyDate(stock_listed.getDate(i)) + ', ' + removeA(target_stock[j].code) + ', o: ' + NoShare_old[j] + ', n: ' + NoShare[j]);
                     NoShare_old[j] = NoShare[j];
                 }
@@ -105,7 +102,6 @@ function onDayClose(now){
             for (var j=0;  j<NumOfStocks; j++){
             	NoShare[j] = target_stock[j].getNoOfShare(i);
                 	if (NoShare[j] != NoShare_old[j]){
-                    //logger.info('날짜: '+ stock_listed.getDate(i) + '종목: ' + target_stock[j].code + ', 기존주식수: ' + NoShare_old[j] + ', 새주식수: ' + NoShare[j]);
                     logger.info(ModifyDate(stock_listed.getDate(i)) + ', ' + removeA(target_stock[j].code) + ', o: ' + NoShare_old[j] + ', n: ' + NoShare[j]);
                     NoShare_old[j] = NoShare[j];
                 }
@@ -116,6 +112,4 @@ function onDayClose(now){
         logger.info('load_failure_list: [' + load_failure_list) + ']';
         logger.info('DelistingDate_Error_list: [' + DelistingDate_Error_list) + ']';        
 	}    
-    // log 크기를 줄여야 한다.
-    // 날짜 출력 형식 바꾸기, 항목명 단순하게, 코드명에서 A 빼기?
 }

@@ -14,6 +14,7 @@ import time
 import os
 import configparser
 import json
+import pyperclip
 
 class Intelliquant:
     def __init__(self):
@@ -41,9 +42,7 @@ class Intelliquant:
         subprocess.Popen(self.path_chrome)  # 디버거 크롬 구동
 
         option = Options()
-        #option.add_experimental_option("debuggerAddress", "127.0.0.1:9221")
         option.add_experimental_option("debuggerAddress", self.port)
-        #option.add_argument('--user-data-dir="C:\chrometemp_sub"')
         option.add_argument(self.argument)
 
         chrome_ver = chromedriver_autoinstaller.get_chrome_version().split('.')[0]
@@ -81,40 +80,40 @@ class Intelliquant:
         logger.info("Chrome 켜기 완료") #이거 저장 설정 해야한다.
 
     def update_code(self, js_code):
-        #self.driver.find_element(By.XPATH, "/html/body/div[2]/div/div[1]/div[3]").send_keys(Keys.CONTROL + 'a')
-        self.driver.find_element(By.XPATH, "//*[@id='editor']/div[3]/div/div/div[6]/div[1]/div/div/div/div[4]/div").send_keys(Keys.CONTROL + 'a')
+        pyperclip.copy(js_code)
+        element = self.driver.find_element(By.CLASS_NAME, 'cm-comment')
+        actions = ActionChains(self.driver)
+        actions.click(element).key_down(Keys.CONTROL).send_keys('a').key_up(Keys.CONTROL).send_keys(Keys.DELETE).key_down(Keys.CONTROL).send_keys('v').key_up(Keys.CONTROL)
+        actions.perform()
+        self.driver.find_element(By.XPATH, "//*[@id='editor']/div[1]/span/button[2]").click()  # 저장 버튼
+        self.driver.implicitly_wait(3)
+        self.driver.find_element(By.XPATH, "/html/body/div[12]/div/div[1]/div/div/div[2]/button").click()  # 저장 후 팝업에서 OK 버튼
 
-        #//*[@id="editor"]/div[3]/div/div/div[6]/div[1]/div/div/div/div[4]/div
-        #        /html/body/div[2]/div/div[1]/div[3]
-        # 이미 인텔리퀀트 열어서 해당 전략 페이지가 열어진 상태임을 가정함.
-        #textedit 선택 후, ctrl+A, delete 후 js_code 값 입력
-        #저장 버튼, 확인 버튼 누르기
-        pass
-
-    def backtest(self, simul_date_string, simul_money_string, logger): # 시작일, 종료일 따로 입력하도록 수정 필요
+    def backtest(self, start_date_str, end_date_str, simul_money_str, logger): # 시작일, 종료일 따로 입력하도록 수정 필요
         # 날짜, 금액 입력, 백테스트 시작
 
         # selenium 4.10 버전으로 오면서 형식 변경
         self.driver.find_element(By.XPATH, "//*[@id='board']/div[1]/span[1]/div[1]/input").send_keys(Keys.CONTROL + 'a')
-        self.driver.find_element(By.XPATH, "//*[@id='board']/div[1]/span[1]/div[1]/input").send_keys(simul_date_string)
+        self.driver.find_element(By.XPATH, "//*[@id='board']/div[1]/span[1]/div[1]/input").send_keys(start_date_str)
         self.driver.find_element(By.XPATH, "//*[@id='board']/div[1]/span[1]/div[1]/input").send_keys(Keys.ENTER)
         self.driver.find_element(By.XPATH, "//*[@id='board']/div[1]/span[1]/div[3]/input").send_keys(Keys.CONTROL + 'a')
-        self.driver.find_element(By.XPATH, "//*[@id='board']/div[1]/span[1]/div[3]/input").send_keys(simul_date_string)
+        self.driver.find_element(By.XPATH, "//*[@id='board']/div[1]/span[1]/div[3]/input").send_keys(end_date_str)
         self.driver.find_element(By.XPATH, "//*[@id='board']/div[1]/span[1]/div[3]/input").send_keys(Keys.ENTER)
         self.driver.find_element(By.XPATH, "//*[@id='aum_input']").send_keys(Keys.CONTROL + 'a')
-        self.driver.find_element(By.XPATH, "//*[@id='aum_input']").send_keys(simul_money_string)
+        self.driver.find_element(By.XPATH, "//*[@id='aum_input']").send_keys(simul_money_str)
         self.driver.find_element(By.XPATH, "//*[@id='aum_input']").send_keys(Keys.ENTER)
         self.driver.find_element(By.XPATH, "//*[@id='board']/div[1]/span[2]/button").click()  # backtest 시작
 
         time.sleep(3)
 
         try:
-            element = WebDriverWait(self.driver, 20).until(
+            element = WebDriverWait(self.driver, 600).until(
                 #EC.text_to_be_present_in_element((By.XPATH, "//*[@id='board']/div[1]/span[2]/button"), "백테스트 시작")
                 EC.text_to_be_present_in_element((By.XPATH, "//*[@id='board']/div[3]/div[2]"), "simulation complete")
             )
         finally:
-            list = self.get_backtest_result()
+            pass
+            #list = self.get_backtest_result()
 
         logger.info("Backtest 시뮬레이션 완료")
         return list
