@@ -109,7 +109,7 @@ function onDayClose(now){
         }
         logger.info('list_index: ' + list_index);
         logger.info('NumOfStocks: ' +  NumOfStocks);
-        logger.info('load_failure_list: [' + load_failure_list) + ']';
-        logger.info('DelistingDate_Error_list: [' + DelistingDate_Error_list) + ']';        
+        logger.info('load_failure_list: [' + load_failure_list + ']');
+        logger.info('DelistingDate_Error_list: [' + DelistingDate_Error_list + ']');        
 	}    
 }

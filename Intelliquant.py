@@ -81,6 +81,7 @@ class Intelliquant:
 
     def update_code(self, js_code):
         pyperclip.copy(js_code)
+        self.driver.implicitly_wait(3)
         element = self.driver.find_element(By.CLASS_NAME, 'cm-comment')
         actions = ActionChains(self.driver)
         actions.click(element).key_down(Keys.CONTROL).send_keys('a').key_up(Keys.CONTROL).send_keys(Keys.DELETE).key_down(Keys.CONTROL).send_keys('v').key_up(Keys.CONTROL)
