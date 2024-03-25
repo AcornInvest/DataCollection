@@ -113,8 +113,7 @@ class Intelliquant:
                 EC.text_to_be_present_in_element((By.XPATH, "//*[@id='board']/div[3]/div[2]"), "simulation complete")
             )
         finally:
-            pass
-            #list = self.get_backtest_result()
+            list = self.get_backtest_result()
 
         logger.info("Backtest 시뮬레이션 완료")
         return list
