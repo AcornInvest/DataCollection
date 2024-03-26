@@ -68,8 +68,12 @@ class Intelliquant:
 
         self.driver.find_element(By.PARTIAL_LINK_TEXT, "스튜디오").click() # 2023.10.16 인텔리퀀트 사이트 변경. XPATH로 읽어오는 게 안되네
         self.driver.implicitly_wait(5)
-
+      #  / html / body / div[1] / div[2] / div / div[2] / div[7] / ul / li[3] / a
+      #  / html / body / div[1] / div[2] / div / div[2] / div[7] / ul / li[3] / a
+       # body > div.algorithms > div.container - custom.content - sm > div > div.col - md - 10 > div.text - center > ul > li.active > a
         try:
+            #self.driver.implicitly_wait(5)
+            #self.driver.find_element(By.LINK_TEXT, "1").click()
             self.driver.find_element(By.XPATH, page).click()  # 페이지 누르기
             self.driver.implicitly_wait(5)
         except ElementNotInteractableException:
@@ -84,7 +88,9 @@ class Intelliquant:
         self.driver.implicitly_wait(3)
         element = self.driver.find_element(By.CLASS_NAME, 'cm-comment')
         actions = ActionChains(self.driver)
+        self.driver.implicitly_wait(3)
         actions.click(element).key_down(Keys.CONTROL).send_keys('a').key_up(Keys.CONTROL).send_keys(Keys.DELETE).key_down(Keys.CONTROL).send_keys('v').key_up(Keys.CONTROL)
+        self.driver.implicitly_wait(3)
         actions.perform()
         self.driver.find_element(By.XPATH, "//*[@id='editor']/div[1]/span/button[2]").click()  # 저장 버튼
         self.driver.implicitly_wait(3)

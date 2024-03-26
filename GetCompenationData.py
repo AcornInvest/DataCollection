@@ -11,7 +11,7 @@ import math
 
 class GetCompensationData(UseIntelliquant):
     def __init__(self):
-        super().__init__()
+        super().__init__(logger)
         #self.length_code_list = 20 # raw 데이터 텍스트 파일 1개당 포함된 데이터 개수
         self.batchsize = 20  # 인텔리퀀트 시뮬레이션 종목수 조회시 한번에 돌리는 종목 수
 
@@ -29,11 +29,14 @@ class GetCompensationData(UseIntelliquant):
         self.name = config['intelliquant']['name']
 
     def process_backtest_result(self, backtest_list, type, datemanage, file_index, idx):
-        self.path_backtest_result = self.path_compensation + '\\' + type + '\\From_Intelliquant\\' + datemanage.workday_str + '\\' + 'backtest_result_' + str(file_index) + '_' + str(idx) + '.txt'
+        self.path_backtest_result = self.path_compensation + '\\' + type + '\\From_Intelliquant\\' + datemanage.workday_str + '\\' + 'backtest_result_' + datemanage.workday_str + '_' + str(file_index) + '_' + str(idx) + '.txt'
         folder = os.path.dirname(self.path_backtest_result)
         # 폴더가 존재하지 않으면 생성
         if not os.path.exists(folder):
             os.makedirs(folder)
+
+        self.path_load_failure_list = folder + '\\' + 'load_failure_list_' + datemanage.workday_str + '.txt'
+        self.path_delisting_date_error_list = folder + '\\' + 'delisting_date_error_list_' + datemanage.workday_str + '.txt'
 
         # 각 백테스트 결과 파일 txt로 저장
         f = open(self.path_backtest_result, 'w', encoding='utf-8')
@@ -41,9 +44,36 @@ class GetCompensationData(UseIntelliquant):
         f.close()
         self.logger.info("Backtest 결과 저장 완료: %s" % self.path_backtest_result)
 
-        # load_failure_list, DelistingDate_Error_list 를 하나의 txt로 만들어서 종목 코드 추가
+        #load_failure_list, delisting_date_error_list 저장
+        load_failure_list, delisting_date_error_list = self.parse_list_data(backtest_list)
+        if load_failure_list: # 여기 들어오는지 확인할 것
+            self.save_list_to_file_append(load_failure_list, self.path_load_failure_list)
+            self.logger.info("load_failure_list 결과 저장 완료: %s" % self.path_load_failure_list)
+        if delisting_date_error_list:
+            self.save_list_to_file_append(delisting_date_error_list, self.path_delisting_date_error_list)
+            self.logger.info("delisting_date_error_list 결과 저장 완료: %s" % self.path_delisting_date_error_list)
+
         # 각 테스트 결과에서 종목별 추출, pd 를 xlsx로 저장
 
+    def parse_list_data(self, lines):
+        load_failure_list = []
+        delisting_date_error_list = []
+
+        for line in lines:
+            if "load_failure_list:" in line:
+                extracted_data = line.split("load_failure_list: [")[1].split("]")[0].split(",")
+                load_failure_list = [x.strip() for x in extracted_data if x.strip()]  # 비어있지 않은 요소만 추가
+            elif "DelistingDate_Error_list:" in line:
+                extracted_data = line.split("DelistingDate_Error_list: [")[1].split("]")[0].split(",")
+                delisting_date_error_list = [x.strip() for x in extracted_data if x.strip()]
+
+        return load_failure_list, delisting_date_error_list
+
+    # 파일에 데이터를 추가하는 함수로 save_list_to_file 수정하기
+    def save_list_to_file_append(self, data_list, filename):
+        with open(filename, 'a') as file:  # 'a' 모드는 파일에 내용을 추가합니다
+            for item in data_list:
+                file.write(f"{item}\n")
 
 '''
 오늘(log용), 기준일(tikerlist 받아온 작업일) 정보 필요

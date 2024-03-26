@@ -29,26 +29,11 @@ class UseIntelliquant:
         self.path_compensation = config['path']['path_compensation']
         self.path_financial  = config['path']['path_financial']
 
-    '''
-    def IntelliquantOn(self, page, name): # 크롬 켜고 전략 페이지 열기
-        pass
-        # 필요없어 보인다
-    '''
     def load_base_code(self, path_base_code):
         with open(path_base_code, 'r', encoding='utf-8') as file:
             js_code_base = file.read()
         #print(js_code_base)
         return js_code_base
-
-    '''
-    #def make_js_code(self, datemanage: DateManage, listed: str, file_index: int, start_num:int, end_num:int):
-    def make_js_code(self, datemanage: DateManage, js_code_dataset: str):
-        js_code_base = self.load_base_code(self.path_base_code)
-        #print(js_code_dataset)
-        js_code = js_code_dataset + js_code_base
-        #print(js_code)
-        return js_code
-    '''
 
     def create_js_code_dataset(self, startday, workday, code, listingdate, delistingdate, start_num, end_num):
         # 상장일, 상폐일, 코드 리스트 받아서 데이터셋 코드 형식 str 리턴
@@ -118,15 +103,6 @@ class UseIntelliquant:
         else:
             raise ValueError(datemanage.workday_str, "_", file_index, "의 파일간 데이터 리스트 수가 다름")
 
-        '''
-        format_code_content = self.format_string_data(code_content, start_num, end_num)
-        format_listingdate_content = self.format_string_data(listingdate_content, start_num, end_num)
-        format_delistingdate_content = self.format_string_data(delistingdate_content, start_num, end_num)
-
-        js_code_dataset = self.create_js_code_dataset(datemanage.startday_str, datemanage.workday_str,
-                                                      format_code_content, format_listingdate_content,
-                                                      format_delistingdate_content)
-        '''
         return length_code_list, code_content, listingdate_content, delistingdate_content
 
     def calculate_batch_indices(self, length_code_list, batchsize):
@@ -175,7 +151,7 @@ class UseIntelliquant:
                 for idx, k in enumerate(data_indices): # 한 파일 내에서의 인덱스
                     js_code_dataset = self.create_js_code_dataset(datemanage.startday_str, datemanage.workday_str,
                                                       code_content, listingdate_content,delistingdate_content, k[0], k[1])
-                    print(js_code_dataset)
+                    #print(js_code_dataset)
                     js_code_base = self.load_base_code(self.path_base_code)
                     js_code = js_code_dataset + js_code_base
                     self.intel.update_code(js_code) #인텔리퀀트 코드창 수정
