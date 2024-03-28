@@ -75,11 +75,9 @@ class UseIntelliquant:
 
     def load_dataset_code(self, datemanage: DateManage, file_index: int):
         # index에 해당하는 code, listing date, delisting date 값 불러와서 리턴
-
-        #self.path_dir = self.path_codeLists + '\\' + listed + '\\For_Intelliquant\\' + datemanage.workday_str + '\\'
-        path_code = self.path_dir + 'A_Code_' + datemanage.workday_str + '_' + str(file_index) + '.txt'
-        path_listingdate = self.path_dir + 'A_ListingDate_' + datemanage.workday_str + '_' + str(file_index) + '.txt'
-        path_delistingdate = self.path_dir + 'A_DelistingDate_' + datemanage.workday_str + '_' + str(file_index) + '.txt'
+        path_code = self.path_for_intelliquant_dir + 'A_Code_' + datemanage.workday_str + '_' + str(file_index) + '.txt'
+        path_listingdate = self.path_for_intelliquant_dir + 'A_ListingDate_' + datemanage.workday_str + '_' + str(file_index) + '.txt'
+        path_delistingdate = self.path_for_intelliquant_dir + 'A_DelistingDate_' + datemanage.workday_str + '_' + str(file_index) + '.txt'
 
 
         with open(path_code, 'r') as file:
@@ -119,7 +117,7 @@ class UseIntelliquant:
         #category = ['Delisted', 'Listed']
         category = ['Delisted']
         for type in category:
-            self.path_dir = self.path_codeLists + '\\' + type + '\\For_Intelliquant\\' + datemanage.workday_str + '\\'
+            self.path_for_intelliquant_dir = self.path_codeLists + '\\' + type + '\\For_Intelliquant\\' + datemanage.workday_str + '\\'
             # max_file_index(폴더 내 데이터 파일 수) 계산
             # 파일 무리별 카운터 초기화
             count_code = 0
@@ -127,7 +125,7 @@ class UseIntelliquant:
             count_listing = 0
 
             # 폴더 내의 모든 파일에 대해 반복
-            for filename in os.listdir(self.path_dir):
+            for filename in os.listdir(self.path_for_intelliquant_dir):
                 if filename.startswith('A_Code_') and datemanage.workday_str in filename:
                     count_code += 1
                 elif filename.startswith('A_DelistingDate_') and datemanage.workday_str in filename:
@@ -142,7 +140,7 @@ class UseIntelliquant:
             else:
                 raise ValueError("파일 무리의 개수가 서로 다릅니다.")
 
-            for file_index in range(1, 1+1):  # 폴더 내의 파일 갯수만큼 반복
+            for file_index in range(1, 2+1):  # 테스트용. 파일 2개만 실행
             #for file_index in range(1, max_file_index+1): #폴더 내의 파일 갯수만큼 반복
                 length_code_list, code_content, listingdate_content, delistingdate_content = self.load_dataset_code(datemanage, file_index)
                 data_indices = self.calculate_batch_indices(length_code_list, self.batchsize)
@@ -156,9 +154,57 @@ class UseIntelliquant:
                     js_code = js_code_dataset + js_code_base
                     self.intel.update_code(js_code) #인텔리퀀트 코드창 수정
                     backtest_list = self.intel.backtest(datemanage.startday_str, datemanage.workday_str, '10000000', self.logger)
-                    self.process_backtest_result(backtest_list, type, datemanage, file_index, idx)
+                    self.save_backtest_result(backtest_list, type, datemanage, file_index, idx)
 
-                    # load_failure_list, DelistingDate_Error_list 를 하나의 txt로 만들어서 종목 코드 추가
-                    # js_code_dataset 에서 코드명 추출해야 하나..
+    def save_backtest_result(self, backtest_list, type, datemanage, file_index, idx):
+        self.path_backtest_result = self.path_compensation + '\\' + type + '\\From_Intelliquant\\' + datemanage.workday_str + '\\' + 'backtest_result_' + datemanage.workday_str + '_' + str(file_index) + '_' + str(idx) + '.txt'
+        folder = os.path.dirname(self.path_backtest_result)
+        # 폴더가 존재하지 않으면 생성
+        if not os.path.exists(folder):
+            os.makedirs(folder)
 
-                    # 각 테스트 결과에서 종목별 추출, pd 를 xlsx로 저장
+        self.path_load_failure_list = folder + '\\' + 'load_failure_list_' + datemanage.workday_str + '.txt'
+        self.path_delisting_date_error_list = folder + '\\' + 'delisting_date_error_list_' + datemanage.workday_str + '.txt'
+
+        # 각 백테스트 결과 파일 txt로 저장
+        f = open(self.path_backtest_result, 'w', encoding='utf-8')
+        f.writelines(backtest_list)
+        f.close()
+        self.logger.info("Backtest 결과 저장 완료: %s" % self.path_backtest_result)
+
+        #load_failure_list, delisting_date_error_list 저장
+        load_failure_list, delisting_date_error_list = self.parse_list_data(backtest_list)
+        if load_failure_list:
+            self.save_list_to_file_append(load_failure_list, self.path_load_failure_list)
+            self.logger.info("load_failure_list 결과 저장 완료: %s" % self.path_load_failure_list)
+        if delisting_date_error_list:
+            self.save_list_to_file_append(delisting_date_error_list, self.path_delisting_date_error_list)
+            self.logger.info("delisting_date_error_list 결과 저장 완료: %s" % self.path_delisting_date_error_list)
+
+    def parse_list_data(self, lines):
+        load_failure_list = []
+        delisting_date_error_list = []
+
+        for line in lines:
+            if "load_failure_list:" in line:
+                extracted_data = line.split("load_failure_list: [")[1].split("]")[0].split(",")
+                load_failure_list = [x.strip() for x in extracted_data if x.strip()]  # 비어있지 않은 요소만 추가
+            elif "DelistingDate_Error_list:" in line:
+                extracted_data = line.split("DelistingDate_Error_list: [")[1].split("]")[0].split(",")
+                delisting_date_error_list = [x.strip() for x in extracted_data if x.strip()]
+
+        return load_failure_list, delisting_date_error_list
+
+    # 파일에 데이터를 추가하는 함수로 save_list_to_file 수정하기
+    def save_list_to_file_append(self, data_list, filename):
+        with open(filename, 'a') as file:  # 'a' 모드는 파일에 내용을 추가합니다
+            for item in data_list:
+                file.write(f"{item}\n")
+
+    # 특정 폴더 내에서 특정 문자열로 시작하는 파일들의 이름을 리스트로 반환하는 함수
+    def get_files_starting_with(self, folder_path, start_string):
+        files_starting_with = []
+        for filename in os.listdir(folder_path):
+            if filename.startswith(start_string):
+                files_starting_with.append(filename)
+        return files_starting_with

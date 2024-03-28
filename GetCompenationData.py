@@ -8,6 +8,7 @@ import configparser
 from UseIntelliquant import UseIntelliquant
 import json
 import math
+import pandas as pd
 
 class GetCompensationData(UseIntelliquant):
     def __init__(self):
@@ -28,52 +29,78 @@ class GetCompensationData(UseIntelliquant):
         self.page = config['intelliquant']['page']
         self.name = config['intelliquant']['name']
 
-    def process_backtest_result(self, backtest_list, type, datemanage, file_index, idx):
-        self.path_backtest_result = self.path_compensation + '\\' + type + '\\From_Intelliquant\\' + datemanage.workday_str + '\\' + 'backtest_result_' + datemanage.workday_str + '_' + str(file_index) + '_' + str(idx) + '.txt'
-        folder = os.path.dirname(self.path_backtest_result)
-        # 폴더가 존재하지 않으면 생성
-        if not os.path.exists(folder):
-            os.makedirs(folder)
+    def process_backtest_result(self, path_file):
+        # 각 코드별 데이터를 저장할 딕셔너리
+        data_by_code = {}
 
-        self.path_load_failure_list = folder + '\\' + 'load_failure_list_' + datemanage.workday_str + '.txt'
-        self.path_delisting_date_error_list = folder + '\\' + 'delisting_date_error_list_' + datemanage.workday_str + '.txt'
+        with open(path_file, 'r') as file:
+            for line in file:
+                if 'list_index:' in line:
+                    num_codes = int(line.split('list_index:')[1].strip())
+                    #other_data.append(('list_index', num_codes))
+                elif 'NumOfStocks:' in line:
+                    num_stocks = int(line.split('NumOfStocks:')[1].strip())
+                    #other_data.append(('NumOfStocks', num_stocks))
+                elif 'load_failure_list:' in line:
+                    load_failure_stocks = line.split('load_failure_list:')[1].strip()
+                    num_load_failure_stocks = len(load_failure_stocks)
+                    #other_data.append(('load_failure_list', load_failure_stocks))
+                elif 'DelistingDate_Error_list:' in line:
+                    delisting_data_error_stocks = line.split('DelistingDate_Error_list:')[1].strip()
+                    num_delisting_data_error_stocks = len(delisting_data_error_stocks)
+                    #other_data.append(('DelistingDate_Error_list', delisting_data_error_stocks))
+                else:
+                    # 일반 데이터 처리
+                    parts = line.split(',')
+                    date2 = parts[1].strip()[1:-1]  # '날짜2' 추출
+                    code = parts[2].strip()
+                    old_no_share = int(parts[3].split(':')[1].strip())  # old_no_share 추출
+                    new_no_share = int(parts[4].split(':')[1].strip())  # new_no_share 추출
 
-        # 각 백테스트 결과 파일 txt로 저장
-        f = open(self.path_backtest_result, 'w', encoding='utf-8')
-        f.writelines(backtest_list)
-        f.close()
-        self.logger.info("Backtest 결과 저장 완료: %s" % self.path_backtest_result)
+                    # 코드에 따라 데이터 묶기
+                    if code not in data_by_code:
+                        data_by_code[code] = []
+                    data_by_code[code].append((date2, old_no_share, new_no_share))
 
-        #load_failure_list, delisting_date_error_list 저장
-        load_failure_list, delisting_date_error_list = self.parse_list_data(backtest_list)
-        if load_failure_list: # 여기 들어오는지 확인할 것
-            self.save_list_to_file_append(load_failure_list, self.path_load_failure_list)
-            self.logger.info("load_failure_list 결과 저장 완료: %s" % self.path_load_failure_list)
-        if delisting_date_error_list:
-            self.save_list_to_file_append(delisting_date_error_list, self.path_delisting_date_error_list)
-            self.logger.info("delisting_date_error_list 결과 저장 완료: %s" % self.path_delisting_date_error_list)
+        if num_codes != (num_stocks + num_load_failure_stocks + num_delisting_data_error_stocks):
+            print('backtest 결과 이상. num_code != num_stock + num_load_failure_stocks + num_delisting_data_error_stocks')
+            self.logger.info("Backtest 결과 이상: %s, num_code = %d, num_stocks = %d, num_load_failure_stocks = %d, num_delisting_data_error_stocks = %d" % (path_file,num_codes,num_stocks,num_load_failure_stocks,num_delisting_data_error_stocks ))
 
-        # 각 테스트 결과에서 종목별 추출, pd 를 xlsx로 저장
+        # 각 코드별로 DataFrame 객체 생성
+        dataframes = {}
+        for code, data in data_by_code.items():
+            df = pd.DataFrame(data, columns=['Date', 'OldNoShare', 'NewNoShare'])
+            dataframes[code] = df
 
-    def parse_list_data(self, lines):
-        load_failure_list = []
-        delisting_date_error_list = []
+        return dataframes
 
-        for line in lines:
-            if "load_failure_list:" in line:
-                extracted_data = line.split("load_failure_list: [")[1].split("]")[0].split(",")
-                load_failure_list = [x.strip() for x in extracted_data if x.strip()]  # 비어있지 않은 요소만 추가
-            elif "DelistingDate_Error_list:" in line:
-                extracted_data = line.split("DelistingDate_Error_list: [")[1].split("]")[0].split(",")
-                delisting_date_error_list = [x.strip() for x in extracted_data if x.strip()]
+    def run_backtest_process(self, datemanage): # Backtest 결과를 가지고 No_shares 정보의 xlsx 파일로 처리
+        # category = ['Delisted', 'Listed']
+        category = ['Delisted']
+        for type in category:
+            # 폴더에서 backtest 파일 이름 목록 찾기 --> file_names
+            backtest_result_folder = self.path_compensation + '\\' + type + '\\From_Intelliquant\\' + datemanage.workday_str + '\\'
+            start_string = 'backtest_result_' + datemanage.workday_str
+            file_names = self.get_files_starting_with(backtest_result_folder, start_string)
 
-        return load_failure_list, delisting_date_error_list
+            # 처리 결과 저장할 폴더
+            no_share_folder = self.path_compensation + '\\' + type + datemanage.workday_str + '\\'
+            # 폴더가 존재하지 않으면 생성
+            if not os.path.exists(no_share_folder):
+                os.makedirs(no_share_folder)
 
-    # 파일에 데이터를 추가하는 함수로 save_list_to_file 수정하기
-    def save_list_to_file_append(self, data_list, filename):
-        with open(filename, 'a') as file:  # 'a' 모드는 파일에 내용을 추가합니다
-            for item in data_list:
-                file.write(f"{item}\n")
+            for backtest_result_file in file_names:
+                path_backtest_result_file = backtest_result_folder + backtest_result_file
+                df_no_share = self.process_backtest_result(path_backtest_result_file)
+                # 여기서 각 코드의 df 에서 old, new 맞나 체크하는 루틴이 필요하다
+                # 문제가 없으면 각각 new 데이터만 남기면 된다.
+                self.save_dfs_to_excel(df_no_share, ('_' + datemanage.workday_str), no_share_folder)
+
+    def save_dfs_to_excel(self, dfs_dict, custom_string, folder):
+        for code, df in dfs_dict.items():
+            filename = f"{code}_{custom_string}.xlsx"
+            path_file = folder + filename
+            df.to_excel(path_file, index=False)
 
 '''
 오늘(log용), 기준일(tikerlist 받아온 작업일) 정보 필요
@@ -90,7 +117,7 @@ class GetCompensationData(UseIntelliquant):
 '''
 
 filename = os.path.splitext(os.path.basename(__file__))[0]  # 실행하고 있는 스크립트 파일 이름 가져오기
-startday = datetime(2023, 1, 4)
+startday = datetime(2000, 1, 4)
 workday = datetime(2024, 3, 21)
 datemanage = DateManage(filename)
 datemanage.SetStartday(startday)
@@ -109,8 +136,10 @@ file_handler_info.setFormatter(formatter)
 logger.addHandler(file_handler_info)
 
 GetCompData = GetCompensationData()
-GetCompData.intel.chrome_on(logger, GetCompData.page, GetCompData.name)
-GetCompData.run_backtest_rep(datemanage)
+#GetCompData.intel.chrome_on(logger, GetCompData.page, GetCompData.name)
+#GetCompData.run_backtest_rep(datemanage) # 인텔리퀀트로 백테스트 돌려서 no_share raw data 크롤링
+GetCompData.run_backtest_process(datemanage) # 인텔리퀀트로 얻은 백테스트 raw 데이터 처리
+
 #js_code = GetCompData.make_js_code(datemanage, 'Delisted', 1, 0, 19)
 #js_code = GetCompData.make_js_code(datemanage, 'Delisted', 1, 5, 10)
 #GetCompData.intel.update_code(js_code)
