@@ -13,8 +13,9 @@ import pandas as pd
 class GetCompensationData(UseIntelliquant):
     def __init__(self):
         super().__init__(logger)
-        #self.length_code_list = 20 # raw 데이터 텍스트 파일 1개당 포함된 데이터 개수
-        self.batchsize = 20  # 인텔리퀀트 시뮬레이션 종목수 조회시 한번에 돌리는 종목 수
+        # 인텔리퀀트 시뮬레이션 종목수 조회시 한번에 돌리는 종목 수.
+        #self.batchsize = 20 # Delisted
+        self.batchsize = 10 # Listed
 
         self.path_base_code = self.cur_dir + '\\' + 'GetNoOfShares_base.js'
 
