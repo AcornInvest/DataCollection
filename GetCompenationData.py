@@ -66,6 +66,9 @@ class GetCompensationData(UseIntelliquant):
 
         # 각 코드별로 DataFrame 객체 생성
         dataframes = {}
+
+        # 각 코드의 df 에서 old, new 맞나 체크하는 루틴
+        # 문제가 없으면 각각 new 데이터만 남긴다
         for code, data in data_by_code.items():
             df = pd.DataFrame(data, columns=['Date', 'OldNoShare', 'NewNoShare'])
 
@@ -102,10 +105,9 @@ class GetCompensationData(UseIntelliquant):
             for backtest_result_file in file_names:
                 path_backtest_result_file = backtest_result_folder + backtest_result_file
                 df_no_share = self.process_backtest_result(path_backtest_result_file)
-                # 여기서 각 코드의 df 에서 old, new 맞나 체크하는 루틴이 필요하다
-                # 문제가 없으면 각각 new 데이터만 남기면 된다.
-                # 그 외 df 처리하기.
                 self.save_dfs_to_excel(df_no_share, ('_compensation_' + datemanage.workday_str), no_share_folder)
+                
+            #처리한 엑셀 파일들이 Codelist에 있는 모든 종목들을 다 커버하는지 확인 필요
 
     def save_dfs_to_excel(self, dfs_dict, custom_string, folder):
         for code, df in dfs_dict.items():
@@ -129,7 +131,7 @@ class GetCompensationData(UseIntelliquant):
 
 filename = os.path.splitext(os.path.basename(__file__))[0]  # 실행하고 있는 스크립트 파일 이름 가져오기
 startday = datetime(2000, 1, 4)
-workday = datetime(2024, 3, 21)
+workday = datetime(2024, 3, 29)
 datemanage = DateManage(filename)
 datemanage.SetStartday(startday)
 datemanage.SetWorkday(workday)
@@ -147,6 +149,6 @@ file_handler_info.setFormatter(formatter)
 logger.addHandler(file_handler_info)
 
 GetCompData = GetCompensationData()
-#GetCompData.intel.chrome_on(logger, GetCompData.page, GetCompData.name)
-#GetCompData.run_backtest_rep(datemanage) # 인텔리퀀트로 백테스트 돌려서 no_share raw data 크롤링
-GetCompData.run_backtest_process(datemanage) # 인텔리퀀트로 얻은 백테스트 raw 데이터 처리
+GetCompData.intel.chrome_on(logger, GetCompData.page, GetCompData.name)
+GetCompData.run_backtest_rep(datemanage) # 인텔리퀀트로 백테스트 돌려서 no_share raw data 크롤링
+#GetCompData.run_backtest_process(datemanage) # 인텔리퀀트로 얻은 백테스트 raw 데이터 처리
