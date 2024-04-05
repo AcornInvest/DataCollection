@@ -29,6 +29,7 @@ class GetCompensationData(UseIntelliquant):
         config.read(path, encoding='utf-8')
         self.page = config['intelliquant']['page']
         self.name = config['intelliquant']['name']
+        self.path_backtest_save = config['path']['path_backtest_save']
 
     def process_backtest_result(self, path_file):
         # 각 코드별 데이터를 저장할 딕셔너리

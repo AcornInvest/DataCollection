@@ -26,8 +26,6 @@ class UseIntelliquant:
         # 설정값 읽기
         self.path_data = config['path']['path_data']
         self.path_codeLists = config['path']['path_codeLists']
-        self.path_compensation = config['path']['path_compensation']
-        self.path_financial  = config['path']['path_financial']
 
     def load_base_code(self, path_base_code):
         with open(path_base_code, 'r', encoding='utf-8') as file:
@@ -158,10 +156,11 @@ class UseIntelliquant:
                     js_code = js_code_dataset + js_code_base
                     self.intel.update_code(js_code) #인텔리퀀트 코드창 수정
                     backtest_list = self.intel.backtest(datemanage.startday_str, datemanage.workday_str, '10000000', self.logger)
-                    self.save_backtest_result(backtest_list, type, datemanage, file_index, idx)
+                    self.save_backtest_result(self.path_backtest_save, backtest_list, type, datemanage, file_index, idx)
 
-    def save_backtest_result(self, backtest_list, type, datemanage, file_index, idx):
-        self.path_backtest_result = self.path_compensation + '\\' + type + '\\From_Intelliquant\\' + datemanage.workday_str + '\\' + 'backtest_result_' + datemanage.workday_str + '_' + str(file_index) + '_' + str(idx) + '.txt'
+    def save_backtest_result(self, path_backtest_save, backtest_list, type, datemanage, file_index, idx):
+        #path_compensation 변수 파라미터로 받아오자
+        self.path_backtest_result = path_backtest_save + '\\' + type + '\\From_Intelliquant\\' + datemanage.workday_str + '\\' + 'backtest_result_' + datemanage.workday_str + '_' + str(file_index) + '_' + str(idx) + '.txt'
         folder = os.path.dirname(self.path_backtest_result)
         # 폴더가 존재하지 않으면 생성
         if not os.path.exists(folder):
