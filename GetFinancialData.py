@@ -62,4 +62,5 @@ class GetFinancialData(UseIntelliquant):
         if sum_unit_year > 0:
             indices.append((start_index, len(unit_year_list) - 1))
 
+        # 인텔리퀀트 start date, end date도 계산해서 리턴할까? 근데 그건 처음에 전체 데이터 읽어올 때만 좀 유용하고 업데이트할 때는 큰 의미가 없다.
         return indices
