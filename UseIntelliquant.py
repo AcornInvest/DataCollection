@@ -77,7 +77,6 @@ class UseIntelliquant:
         path_listingdate = self.path_for_intelliquant_dir + 'A_ListingDate_' + datemanage.workday_str + '_' + str(file_index) + '.txt'
         path_delistingdate = self.path_for_intelliquant_dir + 'A_DelistingDate_' + datemanage.workday_str + '_' + str(file_index) + '.txt'
 
-
         with open(path_code, 'r') as file:
             code_content = file.read()
             items = code_content.split(',')
@@ -100,13 +99,6 @@ class UseIntelliquant:
             raise ValueError(datemanage.workday_str, "_", file_index, "의 파일간 데이터 리스트 수가 다름")
 
         return length_code_list, code_content, listingdate_content, delistingdate_content
-
-    def calculate_batch_indices(self, length_code_list, batchsize):
-        indices = []
-        for start in range(0, length_code_list, batchsize):
-            end = min(start + batchsize - 1, length_code_list - 1)
-            indices.append((start, end))
-        return indices
 
     def run_backtest_rep(self, datemanage):
         # 데이터를 하나씩 추출해서 인텔리퀀트의 코드 수정해가면서 백테스트 수행.
@@ -139,13 +131,13 @@ class UseIntelliquant:
             else:
                 raise ValueError("파일 무리의 개수가 서로 다릅니다.")
 
-            for file_index in range(74, 94 + 1):  # 테스트용. 파일 2개만 실행
+            for file_index in range(1, 2 + 1):  # 테스트용. 파일 2개만 실행
             #for file_index in range(1, max_file_index+1): #폴더 내의 파일 갯수만큼 반복
                 length_code_list, code_content, listingdate_content, delistingdate_content = self.load_dataset_code(datemanage, file_index)
 
                 # 수정할 것
                 # 파일에서 listing date의 최소(가장 과거), delisting date 의 최대(가장 최근) 날짜를 보고 startday, workday 및 batchsize 선정하기
-                data_indices = self.calculate_batch_indices(length_code_list, self.batchsize)
+                data_indices = self.calculate_batch_indices(length_code_list, self.max_batchsize, listingdate_content, delistingdate_content, datemanage.startday, datemanage.workday)
 
                 #num_data_index = 1
                 for idx, k in enumerate(data_indices): # 한 파일 내에서의 인덱스

@@ -11,12 +11,11 @@ import math
 import pandas as pd
 
 class GetCompensationData(UseIntelliquant):
-    def __init__(self):
+    def __init__(self, logger):
         super().__init__(logger)
         # 인텔리퀀트 시뮬레이션 종목수 조회시 한번에 돌리는 종목 수.
-        #self.batchsize = 20 # Delisted
-        self.batchsize = 10 # Listed
-
+        #self.max_batchsize = 20 # Delisted
+        self.max_batchsize = 10 # Listed
         self.path_base_code = self.cur_dir + '\\' + 'GetNoOfShares_base.js'
 
     def load_config(self):
@@ -30,6 +29,13 @@ class GetCompensationData(UseIntelliquant):
         self.page = config['intelliquant']['page']
         self.name = config['intelliquant']['name']
         self.path_backtest_save = config['path']['path_backtest_save']
+
+    def calculate_batch_indices(self, length_code_list, max_batchsize, listingdate_content, delistingdate_content, startday, workday): #run_backtest_rep() 에서 한번에 시뮬레이션 할 리스트 만들어서 리턴
+        indices = []
+        for start in range(0, length_code_list, max_batchsize):
+            end = min(start + max_batchsize - 1, length_code_list - 1)
+            indices.append((start, end))
+        return indices
 
     def process_backtest_result(self, path_file):
         # 각 코드별 데이터를 저장할 딕셔너리
@@ -131,6 +137,7 @@ class GetCompensationData(UseIntelliquant):
 저장할 파일: ohlcv results
 '''
 
+'''
 filename = os.path.splitext(os.path.basename(__file__))[0]  # 실행하고 있는 스크립트 파일 이름 가져오기
 startday = datetime(2000, 1, 4)
 workday = datetime(2024, 3, 29)
@@ -150,7 +157,8 @@ file_handler_info = logging.FileHandler(filename=datemanage.path_log)
 file_handler_info.setFormatter(formatter)
 logger.addHandler(file_handler_info)
 
-GetCompData = GetCompensationData()
+GetCompData = GetCompensationData(logger)
 GetCompData.intel.chrome_on(logger, GetCompData.page, GetCompData.name)
 GetCompData.run_backtest_rep(datemanage) # 인텔리퀀트로 백테스트 돌려서 no_share raw data 크롤링
 #GetCompData.run_backtest_process(datemanage) # 인텔리퀀트로 얻은 백테스트 raw 데이터 처리
+'''
