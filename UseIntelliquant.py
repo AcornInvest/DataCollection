@@ -107,8 +107,8 @@ class UseIntelliquant:
         #category = ['Delisted', 'Listed']
         #category = ['Delisted']
         category = ['Listed']
-        for type in category:
-            self.path_for_intelliquant_dir = self.path_codeLists + '\\' + type + '\\For_Intelliquant\\' + datemanage.workday_str + '\\'
+        for listed_status in category:
+            self.path_for_intelliquant_dir = self.path_codeLists + '\\' + listed_status + '\\For_Intelliquant\\' + datemanage.workday_str + '\\'
             # max_file_index(폴더 내 데이터 파일 수) 계산
             # 파일 무리별 카운터 초기화
             count_code = 0
@@ -148,11 +148,11 @@ class UseIntelliquant:
                     js_code = js_code_dataset + js_code_base
                     self.intel.update_code(js_code) #인텔리퀀트 코드창 수정
                     backtest_list = self.intel.backtest(datemanage.startday_str, datemanage.workday_str, '10000000', self.logger)
-                    self.save_backtest_result(self.path_backtest_save, backtest_list, type, datemanage, file_index, idx)
+                    self.save_backtest_result(self.path_backtest_save, backtest_list, listed_status, datemanage, file_index, idx)
 
-    def save_backtest_result(self, path_backtest_save, backtest_list, type, datemanage, file_index, idx):
+    def save_backtest_result(self, path_backtest_save, backtest_list, listed_status, datemanage, file_index, idx):
         #path_compensation 변수 파라미터로 받아오자
-        self.path_backtest_result = path_backtest_save + '\\' + type + '\\From_Intelliquant\\' + datemanage.workday_str + '\\' + 'backtest_result_' + datemanage.workday_str + '_' + str(file_index) + '_' + str(idx) + '.txt'
+        self.path_backtest_result = path_backtest_save + '\\' + listed_status + '\\From_Intelliquant\\' + datemanage.workday_str + '\\' + 'backtest_result_' + datemanage.workday_str + '_' + str(file_index) + '_' + str(idx) + '.txt'
         folder = os.path.dirname(self.path_backtest_result)
         # 폴더가 존재하지 않으면 생성
         if not os.path.exists(folder):

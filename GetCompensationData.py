@@ -98,14 +98,14 @@ class GetCompensationData(UseIntelliquant):
     def run_backtest_process(self, datemanage): # Backtest 결과를 가지고 No_shares 정보의 xlsx 파일로 처리
         # category = ['Delisted', 'Listed']
         category = ['Delisted']
-        for type in category:
+        for listed_status in category:
             # 폴더에서 backtest 파일 이름 목록 찾기 --> file_names
-            backtest_result_folder = self.path_compensation + '\\' + type + '\\From_Intelliquant\\' + datemanage.workday_str + '\\'
+            backtest_result_folder = self.path_backtest_save + '\\' + listed_status + '\\From_Intelliquant\\' + datemanage.workday_str + '\\'
             start_string = 'backtest_result_' + datemanage.workday_str
             file_names = self.get_files_starting_with(backtest_result_folder, start_string)
 
             # 처리 결과 저장할 폴더
-            no_share_folder = self.path_compensation + '\\' + type + '\\' + datemanage.workday_str + '\\'
+            no_share_folder = self.path_backtest_save + '\\' + listed_status + '\\' + datemanage.workday_str + '\\'
             # 폴더가 존재하지 않으면 생성
             if not os.path.exists(no_share_folder):
                 os.makedirs(no_share_folder)
@@ -115,7 +115,18 @@ class GetCompensationData(UseIntelliquant):
                 df_no_share = self.process_backtest_result(path_backtest_result_file)
                 self.save_dfs_to_excel(df_no_share, ('_compensation_' + datemanage.workday_str), no_share_folder)
                 
-            #처리한 엑셀 파일들이 Codelist에 있는 모든 종목들을 다 커버하는지 확인 필요
+            #처리한 엑셀 파일들이 Codelist에 있는 모든 종목들을 다 커버하는지 확인
+            comp_file_names = os.listdir(no_share_folder) # compensation 처리 결과 파일 목록
+            file_prefixes = set([name[:6] for name in file_names]) # 각 파일명의 처음 6글자 추출
+
+            codelist_path = self.path_codeLists + '\\' + listed_status + '\\' + listed_status + '_Ticker_' + datemanage.workday_str + '_modified.xlsx'
+            codelist = pd.read_excel(codelist_path, index_col=0)
+            codes = set(codelist['Code']) # Ticker 파일에서 가져온 Code column
+
+            is_subset = codes.issubset(file_prefixes)
+
+            # 결과 출력
+            print("DataFrame의 칼럼 값이 모두 파일 이름에 있습니까?:", is_subset)
 
     def save_dfs_to_excel(self, dfs_dict, custom_string, folder):
         for code, df in dfs_dict.items():
