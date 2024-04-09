@@ -121,9 +121,13 @@ class GetCompensationData(UseIntelliquant):
 
             codelist_path = self.path_codeLists + '\\' + listed_status + '\\' + listed_status + '_Ticker_' + datemanage.workday_str + '_modified.xlsx'
             codelist = pd.read_excel(codelist_path, index_col=0)
+            # 상폐일이 기준일(2000.1.4) 보다 앞선 것은 제외시키기
+
             codes = set(codelist['Code']) # Ticker 파일에서 가져온 Code column
 
             is_subset = codes.issubset(file_prefixes)
+
+            # 안맞는 종목들 txt로 출력
 
             # 결과 출력
             print("DataFrame의 칼럼 값이 모두 파일 이름에 있습니까?:", is_subset)
