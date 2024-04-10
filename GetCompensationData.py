@@ -99,6 +99,7 @@ class GetCompensationData(UseIntelliquant):
         # category = ['Delisted', 'Listed']
         category = ['Delisted']
         for listed_status in category:
+
             # 폴더에서 backtest 파일 이름 목록 찾기 --> file_names
             backtest_result_folder = self.path_backtest_save + '\\' + listed_status + '\\From_Intelliquant\\' + datemanage.workday_str + '\\'
             start_string = 'backtest_result_' + datemanage.workday_str
@@ -106,6 +107,7 @@ class GetCompensationData(UseIntelliquant):
 
             # 처리 결과 저장할 폴더
             no_share_folder = self.path_backtest_save + '\\' + listed_status + '\\' + datemanage.workday_str + '\\'
+
             # 폴더가 존재하지 않으면 생성
             if not os.path.exists(no_share_folder):
                 os.makedirs(no_share_folder)
@@ -114,23 +116,43 @@ class GetCompensationData(UseIntelliquant):
                 path_backtest_result_file = backtest_result_folder + backtest_result_file
                 df_no_share = self.process_backtest_result(path_backtest_result_file)
                 self.save_dfs_to_excel(df_no_share, ('_compensation_' + datemanage.workday_str), no_share_folder)
-                
+
+
             #처리한 엑셀 파일들이 Codelist에 있는 모든 종목들을 다 커버하는지 확인
-            comp_file_names = os.listdir(no_share_folder) # compensation 처리 결과 파일 목록
-            file_prefixes = set([name[:6] for name in file_names]) # 각 파일명의 처음 6글자 추출
+            #compensation_file_names = os.listdir(no_share_folder) # compensation 처리 결과 파일 목록
+            compensation_file_names = self.find_files_with_numeric_prefix(no_share_folder)  # compensation 처리 결과 파일 목록. 파일 처음 6글자가 숫자로 시작하는 것만으로 제한
+            file_prefixes = set([name[:6] for name in compensation_file_names]) # 각 파일명의 처음 6글자 추출
+            # 파일 처음 6글자가 숫자로 시작하는 것만으로 제한할 것
 
             codelist_path = self.path_codeLists + '\\' + listed_status + '\\' + listed_status + '_Ticker_' + datemanage.workday_str + '_modified.xlsx'
             codelist = pd.read_excel(codelist_path, index_col=0)
-            # 상폐일이 기준일(2000.1.4) 보다 앞선 것은 제외시키기
-
-            codes = set(codelist['Code']) # Ticker 파일에서 가져온 Code column
+            codelist['DelistingDate'] = pd.to_datetime(codelist['DelistingDate'])
+            codelist.loc[:, 'Code'] = codelist['Code'].apply(lambda x: f"{x:06d}")  # Code 열 str, 6글자로 맞추기
+            codelist_filtered = codelist[codelist['DelistingDate'] >= datemanage.startday] # 상폐일이 기준일(2000.1.4) 보다 앞선 것은 제외시키기
+            codes = set(codelist_filtered['Code']) # Ticker 파일에서 가져온 Code column
 
             is_subset = codes.issubset(file_prefixes)
+            if not is_subset:
+                # DataFrame의 칼럼에는 있는데 파일 이름에 없는 값 목록
+                missing_in_files = codes - file_prefixes
 
-            # 안맞는 종목들 txt로 출력
+                # 파일 이름에는 있는데 DataFrame의 칼럼에 없는 값 목록
+                extra_in_files = file_prefixes - codes
 
-            # 결과 출력
-            print("DataFrame의 칼럼 값이 모두 파일 이름에 있습니까?:", is_subset)
+                # 결과를 텍스트 파일로 저장
+                missing_in_files_path = no_share_folder + 'missing_in_files_' + datemanage.workday_str + '.txt'
+                with open(missing_in_files_path, 'w') as f:
+                    for item in missing_in_files:
+                        f.write("%s\n" % item)
+
+                extra_in_files_path = no_share_folder + 'extra_in_files_' + datemanage.workday_str + '.txt'
+                with open(extra_in_files_path, 'w') as f:
+                    for item in extra_in_files:
+                        f.write("%s\n" % item)
+
+                print("결과가 'missing_in_files.txt'와 'extra_in_files.txt'에 저장되었습니다.")
+            else:
+                print("모든 DataFrame의 칼럼 값이 파일 이름에 있습니다.")
 
     def save_dfs_to_excel(self, dfs_dict, custom_string, folder):
         for code, df in dfs_dict.items():
