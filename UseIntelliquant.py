@@ -25,7 +25,7 @@ class UseIntelliquant:
 
         # 설정값 읽기
         self.path_data = config['path']['path_data']
-        self.path_codeLists = config['path']['path_codeLists']
+        self.path_codeLists = config['path']['path_codelists']
 
     def load_base_code(self, path_base_code):
         with open(path_base_code, 'r', encoding='utf-8') as file:
