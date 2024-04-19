@@ -204,14 +204,7 @@ class UseIntelliquant:
                 files_starting_with.append(filename)
         return files_starting_with
 
-    def find_files_with_numeric_prefix(self, folder_path):
-        # 파일 이름을 저장할 리스트
-        numeric_files = []
-
-        # 지정된 폴더 내의 파일 목록을 가져옴
-        for filename in os.listdir(folder_path):
-            # 파일 이름의 처음 6글자가 숫자인지 확인
-            if filename[:6].isdigit():
-                numeric_files.append(filename)
-
-        return numeric_files
+    def find_files_with_keyword(self, folder_path, keyword):
+        files = os.listdir(folder_path)
+        files_with_keyword = [file for file in files if keyword in file]
+        return files_with_keyword

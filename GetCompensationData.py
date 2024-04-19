@@ -74,13 +74,12 @@ class GetCompensationData(UseIntelliquant):
 
         # 각 코드별로 DataFrame 객체 생성
         dataframes = {}
-
         # 각 코드의 df 에서 old, new 맞나 체크하는 루틴
         # 문제가 없으면 각각 new 데이터만 남긴다
         for code, data in data_by_code.items():
             df = pd.DataFrame(data, columns=['Date', 'OldNoShare', 'NewNoShare'])
 
-            # OldNoShare를 한 칸 위로 shift한 후 NewNoShare와 비교. 마지막 행은 제외하고.
+            # OldNoShare를 한 칸 위로 shift한 후 NewNoShare와 비교. 마지막 행은 제외하고. backtest 시 누락된 데이터가 없는지 확인하는 용도
             df['ShiftedOldNoShare'] = df['OldNoShare'].shift(-1)
             comparison_result_without_last = (df['ShiftedOldNoShare'][:-1] == df['NewNoShare'][:-1])
 
@@ -92,6 +91,27 @@ class GetCompensationData(UseIntelliquant):
                 self.logger.info(f"주식수 데이터 에러. Code: {code}, date:{err_date}")
 
             del df['ShiftedOldNoShare']
+
+            # 시뮬레이션 마지막 해에 load한 데이터로 인해 중복되는 데이터 처리
+            df['Date'] = pd.to_datetime(df['Date']).dt.strftime('%Y-%m-%d')
+            df.sort_values('Date', inplace=True)
+
+            # Drop duplicates keeping the last occurrence
+            df.drop_duplicates(subset=['Date'], keep='last', inplace=True)
+
+            # Use forward fill to create a column of the correct OldNoShare values
+            df['CorrectOldNoShare'] = df['NewNoShare'].shift(1).ffill()
+
+            # Filter out rows where the OldNoShare doesn't match the CorrectOldNoShare, except for the first occurrence
+            # The first occurrence does not have a previous NewNoShare value, so it's considered correct
+            df = df[(df['OldNoShare'] == df['CorrectOldNoShare']) | (df['Date'] == df['Date'].min())]
+
+            # Drop the CorrectOldNoShare column as it is no longer needed
+            df.drop(columns=['CorrectOldNoShare'], inplace=True)
+
+            # Reset index
+            df.reset_index(drop=True, inplace=True)
+
             dataframes[code] = df
         return dataframes
 
@@ -107,7 +127,7 @@ class GetCompensationData(UseIntelliquant):
 
             # 처리 결과 저장할 폴더
             no_share_folder = self.path_backtest_save + '\\' + listed_status + '\\' + datemanage.workday_str + '\\'
-            '''
+
             # 폴더가 존재하지 않으면 생성
             if not os.path.exists(no_share_folder):
                 os.makedirs(no_share_folder)
@@ -116,24 +136,23 @@ class GetCompensationData(UseIntelliquant):
                 path_backtest_result_file = backtest_result_folder + backtest_result_file
                 df_no_share = self.process_backtest_result(path_backtest_result_file)
                 self.save_dfs_to_excel(df_no_share, ('_compensation_' + datemanage.workday_str), no_share_folder)
-            '''
+
 
             #처리한 엑셀 파일들이 Codelist에 있는 모든 종목들을 다 커버하는지 확인
-            #compensation_file_names = os.listdir(no_share_folder) # compensation 처리 결과 파일 목록
-            compensation_file_names = self.find_files_with_numeric_prefix(no_share_folder)  # compensation 처리 결과 파일 목록. 파일 처음 6글자가 숫자로 시작하는 것만으로 제한
+            compensation_file_names = self.find_files_with_keyword(no_share_folder, 'compensation')  # compensation 처리 결과 파일 목록. compensation이 포함된 파일만 골라냄
             file_prefixes = set([name[:6] for name in compensation_file_names]) # 각 파일명의 처음 6글자 추출
             # 파일 처음 6글자가 숫자로 시작하는 것만으로 제한할 것
 
             codelist_path = self.path_codeLists + '\\' + listed_status + '\\' + listed_status + '_Ticker_' + datemanage.workday_str + '_modified.xlsx'
             codelist = pd.read_excel(codelist_path, index_col=0)
             codelist['DelistingDate'] = pd.to_datetime(codelist['DelistingDate'])
-            codelist.loc[:, 'Code'] = codelist['Code'].apply(lambda x: f"{x:06d}")  # Code 열 str, 6글자로 맞추기
+            codelist['Code'] = codelist['Code'].astype(str)
+            codelist['Code'] = codelist['Code'].str.zfill(6)  # 코드가 6자리에 못 미치면 앞에 0 채워넣기
+            #codelist.loc[:, 'Code'] = codelist['Code'].apply(lambda x: f"{x:06d}")  # Code 열 str, 6글자로 맞추기
             codelist_filtered = codelist[codelist['DelistingDate'] >= datemanage.startday] # 상폐일이 기준일(2000.1.4) 보다 앞선 것은 제외시키기
             codes = set(codelist_filtered['Code']) # Ticker 파일에서 가져온 Code column
 
-            #is_subset = codes.issubset(file_prefixes)
-            #if not is_subset:
-            if file_prefixes != codes:
+            if file_prefixes != codes or len(codelist_filtered) != len(file_prefixes):
                 # DataFrame의 칼럼에는 있는데 파일 이름에 없는 값 목록
                 missing_in_files = codes - file_prefixes
 

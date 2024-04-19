@@ -60,8 +60,7 @@ class GetTicker:
         cond = stocks['SecuGroup'] == '주권'
         stocks = stocks.loc[cond]  # SecuGroup == '주권' 만 남기기
         stocks.rename(columns={'Symbol': 'Code'}, inplace=True)  # symbol --> code로 변경
-        stocks = stocks[['Code', 'Name', 'ListingDate',
-                         'DelistingDate']]  # synbol, name, listingDate, DelistingDate 칼럼만 남기기
+        stocks = stocks[['Code', 'Name', 'ListingDate', 'DelistingDate']]  # synbol, name, listingDate, DelistingDate 칼럼만 남기기
         stocks = stocks[stocks['Code'].str.endswith('0')]  # 'Code'의 값이 '0'으로 끝나는 행만 남깁니다 --> 우선주 삭제
         stocks = stocks[~stocks['Name'].str.contains('스팩')]  # 스팩 종목 제거
         # ListingDate, DelistingDate 열에서 연도-월-일 형식의 날짜만 추출
@@ -84,8 +83,7 @@ class GetTicker:
         cond = stocks['SecuGroup'] == '주권'
         stocks = stocks.loc[cond]  # SecuGroup == '주권' 만 남기기
         stocks.rename(columns={'Symbol': 'Code'}, inplace=True)  # symbol --> code로 변경
-        stocks = stocks[['Code', 'Name', 'ListingDate',
-                         'DelistingDate']]  # synbol, name, listingDate, DelistingDate 칼럼만 남기기
+        stocks = stocks[['Code', 'Name', 'ListingDate', 'DelistingDate']]  # synbol, name, listingDate, DelistingDate 칼럼만 남기기
         stocks = stocks[~stocks['Code'].str.endswith('0')]  # 'Code'의 값이 '0'으로 끝나는 행만 삭제 --> 보통주 삭제
         # df = df[~df['column_name'].str.endswith('0')]
         stocks = stocks[~stocks['Name'].str.contains('스팩')]  # 스팩 종목 제거
