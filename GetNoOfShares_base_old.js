@@ -1,7 +1,5 @@
 var NoShare = [];
 var target_stock = [];
-var code_modified = [];
-var target_stock_code =[];
 var code_listed = 'A005930'; // 삼성전자. 2000년부터 계속 상장된 회사
 var stock_listed;
 var NoShare_old = [];
@@ -28,9 +26,6 @@ function removeA(str) {
 }
 
 function initialize() {
-     for (var i = 0; i < len_data; i++) {
-    	code_modified[i] = code[i].substring(0, code[i].length - 1) + '0'; // 코드명 마지막 글자 '0'으로 변경
-	}
     for (var i = 0; i < len_data; i++) {
     	ListingDate[i].setHours(0, 0, 0, 0);
 	}
@@ -42,15 +37,13 @@ function initialize() {
     stock_listed = IQStock.getStock(code_listed);
     
     while ((ListingDate[list_index] <= StartDate) && (list_index < len_data)){ // 더 최근 날짜가 더 크다
-        if (DelistingDate[list_index] >= StartDate) {//DelistingDate 보다 기준일이 더 과거인지 확인          
-            var _stock = IQStock.getStock(code_modified[list_index]);                
+        if (DelistingDate[list_index] >= StartDate) {//DelistingDate 보다 기준일이 더 과거인지 확인
+			var _stock = IQStock.getStock(code[list_index]);                
             if (_stock != null)
             {
-                target_stock[NumOfStocks] = _stock;
-                target_stock_code[NumOfStocks] = code[list_index]; // target stock의 original 코드명 맵핑
+                target_stock[NumOfStocks] = _stock;                
                 NoShare_old[NumOfStocks] = 0; // NoShare_old 초기화
                 NumOfStocks++;
-                logger.info(_stock.code)                
             }
             else
             {
@@ -74,11 +67,10 @@ function onDayClose(now){
     // today와 같거나 빠른 상장일의 종목들 등록
     while ((ListingDate[list_index] <= today) && (list_index < len_data)){ // 더 최근 날짜가 더 크다
         if (DelistingDate[list_index] >= StartDate) {//DelistingDate 보다 기준일이 더 과거인지 확인
-			var _stock = IQStock.getStock(code_modified[list_index]);                
+			var _stock = IQStock.getStock(code[list_index]);                
             if (_stock != null)
             {
-                target_stock[NumOfStocks] = _stock;
-                target_stock_code[NumOfStocks] = code[list_index]; // target stock의 original 코드명 맵핑
+                target_stock[NumOfStocks] = _stock;                
                 NoShare_old[NumOfStocks] = 0; // NoShare_old 초기화
                 NumOfStocks++;
             }
@@ -97,9 +89,8 @@ function onDayClose(now){
     	for (var i=numBusinessDay; i>=0 ;i--){
         	for (var j=0;  j<NumOfStocks; j++){                            
                 NoShare[j] = target_stock[j].getNoOfShare(i);
-                if (NoShare[j] != NoShare_old[j]){
-					//logger.info(ModifyDate(stock_listed.getDate(i)) + ', ' + removeA(target_stock[j].code) + ', o: ' + NoShare_old[j] + ', n: ' + NoShare[j]);
-                    logger.info(ModifyDate(stock_listed.getDate(i)) + ', ' + removeA(target_stock_code[j]) + ', o: ' + NoShare_old[j] + ', n: ' + NoShare[j]);
+                if (NoShare[j] != NoShare_old[j]){                    
+                    logger.info(ModifyDate(stock_listed.getDate(i)) + ', ' + removeA(target_stock[j].code) + ', o: ' + NoShare_old[j] + ', n: ' + NoShare[j]);
                     NoShare_old[j] = NoShare[j];
                 }
             }
@@ -111,8 +102,7 @@ function onDayClose(now){
             for (var j=0;  j<NumOfStocks; j++){
             	NoShare[j] = target_stock[j].getNoOfShare(i);
                 	if (NoShare[j] != NoShare_old[j]){
-                    //logger.info(ModifyDate(stock_listed.getDate(i)) + ', ' + removeA(target_stock[j].code) + ', o: ' + NoShare_old[j] + ', n: ' + NoShare[j]);
-                    logger.info(ModifyDate(stock_listed.getDate(i)) + ', ' + removeA(target_stock_code[j]) + ', o: ' + NoShare_old[j] + ', n: ' + NoShare[j]);
+                    logger.info(ModifyDate(stock_listed.getDate(i)) + ', ' + removeA(target_stock[j].code) + ', o: ' + NoShare_old[j] + ', n: ' + NoShare[j]);
                     NoShare_old[j] = NoShare[j];
                 }
             }         
