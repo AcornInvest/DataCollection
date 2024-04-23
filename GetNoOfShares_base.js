@@ -1,5 +1,7 @@
 var NoShare = [];
 var target_stock = [];
+var ListingDate_stock = [];
+var DelistingDate_stock = [];
 var code_modified = [];
 var target_stock_code =[];
 var code_listed = 'A005930'; // 삼성전자. 2000년부터 계속 상장된 회사
@@ -48,9 +50,11 @@ function initialize() {
             {
                 target_stock[NumOfStocks] = _stock;
                 target_stock_code[NumOfStocks] = code[list_index]; // target stock의 original 코드명 맵핑
+                ListingDate_stock[NumOfStocks] = ListingDate[list_index]; // target stock의 상장일 맵핑
+                DelistingDate_stock[NumOfStocks] = DelistingDate[list_index]; // target stock의 상폐일 맵핑                                
                 NoShare_old[NumOfStocks] = 0; // NoShare_old 초기화
                 NumOfStocks++;
-                logger.info(_stock.code)                
+                //logger.info(_stock.code)                
             }
             else
             {
@@ -79,6 +83,8 @@ function onDayClose(now){
             {
                 target_stock[NumOfStocks] = _stock;
                 target_stock_code[NumOfStocks] = code[list_index]; // target stock의 original 코드명 맵핑
+                ListingDate_stock[NumOfStocks] = ListingDate[list_index]; // target stock의 상장일 맵핑
+                DelistingDate_stock[NumOfStocks] = DelistingDate[list_index]; // target stock의 상폐일 맵핑      
                 NoShare_old[NumOfStocks] = 0; // NoShare_old 초기화
                 NumOfStocks++;
             }
@@ -93,33 +99,20 @@ function onDayClose(now){
         list_index++;        
     }     
 
-	if ( thisYear >= LastRebalYear+2 && thisMonth == 11  && thisDate >=1 ){ // 시작, 중간
-    	for (var i=numBusinessDay; i>=0 ;i--){
-        	for (var j=0;  j<NumOfStocks; j++){                            
-                NoShare[j] = target_stock[j].getNoOfShare(i);
-                if (NoShare[j] != NoShare_old[j]){
-					//logger.info(ModifyDate(stock_listed.getDate(i)) + ', ' + removeA(target_stock[j].code) + ', o: ' + NoShare_old[j] + ', n: ' + NoShare[j]);
-                    logger.info(ModifyDate(stock_listed.getDate(i)) + ', ' + removeA(target_stock_code[j]) + ', o: ' + NoShare_old[j] + ', n: ' + NoShare[j]);
-                    NoShare_old[j] = NoShare[j];
-                }
-            }
-		}
-    	LastRebalYear = thisYear;
-	}
-    else if (today >= FinalDate){ // 마지막날
-        for (var i=numBusinessDay; i>=0 ;i--){	
-            for (var j=0;  j<NumOfStocks; j++){
-            	NoShare[j] = target_stock[j].getNoOfShare(i);
-                	if (NoShare[j] != NoShare_old[j]){
-                    //logger.info(ModifyDate(stock_listed.getDate(i)) + ', ' + removeA(target_stock[j].code) + ', o: ' + NoShare_old[j] + ', n: ' + NoShare[j]);
-                    logger.info(ModifyDate(stock_listed.getDate(i)) + ', ' + removeA(target_stock_code[j]) + ', o: ' + NoShare_old[j] + ', n: ' + NoShare[j]);
-                    NoShare_old[j] = NoShare[j];
-                }
-            }         
-        }
+    for (var j=0;  j<NumOfStocks; j++){
+        if(ListingDate_stock[j] <= today && DelistingDate_stock[j] >= today){
+            NoShare[j] = target_stock[j].getNoOfShare();
+        	if (NoShare[j] != NoShare_old[j]){
+            //logger.info(ModifyDate(stock_listed.getDate(i)) + ', ' + removeA(target_stock[j].code) + ', o: ' + NoShare_old[j] + ', n: ' + NoShare[j]);
+            logger.info(ModifyDate(stock_listed.getDate()) + ', ' + removeA(target_stock_code[j]) + ', o: ' + NoShare_old[j] + ', n: ' + NoShare[j]);
+            NoShare_old[j] = NoShare[j];
+        	}
+    	}        
+    }    
+    if (today >= FinalDate){ // 마지막날       
         logger.info('list_index: ' + list_index);
         logger.info('NumOfStocks: ' +  NumOfStocks);
         logger.info('load_failure_list: [' + load_failure_list + ']');
         logger.info('DelistingDate_Error_list: [' + DelistingDate_Error_list + ']');        
-	}    
+	}   
 }

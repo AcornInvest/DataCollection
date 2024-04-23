@@ -105,8 +105,8 @@ class UseIntelliquant:
         #chrome_on()은 되어 있는 상태에서 호출
 
         #category = ['Delisted', 'Listed']
-        #category = ['Delisted']
-        category = ['Listed']
+        category = ['Delisted']
+        #category = ['Listed']
         for listed_status in category:
             self.path_for_intelliquant_dir = self.path_codeLists + '\\' + listed_status + '\\For_Intelliquant\\' + datemanage.workday_str + '\\'
             # max_file_index(폴더 내 데이터 파일 수) 계산
@@ -131,7 +131,7 @@ class UseIntelliquant:
             else:
                 raise ValueError("파일 무리의 개수가 서로 다릅니다.")
 
-            for file_index in range(86, max_file_index + 1):  # 테스트용. 파일 2개만 실행
+            for file_index in range(85, max_file_index + 1):  # 테스트용. 파일 2개만 실행
             #for file_index in range(1, max_file_index+1): #폴더 내의 파일 갯수만큼 반복
                 length_code_list, code_content, listingdate_content, delistingdate_content = self.load_dataset_code(datemanage, file_index)
 
