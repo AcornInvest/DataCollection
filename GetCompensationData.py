@@ -37,7 +37,7 @@ class GetCompensationData(UseIntelliquant):
             indices.append((start, end))
         return indices
 
-    def process_backtest_result(self, path_file):
+    def process_backtest_result(self, path_file): #backtest result 를 처리하여 df로 반환
         # 각 코드별 데이터를 저장할 딕셔너리
         data_by_code = {}
 
@@ -117,7 +117,8 @@ class GetCompensationData(UseIntelliquant):
 
     def run_backtest_process(self, datemanage): # Backtest 결과를 가지고 No_shares 정보의 xlsx 파일로 처리
         # category = ['Delisted', 'Listed']
-        category = ['Delisted']
+        #category = ['Delisted']
+        category = ['Listed']
         for listed_status in category:
 
             # 폴더에서 backtest 파일 이름 목록 찾기 --> file_names
@@ -173,12 +174,6 @@ class GetCompensationData(UseIntelliquant):
                 print("결과가 'missing_in_files.txt'와 'extra_in_files.txt'에 저장되었습니다.")
             else:
                 print("모든 DataFrame의 칼럼 값이 파일 이름에 있습니다.")
-
-    def save_dfs_to_excel(self, dfs_dict, custom_string, folder):
-        for code, df in dfs_dict.items():
-            filename = f"{code}{custom_string}.xlsx"
-            path_file = folder + filename
-            df.to_excel(path_file, index=False)
 
 '''
 오늘(log용), 기준일(tikerlist 받아온 작업일) 정보 필요
