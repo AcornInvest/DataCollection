@@ -31,6 +31,6 @@ logger.addHandler(file_handler_info)
 
 
 GetFinancData = GetFinancialData(logger)
-#GetFinancData.intel.chrome_on(logger, GetFinancData.page, GetFinancData.name)
-#GetFinancData.run_backtest_rep(datemanage) # 인텔리퀀트로 백테스트 돌려서 no_share raw data 크롤링
-GetFinancData.run_backtest_process(datemanage) # 인텔리퀀트로 얻은 백테스트 raw 데이터 처리
+GetFinancData.intel.chrome_on(logger, GetFinancData.page, GetFinancData.name)
+GetFinancData.run_backtest_rep(datemanage) # 인텔리퀀트로 백테스트 돌려서 no_share raw data 크롤링
+#GetFinancData.run_backtest_process(datemanage) # 인텔리퀀트로 얻은 백테스트 raw 데이터 처리

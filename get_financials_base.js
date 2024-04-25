@@ -26,6 +26,7 @@ var list_index = 0;
 var NumOfStocks = 0;
 var len_data = code.length;
 var last_data_day;
+var first_data_day = new Date('2000-04-03');
 
 function removeA(str) {
     return str.replace(/^A/, '');
@@ -47,7 +48,7 @@ function initialize() {
     
     while ((ListingDate[list_index] <= StartDate) && (list_index < len_data)){ // 더 최근 날짜가 더 크다
         if (DelistingDate[list_index] >= StartDate) {//DelistingDate 보다 기준일이 더 과거인지 확인
-			var _stock = IQStock.getStock(code[list_index]);                
+			var _stock = IQStock.getStock(code_modified[list_index]);                
             if (_stock != null)
             {
                 target_stock[NumOfStocks] = _stock;
@@ -103,45 +104,53 @@ function onDayClose(now){
 	
 	// 재무 정보 기록
 	if( thisMonth == month_quarter_1 && thisDate>=1 && thisYear > last_quarter_1_rebal_year){ // 6월 첫째날
-		for (var i=0;  i<NumOfStocks; i++){  
-			revenue[i] = target_stock[i].getFundamentalRevenue(); // 매출액 [천원]
-			GP[i] = target_stock[i].getFundamentalGrossProfit(); // 매출총이익 [천원]
-			operating_income[i] = target_stock[i].getFundamentalOperatingIncome(); // 영업이익 [천원]
-			net_profit[i] = target_stock[i].getFundamentalNetProfit(); // 당기순이익 [천원]
-			logger.info(removeA(target_stock_code[i]) + ', RV: ' + revenue[i] + ', GP: ' + GP[i] + ', OI: ' + operating_income[i] + ', NP: ' + net_profit[i]);
+		for (var i=0;  i<NumOfStocks; i++){
+			if (DelistingDate_stock[i] >= today){ // 상폐일이 오늘 이후인 경우만 데이터 읽음
+				revenue[i] = target_stock[i].getFundamentalRevenue(); // 매출액 [천원]
+				GP[i] = target_stock[i].getFundamentalGrossProfit(); // 매출총이익 [천원]
+				operating_income[i] = target_stock[i].getFundamentalOperatingIncome(); // 영업이익 [천원]
+				net_profit[i] = target_stock[i].getFundamentalNetProfit(); // 당기순이익 [천원]
+				logger.info(removeA(target_stock_code[i]) + ', RV: ' + revenue[i] + ', GP: ' + GP[i] + ', OI: ' + operating_income[i] + ', NP: ' + net_profit[i]);
+			}
 		}
 		last_quarter_1_rebal_year = thisYear;
         last_data_day = today;
 	}
     else if( thisMonth == month_quarter_2 && thisDate>=1 && thisYear > last_quarter_2_rebal_year){ // 9월 첫째날
-		for (var i=0;  i<NumOfStocks; i++){  
-			revenue[i] = target_stock[i].getFundamentalRevenue(); // 매출액 [천원]
-			GP[i] = target_stock[i].getFundamentalGrossProfit(); // 매출총이익 [천원]
-			operating_income[i] = target_stock[i].getFundamentalOperatingIncome(); // 영업이익 [천원]
-			net_profit[i] = target_stock[i].getFundamentalNetProfit(); // 당기순이익 [천원]
-			logger.info(removeA(target_stock_code[i]) + ', RV: ' + revenue[i] + ', GP: ' + GP[i] + ', OI: ' + operating_income[i] + ', NP: ' + net_profit[i]);
+		for (var i=0;  i<NumOfStocks; i++){
+			if (DelistingDate_stock[i] >= today){ // 상폐일이 오늘 이후인 경우만 데이터 읽음
+				revenue[i] = target_stock[i].getFundamentalRevenue(); // 매출액 [천원]
+				GP[i] = target_stock[i].getFundamentalGrossProfit(); // 매출총이익 [천원]
+				operating_income[i] = target_stock[i].getFundamentalOperatingIncome(); // 영업이익 [천원]
+				net_profit[i] = target_stock[i].getFundamentalNetProfit(); // 당기순이익 [천원]
+				logger.info(removeA(target_stock_code[i]) + ', RV: ' + revenue[i] + ', GP: ' + GP[i] + ', OI: ' + operating_income[i] + ', NP: ' + net_profit[i]);
+			}
 		}
 		last_quarter_2_rebal_year = thisYear;
         last_data_day = today;
 	}
     else if( thisMonth == month_quarter_3 && thisDate>=1 && thisYear > last_quarter_3_rebal_year){ // 12월 첫째날
 		for (var i=0;  i<NumOfStocks; i++){  
-			revenue[i] = target_stock[i].getFundamentalRevenue(); // 매출액 [천원]
-			GP[i] = target_stock[i].getFundamentalGrossProfit(); // 매출총이익 [천원]
-			operating_income[i] = target_stock[i].getFundamentalOperatingIncome(); // 영업이익 [천원]
-			net_profit[i] = target_stock[i].getFundamentalNetProfit(); // 당기순이익 [천원]
-			logger.info(removeA(target_stock_code[i]) + ', RV: ' + revenue[i] + ', GP: ' + GP[i] + ', OI: ' + operating_income[i] + ', NP: ' + net_profit[i]);
+			if (DelistingDate_stock[i] >= today){ // 상폐일이 오늘 이후인 경우만 데이터 읽음
+				revenue[i] = target_stock[i].getFundamentalRevenue(); // 매출액 [천원]
+				GP[i] = target_stock[i].getFundamentalGrossProfit(); // 매출총이익 [천원]
+				operating_income[i] = target_stock[i].getFundamentalOperatingIncome(); // 영업이익 [천원]
+				net_profit[i] = target_stock[i].getFundamentalNetProfit(); // 당기순이익 [천원]
+				logger.info(removeA(target_stock_code[i]) + ', RV: ' + revenue[i] + ', GP: ' + GP[i] + ', OI: ' + operating_income[i] + ', NP: ' + net_profit[i]);
+			}
 		}
 		last_quarter_3_rebal_year = thisYear;
         last_data_day = today;
 	}  
     else if( thisMonth == month_quarter_4 && thisDate>=1 && thisYear > last_quarter_4_rebal_year){ // 4월 첫째날
 		for (var i=0;  i<NumOfStocks; i++){  
-			revenue[i] = target_stock[i].getFundamentalRevenue(); // 매출액 [천원]
-			GP[i] = target_stock[i].getFundamentalGrossProfit(); // 매출총이익 [천원]
-			operating_income[i] = target_stock[i].getFundamentalOperatingIncome(); // 영업이익 [천원]
-			net_profit[i] = target_stock[i].getFundamentalNetProfit(); // 당기순이익 [천원]
-			logger.info(removeA(target_stock_code[i]) + ', RV: ' + revenue[i] + ', GP: ' + GP[i] + ', OI: ' + operating_income[i] + ', NP: ' + net_profit[i]);
+			if (DelistingDate_stock[i] >= today){ // 상폐일이 오늘 이후인 경우만 데이터 읽음
+				revenue[i] = target_stock[i].getFundamentalRevenue(); // 매출액 [천원]
+				GP[i] = target_stock[i].getFundamentalGrossProfit(); // 매출총이익 [천원]
+				operating_income[i] = target_stock[i].getFundamentalOperatingIncome(); // 영업이익 [천원]
+				net_profit[i] = target_stock[i].getFundamentalNetProfit(); // 당기순이익 [천원]
+				logger.info(removeA(target_stock_code[i]) + ', RV: ' + revenue[i] + ', GP: ' + GP[i] + ', OI: ' + operating_income[i] + ', NP: ' + net_profit[i]);
+			}
 		}
 		last_quarter_4_rebal_year = thisYear;
         last_data_day = today;
@@ -149,8 +158,12 @@ function onDayClose(now){
 
     if (today >= FinalDate){ // 백테스트 마지막날
         for (var i=0;  i<NumOfStocks; i++){
-            if( ListingDate_stock[i]>last_data_day) // 상장일이 마지막 fiancial data 습득일보다 뒤인 경우
-			logger.info(removeA(target_stock_code[i]) + ', RV: 0, GP: 0, OI: 0, NP: 0');
+            if( ListingDate_stock[i]>last_data_day){ // 상장일이 마지막 fiancial data 습득일보다 뒤인 경우
+				logger.info(removeA(target_stock_code[i]) + ', RV: 0, GP: 0, OI: 0, NP: 0');
+			}
+			else if ( DelistingDate_stock[i] < first_data_day){ // 상폐일이 첫번째 fiancial data 습득일보다 먼저인 경우
+				logger.info(removeA(target_stock_code[i]) + ', RV: 0, GP: 0, OI: 0, NP: 0');
+			}
 		}       
         logger.info('list_index: ' + list_index);
         logger.info('NumOfStocks: ' +  NumOfStocks);
