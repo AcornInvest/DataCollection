@@ -100,7 +100,8 @@ class GetTicker:
         return stocks
 
     def process_tickerlist(self, datemanage): # 1차 생성된 tickerlist 엑셀 파일을 받아와서 예외처리하여 엑셀로 저장함
-        category = ['Delisted']
+        #category = ['Delisted']
+        category = ['Listed']
         for type_list in category:
             # original ticker list loading
             file_read_path = self.path_codeLists + f'\\{type_list}\\{type_list}_Ticker_{datemanage.workday_str}.xlsx'
@@ -204,6 +205,47 @@ class GetTicker:
             stocks.reset_index(drop=True, inplace=True)  # 인덱스 리셋
             file_save_path = self.path_codeLists + f'\\{type_list}\\{type_list}_Ticker_{date_str}_modified.xlsx'
             stocks.to_excel(file_save_path)
+
+    def make_txt_from_ticker(self, datemanage):
+        # category = ['Listed', 'Delisted']
+        category = ['Listed']
+        #category = ['Delisted']
+        for type_list in category:
+            # 엑셀 파일 불러올 경로
+            file_path = self.path_codeLists + f'\\{type_list}\\{type_list}_Ticker_{datemanage.workday_str}_modified.xlsx'
+            stocks = pd.read_excel(file_path, index_col=0)
+
+            stocks['Code'] = stocks['Code'].astype(str)
+            stocks['Code'] = stocks['Code'].str.zfill(6)  # 코드가 6자리에 못 미치면 앞에 0 채워넣기
+            stocks['ListingDate'] = pd.to_datetime(stocks['ListingDate'])
+            stocks['DelistingDate'] = pd.to_datetime(stocks['DelistingDate'])
+            # Intelliquant 를 위한 칼럼
+            stocks['A_Code'] = "'A" + stocks['Code'] + "'"  # Code 열의 각 값에 "A"를 붙인 열 생성
+            stocks['A_ListingDate'] = "new Date('" + pd.to_datetime(stocks['ListingDate']).dt.strftime(
+                '%Y-%m-%d') + "')"
+            stocks['A_DelistingDate'] = "new Date('" + pd.to_datetime(stocks['DelistingDate']).dt.strftime(
+                '%Y-%m-%d') + "')"
+
+            stocks = stocks.sort_values(by='ListingDate')  # 상장일 기준 오름차순 정렬
+            stocks.reset_index(drop=True, inplace=True)  # 인덱스 리셋
+
+            # txt 파일 저장할 경로
+            base_path = 'C:\\Work_Dotori\\StockDataset\\CodeLists\\' + type_list + '\\For_Intelliquant\\' + datemanage.workday_str + '\\'
+            if not os.path.exists(base_path):
+                os.makedirs(base_path)
+
+            # 각 칼럼을 20개씩 끊어서 파일로 저장
+            for column in ['A_Code', 'A_ListingDate', 'A_DelistingDate']:
+                for i in range(0, len(stocks), 20):
+                    subset = stocks[column][i:i + 20]
+                    file_name = f"{column}_{datemanage.workday_str}_{i // 20 + 1}.txt"
+                    with open(base_path + file_name, 'w') as f:
+                        for idx, val in enumerate(subset):
+                            f.write(val)
+                            if (idx + 1) % 5 == 0 and idx != len(subset) - 1:
+                                f.write(',\n')
+                            elif idx != len(subset) - 1:
+                                f.write(',')
 
     def merge_rows(self, df): #KOSDAQ에서 KOSPI로 이전상장 목록 처리시 code 같은 것 그룹으로 묶기
         df = df.sort_values(by='ListingDate')
