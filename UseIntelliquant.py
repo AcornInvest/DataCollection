@@ -193,7 +193,7 @@ class UseIntelliquant:
 
         return load_failure_list, delisting_date_error_list
 
-    # 파일에 데이터를 추가하는 함수로 save_list_to_file 수정하기
+    # 파일에 데이터를 추가하는 함수
     def save_list_to_file_append(self, data_list, filename):
         with open(filename, 'a') as file:  # 'a' 모드는 파일에 내용을 추가합니다
             for item in data_list:
@@ -240,7 +240,6 @@ class UseIntelliquant:
                 path_backtest_result_file = backtest_result_folder + backtest_result_file
                 df_no_share = self.process_backtest_result(path_backtest_result_file)
                 self.save_dfs_to_excel(df_no_share, ('_' + self.suffix + '_' + datemanage.workday_str), no_share_folder)
-
 
             #처리한 엑셀 파일들이 Codelist에 있는 모든 종목들을 다 커버하는지 확인
             processed_file_names = self.find_files_with_keyword(no_share_folder, self.suffix)  # 데이터 처리 결과 파일 목록. compensation이 포함된 파일만 골라냄
