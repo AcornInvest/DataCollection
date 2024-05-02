@@ -3,6 +3,7 @@ from Intelliquant import Intelliquant
 from DateManage import DateManage
 import configparser
 import pandas as pd
+import utils
 
 class UseIntelliquant:
     '''
@@ -173,10 +174,10 @@ class UseIntelliquant:
         #load_failure_list, delisting_date_error_list 저장
         load_failure_list, delisting_date_error_list = self.parse_list_data(backtest_list)
         if load_failure_list:
-            self.save_list_to_file_append(load_failure_list, self.path_load_failure_list)
+            utils.save_list_to_file_append(load_failure_list, self.path_load_failure_list)
             self.logger.info("load_failure_list 결과 저장 완료: %s" % self.path_load_failure_list)
         if delisting_date_error_list:
-            self.save_list_to_file_append(delisting_date_error_list, self.path_delisting_date_error_list)
+            utils.save_list_to_file_append(delisting_date_error_list, self.path_delisting_date_error_list)
             self.logger.info("delisting_date_error_list 결과 저장 완료: %s" % self.path_delisting_date_error_list)
 
     def parse_list_data(self, lines):
@@ -193,11 +194,13 @@ class UseIntelliquant:
 
         return load_failure_list, delisting_date_error_list
 
-    # 파일에 데이터를 추가하는 함수
+    '''
+    # txt 파일에 데이터를 추가하는 함수
     def save_list_to_file_append(self, data_list, filename):
         with open(filename, 'a') as file:  # 'a' 모드는 파일에 내용을 추가합니다
             for item in data_list:
                 file.write(f"{item}\n")
+    '''
 
     # 특정 폴더 내에서 특정 문자열로 시작하는 파일들의 이름을 리스트로 반환하는 함수
     def get_files_starting_with(self, folder_path, start_string):
@@ -212,11 +215,13 @@ class UseIntelliquant:
         files_with_keyword = [file for file in files if keyword in file]
         return files_with_keyword
 
+    '''
     def save_dfs_to_excel(self, dfs_dict, custom_string, folder):
         for code, df in dfs_dict.items():
             filename = f"{code}{custom_string}.xlsx"
             path_file = folder + filename
             df.to_excel(path_file, index=False)
+    '''
 
     def run_backtest_process(self, datemanage): # Backtest 결과를 가지고 xlsx 파일로 처리
         # category = ['Delisted', 'Listed']
@@ -239,7 +244,7 @@ class UseIntelliquant:
             for backtest_result_file in file_names:
                 path_backtest_result_file = backtest_result_folder + backtest_result_file
                 df_no_share = self.process_backtest_result(path_backtest_result_file)
-                self.save_dfs_to_excel(df_no_share, ('_' + self.suffix + '_' + datemanage.workday_str), no_share_folder)
+                utils.save_dfs_to_excel(df_no_share, ('_' + self.suffix + '_' + datemanage.workday_str), no_share_folder)
 
             #처리한 엑셀 파일들이 Codelist에 있는 모든 종목들을 다 커버하는지 확인
             processed_file_names = self.find_files_with_keyword(no_share_folder, self.suffix)  # 데이터 처리 결과 파일 목록. compensation이 포함된 파일만 골라냄

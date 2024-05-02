@@ -6,7 +6,7 @@ from pykrx import stock
 import yfinance as yf
 import pandas as pd
 import numpy as np
-from datetime import date, timedelta
+from datetime import datetime, timedelta
 import utils
 
 
@@ -17,7 +17,7 @@ class GetOHLCV:
 
     def __init__(self, logger):
         self.logger = logger
-        self.limit_change_day = date(2015, 6, 15) #가격제한폭이 30%로 확대된 날
+        self.limit_change_day = startday = datetime(2015, 6, 15) #가격제한폭이 30%로 확대된 날
         self.suffix = 'OHLCV_origin'  # 파일 이름 저장시 사용하는 접미사
 
         # 설정 로드
@@ -37,15 +37,14 @@ class GetOHLCV:
         self.path_date_ref = config['path']['path_date_ref']
 
     def get_OHLCV(self, code, start_date, end_date, listed_status, df_holiday_ref):
+        # fdr 은 2024-04-29 기준으로 마지막으로 읽어올 수 있는 데이터가 2000-01-10 부터이다. 일단 생략한다.
+        '''
         df_OHLCV_fdr = fdr.DataReader(code, start=start_date, end=end_date)
-        df_OHLCV_fdr.drop(['Change'], axis=1, inplace=True)
         df_OHLCV_fdr.reset_index(inplace=True)
         df_OHLCV_fdr['Date'] = pd.to_datetime(df_OHLCV_fdr['Date']).dt.strftime('%Y-%m-%d')  # 인덱스 열을 바꾸는 것으로 코드 수정
-        df_OHLCV_fdr[['Open', 'High', 'Low', 'Close']] = df_OHLCV_fdr[['Open', 'High', 'Low', 'Close']].astype(float)
         df_OHLCV_fdr.set_index('Date', inplace=True)
-        # df_holiday_ref 에 있는 휴장일에 해당하는 데이터 삭제시킴
-        indices_to_drop = df_OHLCV_fdr.index.intersection(df_holiday_ref.index)
-        df_OHLCV_fdr.drop(indices_to_drop, inplace=True)
+        df_OHLCV_fdr.drop(['Change'])
+        '''
 
         df_OHLCV_pykrx = stock.get_market_ohlcv_by_date(fromdate=start_date, todate=end_date, ticker=code)
         df_OHLCV_pykrx.drop(['등락률'], axis=1, inplace=True)
@@ -59,54 +58,63 @@ class GetOHLCV:
         df_OHLCV_pykrx.drop(indices_to_drop, inplace=True)
         #df_OHLCV_pykrx_test=df_OHLCV_pykrx.drop(indices_to_drop)
 
-        # 무결성 검사 1. 두 객체 비교
-        # 관심 있는 열 선택
-        columns = ['Open', 'High', 'Low', 'Close', 'Volume']
-        all_dates = df_OHLCV_pykrx.index.union(df_OHLCV_fdr.index)  # 두 DataFrame의 인덱스로 사용된 'Date'의 고유한 값들을 모두 찾기
+        if( listed_status == 'Listed'): #상장 종목
+            code_yahoo = code + '.KS'
+            ticker = yf.Ticker(code_yahoo)
+            # 야후는 end_date에 하루 더한 날을 넣어야 함
+            end_date_obj =  datetime.strptime(end_date, '%Y-%m-%d')
+            next_day = end_date_obj + timedelta(days=1)
+            next_day_str = next_day.strftime('%Y-%m-%d')
+            df_OHLCV_yf = ticker.history(interval='1d', start=start_date, end=next_day_str, auto_adjust=False)
+            df_OHLCV_yf.reset_index(inplace=True)
+            df_OHLCV_yf['Date'] = pd.to_datetime(df_OHLCV_yf['Date']).dt.strftime('%Y-%m-%d')
+            df_OHLCV_yf[['Open', 'High', 'Low', 'Close']] = df_OHLCV_yf[['Open', 'High', 'Low', 'Close']].astype(float)
+            df_OHLCV_yf.set_index('Date', inplace=True)
+            df_OHLCV_yf.drop(['Adj Close', 'Volume', 'Dividends', 'Stock Splits'], axis=1, inplace=True)
+            # df_holiday_ref 에 있는 휴장일에 해당하는 데이터 삭제시킴
+            indices_to_drop = df_OHLCV_yf.index.intersection(df_holiday_ref.index)
+            df_OHLCV_yf.drop(indices_to_drop, inplace=True)
+            #df_OHLCV_yf_test = df_OHLCV_yf.drop(indices_to_drop)
 
-        # 이제 두 DataFrame을 all_dates를 사용하여 재인덱싱합니다.
-        df_OHLCV_pykrx_reindexed = df_OHLCV_pykrx.reindex(all_dates)
-        df_OHLCV_fdr_reindexed = df_OHLCV_fdr.reindex(all_dates)
+            '''
+            unique_to_pykrx = df_OHLCV_pykrx[~df_OHLCV_pykrx.index.isin(df_OHLCV_yf.index)]  # df_date_reference에만 있고 df_OHLCV에 없는 날짜.
+            unique_to_yf = df_OHLCV_yf[~df_OHLCV_yf.index.isin(df_OHLCV_pykrx.index)]  # df_OHLCV에 있고 df_date_reference에만 없는 날짜.
+            unique_to_pykrx.to_excel('C:\\Work_Dotori\\StockDataset\\OHLCV\\date_reference\\unique_to_pykrx.xlsx', index=True)
+            unique_to_yf.to_excel('C:\\Work_Dotori\\StockDataset\\OHLCV\\date_reference\\unique_to_yf.xlsx', index=True)
+            '''
 
-        # 두 데이터 프레임의 해당 열만 추출
-        df_pykrx = df_OHLCV_pykrx_reindexed[columns]
-        df_fdr = df_OHLCV_fdr_reindexed[columns]
+            # 무결성 검사 1. 두 객체 비교
+            all_dates = df_OHLCV_pykrx.index.union(df_OHLCV_yf.index) # 두 DataFrame의 인덱스로 사용된 'Date'의 고유한 값들을 모두 찾기
 
-        # 두 데이터 프레임 결합
-        df_combined = df_pykrx.combine_first(df_fdr)
+            # 이제 두 DataFrame을 all_dates를 사용하여 재인덱싱합니다.
+            df_OHLCV_pykrx_reindexed = df_OHLCV_pykrx.reindex(all_dates)
+            df_OHLCV_yf_reindexed = df_OHLCV_yf.reindex(all_dates)
 
-        # 두 데이터 프레임 값의 편차 계산 및 조건에 따른 처리
-        significant_diff = False
-        diff_btw_sources = []
-        for col in columns:
-            diff = df_pykrx[col] - df_fdr[col]
-            mask = diff.abs() >= 1.5
-            df_combined[col] = df_pykrx[col]  # pykrx 값을 기본으로 사용
-            significant_diff_rows = mask[mask].index.tolist()
-            if significant_diff_rows:
-                significant_diff = True
-                pos_diff = f'{col} 열, 행: {significant_diff_rows}'
-                diff_btw_sources.append(pos_diff)
+            #comparison_result = (df_OHLCV_pykrx[['Date', 'Open', 'High', 'Low', 'Close']] == df_OHLCV_yf[['Date', 'Open', 'High', 'Low', 'Close']])
+            #comparison_result = (df_OHLCV_pykrx[['Date', 'Open', 'High', 'Low', 'Close']] == df_OHLCV_yf[['Date', 'Open', 'High', 'Low', 'Close']]) | (
+            #            pd.isna(df_OHLCV_pykrx[['Date', 'Open', 'High', 'Low', 'Close']]) & pd.isna(df_OHLCV_yf[['Date', 'Open', 'High', 'Low', 'Close']]))
+            comparison_result = (df_OHLCV_pykrx_reindexed[['Open', 'High', 'Low', 'Close']] == df_OHLCV_yf_reindexed[['Open', 'High', 'Low', 'Close']]) | (
+                                        pd.isna(df_OHLCV_pykrx_reindexed[['Open', 'High', 'Low', 'Close']]) & pd.isna(df_OHLCV_yf_reindexed[['Open', 'High', 'Low', 'Close']]))
 
-        if diff_btw_sources: # OHLCV 소스간 편차가 있는 경우 txt 파일로 저장
-            path = f"{self.path_OHLCV_init}\\{listed_status}\\{end_date}\\{code}_diff_btw_sources.txt"
-            utils.save_list_to_file(diff_btw_sources, path) # 텍스트 파일에 오류 부분 저장
-            self.logger.info("OHLCV Origin - 두 소스의 데이터 다름: %s" % code)
+            # 모든 값이 True인지 확인
+            if comparison_result.all().all():  # 첫 번째 all()은 각 열에 대해, 두 번째 all()은 결과적으로 얻은 시리즈에 대해
+                return True, df_OHLCV_pykrx_reindexed #df_OHLCV_pykrx
+            else:
+                return False, df_OHLCV_pykrx_reindexed, df_OHLCV_yf_reindexed #df_OHLCV_pykrx, df_OHLCV_yf
 
-        if significant_diff:
-            return False, df_OHLCV_pykrx_reindexed, df_OHLCV_fdr_reindexed, df_combined
-        else:
-            return True, df_combined  # df_OHLCV_pykrx
+        else: # 비상장종목
+            return True, df_OHLCV_pykrx
 
     def get_OHLCV_original(self, code, datemanage, listed_status):
         #code = '005930'
         #listed_status = 'Listed'
+
         df_holiday_ref = pd.read_excel(f'{self.path_date_ref}\\holiday_ref_{datemanage.workday_str}.xlsx', index_col=0)
         result = self.get_OHLCV(code, datemanage.startday_str, datemanage.workday_str, listed_status, df_holiday_ref)
         folder = f"{self.path_OHLCV_init}\\{listed_status}\\{datemanage.workday_str}\\"
         if result[0] == True: # 엑셀 파일 저장
             #folder = f"{self.path_OHLCV_init}\\{listed_status}\\{datemanage.workday_str}\\"
-            custom_string = f"_{self.suffix}_{datemanage.workday_str}"
+            custom_string = f"_{self.suffix}_pykrx_{datemanage.workday_str}"
             utils.save_df_to_excel(result[1], code, custom_string, folder)
         else: # 두 소스의 파일이 다른 경우
             # 두가지 소스의 엑셀 파일 모두 저장
@@ -114,53 +122,13 @@ class GetOHLCV:
             utils.save_df_to_excel(result[1], code, custom_string, folder)
             custom_string = f"_{self.suffix}_yf_{datemanage.workday_str}"
             utils.save_df_to_excel(result[2], code, custom_string, folder)
-            custom_string = f"_{self.suffix}_{datemanage.workday_str}"
-            utils.save_df_to_excel(result[3], code, custom_string, folder)
+            self.logger.info("두 소스의 데이터 다름: %s" % code)
 
     def update_OHLCV_original(self, code, datemanage, listed_status):
         #기존 OHLCV 로드
         #get_OHLCV() 호출하여 추가되는 부분 읽어옴
         #합쳐서 xlsx로 저장
         pass
-
-    def process_OHLCV_original(self, datemanage, listed_status):
-        # 거래일 목록 ref 읽어오기
-        path_date_ref = f'{self.path_date_ref}\\bussiness_day_ref_{datemanage.workday_str}.xlsx'
-        df_business_days = pd.read_excel(path_date_ref)
-        df_business_days['Date'] = pd.to_datetime(df_business_days['Date']).dt.date
-
-        # 코드리스트 읽어오기
-        codelist_path = f'{self.path_codeLists}\\{listed_status}\\{listed_status}_Ticker_{datemanage.workday_str}_modified.xlsx'
-        df_codelist = pd.read_excel(codelist_path, index_col=0)
-        df_codelist['Code'] = df_codelist['Code'].astype(str)
-        df_codelist['Code'] = df_codelist['Code'].str.zfill(6)  # 코드가 6자리에 못 미치면 앞에 0 채워넣기
-        df_codelist['ListingDate'] = pd.to_datetime(df_codelist['ListingDate']).dt.date
-        df_codelist['DelistingDate'] = pd.to_datetime(df_codelist['DelistingDate']).dt.date
-        #codelist = df_codelist['Code']
-
-        for index, row in df_codelist.iterrows():
-            listing_date = row['ListingDate']
-            delisting_date = row['DelistingDate']
-            # df_business_days에서 listing_date와 delisting_date 사이의 날짜 추출
-            df_b_day_ref = df_business_days[(df_business_days['Date'] >= listing_date) & (df_business_days['Date'] <= delisting_date)]
-            # 시작일과 종료일 조정
-            df_b_day_ref['Date'] = df_b_day_ref['Date'].apply(lambda x: max(x, datemanage.startday))
-            df_b_day_ref['Date'] = df_b_day_ref['Date'].apply(lambda x: min(x, datemanage.workday))
-
-            # 코드 불러오기
-            code = row['Code']
-            path_OHLCV = f"{self.path_OHLCV_init}\\{listed_status}\\{datemanage.workday_str}\\{code}_{self.suffix}_{datemanage.workday_str}.xlsx"
-            if os.path.exists(path_OHLCV):
-                df_OHLCV = pd.read_excel(path_OHLCV, index_col=0)
-            else:
-                path = f"{self.path_OHLCV_init}\\{listed_status}\\{datemanage.workday_str}\\OHCLV_not_existed_list.txt"
-                OHCLV_not_existed = [code]
-                utils.save_list_to_file_append(OHCLV_not_existed, path)  # 텍스트 파일에 오류 부분 저장
-                self.logger.info("OHLCV Origin 파일이 없음: %s" % code)
-
-            #`self.check_integrity(code,
-
-
 
     def check_integrity(self, codelist, df_b_day_ref, code, df_OHLCV):
         # 여기서 무결성 검사는 다 하자.

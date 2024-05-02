@@ -2,7 +2,7 @@ import sys
 import os
 import time
 import logging
-import datetime
+from datetime import date
 from dateutil.relativedelta import *
 import configparser
 
@@ -15,7 +15,7 @@ class DateManage:
         self.LoadConfig()
 
         # day Strings
-        self.today = datetime.date.today()
+        self.today = date.today()
         self.today_string = self.today.strftime('%Y-%m-%d') # 로그파일명에 쓸 것
 
         # 로그 파일 - 오늘
@@ -33,11 +33,11 @@ class DateManage:
         # 설정값 읽기
         self.path_data = config['path']['path_data']
 
-    def SetStartday(self, startday:datetime): # 작업시작일 --> 수집하는 데이터의 첫번째 날짜
+    def SetStartday(self, startday:date): # 작업시작일 --> 수집하는 데이터의 첫번째 날짜
         self.startday = startday
         self.startday_str = self.startday.strftime('%Y-%m-%d')
 
-    def SetWorkday(self, workday:datetime): # 작업기준일 --> 수집하는 데이터의 마지막 날짜
+    def SetWorkday(self, workday:date): # 작업기준일 --> 수집하는 데이터의 마지막 날짜
         self.workday = workday
         self.workday_str = self.workday.strftime('%Y-%m-%d')
 

@@ -46,11 +46,13 @@ class GetTicker:
         stocks = stocks.sort_values(by='ListingDate')  # 상장일 기준 오름차순 정렬
         stocks.reset_index(drop=True, inplace=True)  # 인덱스 리셋
 
+        '''
         # Intelliquant 를 위한 칼럼
         stocks['A_Code'] = "'A" + stocks['Code'] + "'"  # Code 열의 각 값에 "A"를 붙인 열 생성
         stocks['A_ListingDate'] = "new Date('" + pd.to_datetime(stocks['ListingDate']).dt.strftime('%Y-%m-%d') + "')"
         stocks['A_DelistingDate'] = "new Date('" + pd.to_datetime(stocks['DelistingDate']).dt.strftime(
             '%Y-%m-%d') + "')"
+        '''
         return stocks
 
     def get_delistingstocks(self): # 작업일(오늘) 기준 상폐종목 코드, 이름, 상장일, 상폐일 dataframe 리턴
@@ -69,11 +71,13 @@ class GetTicker:
         stocks = stocks.sort_values(by='ListingDate')  # 상장일 기준 오름차순 정렬
         stocks.reset_index(drop=True, inplace=True)  # 인덱스 리셋
 
+        '''
         # Intelliquant 를 위한 칼럼
         stocks['A_Code'] = "'A" + stocks['Code'] + "'"  # Code 열의 각 값에 "A"를 붙인 열 생성
         stocks['A_ListingDate'] = "new Date('" + pd.to_datetime(stocks['ListingDate']).dt.strftime('%Y-%m-%d') + "')"
         stocks['A_DelistingDate'] = "new Date('" + pd.to_datetime(stocks['DelistingDate']).dt.strftime(
             '%Y-%m-%d') + "')"
+        '''
         return stocks
 
     def get_delistingstocks_test(self):  # 우선주만 남기는 테스트 용도
@@ -93,11 +97,13 @@ class GetTicker:
         stocks = stocks.sort_values(by='ListingDate')  # 상장일 기준 오름차순 정렬
         stocks.reset_index(drop=True, inplace=True)  # 인덱스 리셋
 
+        '''
         # Intelliquant 를 위한 칼럼
         stocks['A_Code'] = "'A" + stocks['Code'] + "'"  # Code 열의 각 값에 "A"를 붙인 열 생성
         stocks['A_ListingDate'] = "new Date('" + pd.to_datetime(stocks['ListingDate']).dt.strftime('%Y-%m-%d') + "')"
         stocks['A_DelistingDate'] = "new Date('" + pd.to_datetime(stocks['DelistingDate']).dt.strftime('%Y-%m-%d') + "')"
         return stocks
+        '''
 
     def process_tickerlist(self, datemanage): # 1차 생성된 tickerlist 엑셀 파일을 받아와서 예외처리하여 엑셀로 저장함
         #category = ['Delisted']

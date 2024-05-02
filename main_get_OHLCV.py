@@ -1,6 +1,6 @@
 import os
 import logging
-from datetime import datetime
+from datetime import date
 from DateManage import DateManage
 from GetCompensationData import GetCompensationData
 from GetFinancialData import GetFinancialData
@@ -8,8 +8,8 @@ from GetTicker import GetTicker
 from GetOHLCV import GetOHLCV
 
 filename = os.path.splitext(os.path.basename(__file__))[0]  # 실행하고 있는 스크립트 파일 이름 가져오기
-startday = datetime(2000, 1, 4)
-workday = datetime(2024, 3, 29)
+startday = date(2000, 1, 4)
+workday = date(2024, 3, 29)
 datemanage = DateManage(filename)
 datemanage.SetStartday(startday)
 datemanage.SetWorkday(workday)
@@ -27,7 +27,8 @@ file_handler_info.setFormatter(formatter)
 logger.addHandler(file_handler_info)
 
 get_OHLCV = GetOHLCV(logger)
-get_OHLCV.get_OHLCV_original('005930', datemanage, 'Listed')
+#get_OHLCV.get_OHLCV_original('005930', datemanage, 'Listed')
+get_OHLCV.process_OHLCV_original(datemanage, 'Listed')
 
 # path_date_reference = f"{path_OHLCV_init}\\Listed\\{datemanage.workday_str}\\date_reference_{datemanage.workday_str}.xlsx"
 # df_date_reference = pd.read_excel(path_date_reference, index_col=0)

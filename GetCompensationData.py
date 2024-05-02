@@ -3,7 +3,7 @@ import logging
 from LogStringHandler import LogStringHandler
 from Intelliquant import Intelliquant
 from DateManage import DateManage
-from datetime import datetime
+from datetime import date
 import configparser
 from UseIntelliquant import UseIntelliquant
 import json

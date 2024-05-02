@@ -1,14 +1,14 @@
 import os
 import logging
-from datetime import datetime
+from datetime import date
 from DateManage import DateManage
 from GetCompensationData import GetCompensationData
 from GetFinancialData import GetFinancialData
 from GetTicker import GetTicker
 
 filename = os.path.splitext(os.path.basename(__file__))[0]  # 실행하고 있는 스크립트 파일 이름 가져오기
-startday = datetime(2000, 1, 4)
-workday = datetime(2024, 3, 29)
+startday = date(2000, 1, 4)
+workday = date(2024, 3, 29)
 datemanage = DateManage(filename)
 datemanage.SetStartday(startday)
 datemanage.SetWorkday(workday)
