@@ -36,23 +36,31 @@ class GetOHLCV:
         self.path_OHLCV_init = config['path']['path_OHLCV_init']
         self.path_date_ref = config['path']['path_date_ref']
 
-    def get_OHLCV(self, code, start_date, end_date, listed_status, df_holiday_ref):
-        #df_OHLCV_fdr = fdr.DataReader(code, start=start_date, end=end_date,  exchange='KRX-DELISTING')
-        df_OHLCV_fdr = fdr.DataReader('KRX-DELISTING:000030', start='2000-01-04', end='2002-04-26')
-        #df_OHLCV_fdr = fdr.DataReader(code, start=start_date, end=end_date)
-        df_OHLCV_fdr.drop(['Change'], axis=1, inplace=True)
-        # 상폐 종목은 추가 열 삭제 필요
+    def get_OHLCV(self, code, start_date, end_date, listed_status, df_holiday_ref, datemanage):
+        # 관심 있는 열 선택
+        columns = ['Open', 'High', 'Low', 'Close', 'Volume']
+
+        if listed_status == 'Delisted':
+            df_OHLCV_fdr = fdr.DataReader(f'KRX-DELISTING:{code}', start=start_date, end=end_date)
+        else:
+            df_OHLCV_fdr = fdr.DataReader(code, start=start_date, end=end_date)
+
+        #df_OHLCV_fdr.drop(['Change'], axis=1, inplace=True)
         df_OHLCV_fdr.reset_index(inplace=True)
         df_OHLCV_fdr['Date'] = pd.to_datetime(df_OHLCV_fdr['Date']).dt.strftime('%Y-%m-%d')  # 인덱스 열을 바꾸는 것으로 코드 수정
         df_OHLCV_fdr[['Open', 'High', 'Low', 'Close']] = df_OHLCV_fdr[['Open', 'High', 'Low', 'Close']].astype(float)
+        if listed_status == 'Delisted':  #상폐 종목은 추가 열 삭제 필요, 날짜별 오름차순 리셋 필요
+            df_OHLCV_fdr = df_OHLCV_fdr.sort_values(by='Date')  # 날짜 오름차순 정렬
         df_OHLCV_fdr.set_index('Date', inplace=True)
         # df_holiday_ref 에 있는 휴장일에 해당하는 데이터 삭제시킴
         indices_to_drop = df_OHLCV_fdr.index.intersection(df_holiday_ref.index)
         df_OHLCV_fdr.drop(indices_to_drop, inplace=True)
-        #상폐 종목은 날짜별 오름차순 리셋 필요
+        df_OHLCV_fdr = df_OHLCV_fdr[columns] # 관심있는 열만 남김
 
-        df_OHLCV_pykrx = stock.get_market_ohlcv_by_date(fromdate=start_date, todate=end_date, ticker=code)
-        df_OHLCV_pykrx.drop(['등락률'], axis=1, inplace=True)
+        if listed_status == 'Delisted':
+            df_OHLCV_pykrx = stock.get_market_ohlcv_by_date(fromdate=start_date, todate=end_date, ticker=code, adjusted=False)
+        else:
+            df_OHLCV_pykrx = stock.get_market_ohlcv_by_date(fromdate=start_date, todate=end_date, ticker=code)
         df_OHLCV_pykrx.reset_index(inplace=True)
         df_OHLCV_pykrx.rename(columns={'날짜': 'Date', '시가': 'Open', '고가': 'High', '저가': 'Low', '종가': 'Close', '거래량': 'Volume'}, inplace=True)
         df_OHLCV_pykrx['Date'] = pd.to_datetime(df_OHLCV_pykrx['Date']).dt.strftime('%Y-%m-%d')
@@ -61,11 +69,9 @@ class GetOHLCV:
         # df_holiday_ref 에 있는 휴장일에 해당하는 데이터 삭제시킴
         indices_to_drop = df_OHLCV_pykrx.index.intersection(df_holiday_ref.index)
         df_OHLCV_pykrx.drop(indices_to_drop, inplace=True)
-        #df_OHLCV_pykrx_test=df_OHLCV_pykrx.drop(indices_to_drop)
+        df_OHLCV_pykrx = df_OHLCV_pykrx[columns] # 관심있는 열만 남김
 
         # 무결성 검사 1. 두 객체 비교
-        # 관심 있는 열 선택
-        columns = ['Open', 'High', 'Low', 'Close', 'Volume']
         all_dates = df_OHLCV_pykrx.index.union(df_OHLCV_fdr.index)  # 두 DataFrame의 인덱스로 사용된 'Date'의 고유한 값들을 모두 찾기
 
         # 이제 두 DataFrame을 all_dates를 사용하여 재인덱싱합니다.
@@ -77,15 +83,15 @@ class GetOHLCV:
         df_fdr = df_OHLCV_fdr_reindexed[columns]
 
         # 두 데이터 프레임 결합
-        df_combined = df_pykrx.combine_first(df_fdr)
+        df_combined = df_pykrx.combine_first(df_fdr) # pykrx 값을 기본으로 사용
 
         # 두 데이터 프레임 값의 편차 계산 및 조건에 따른 처리
         significant_diff = False
         diff_btw_sources = []
         for col in columns:
             diff = df_pykrx[col] - df_fdr[col]
-            mask = diff.abs() >= 1.5
-            df_combined[col] = df_pykrx[col]  # pykrx 값을 기본으로 사용
+            mask = (diff.abs() >= 1.5)
+            df_combined[mask] = df_pykrx[mask]  # pykrx 값을 기본으로 사용
             significant_diff_rows = mask[mask].index.tolist()
             if significant_diff_rows:
                 significant_diff = True
@@ -93,7 +99,10 @@ class GetOHLCV:
                 diff_btw_sources.append(pos_diff)
 
         if diff_btw_sources: # OHLCV 소스간 편차가 있는 경우 txt 파일로 저장
-            path = f"{self.path_OHLCV_init}\\{listed_status}\\{end_date}\\{code}_diff_btw_sources.txt"
+            folder = f"{self.path_OHLCV_init}\\{listed_status}\\{datemanage.workday_str}\\"
+            if not os.path.exists(folder):
+                os.makedirs(folder)
+            path = f"{folder}\\{code}_diff_btw_sources.txt"
             utils.save_list_to_file(diff_btw_sources, path) # 텍스트 파일에 오류 부분 저장
             self.logger.info("OHLCV Origin - 두 소스의 데이터 다름: %s" % code)
 
@@ -110,7 +119,7 @@ class GetOHLCV:
         else:
             code_modified = code
 
-        result = self.get_OHLCV(code_modified, start_date, end_date, listed_status, df_holiday_ref)
+        result = self.get_OHLCV(code_modified, start_date, end_date, listed_status, df_holiday_ref, datemanage)
         folder = f"{self.path_OHLCV_init}\\{listed_status}\\{datemanage.workday_str}\\"
         if result[0] == True: # 엑셀 파일 저장
             #folder = f"{self.path_OHLCV_init}\\{listed_status}\\{datemanage.workday_str}\\"
@@ -120,7 +129,7 @@ class GetOHLCV:
             # 두가지 소스의 엑셀 파일 모두 저장
             custom_string = f"_{self.suffix}_pykrx_{datemanage.workday_str}"
             utils.save_df_to_excel(result[1], code, custom_string, folder)
-            custom_string = f"_{self.suffix}_yf_{datemanage.workday_str}"
+            custom_string = f"_{self.suffix}_fdr_{datemanage.workday_str}"
             utils.save_df_to_excel(result[2], code, custom_string, folder)
             custom_string = f"_{self.suffix}_{datemanage.workday_str}"
             utils.save_df_to_excel(result[3], code, custom_string, folder)
@@ -129,7 +138,8 @@ class GetOHLCV:
         df_holiday_ref = pd.read_excel(f'{self.path_date_ref}\\holiday_ref_{datemanage.workday_str}.xlsx', index_col=0)
 
         #category = ['Listed', 'Delisted']
-        category = ['Delisted']
+        #category = ['Delisted']
+        category = ['Listed']
         for listed_status in category:
             # 코드리스트 읽어오기
             codelist_path = f'{self.path_codeLists}\\{listed_status}\\{listed_status}_Ticker_{datemanage.workday_str}_modified.xlsx'
