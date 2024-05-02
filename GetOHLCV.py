@@ -6,7 +6,7 @@ from pykrx import stock
 import yfinance as yf
 import pandas as pd
 import numpy as np
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta
 import utils
 
 
@@ -37,8 +37,11 @@ class GetOHLCV:
         self.path_date_ref = config['path']['path_date_ref']
 
     def get_OHLCV(self, code, start_date, end_date, listed_status, df_holiday_ref):
-        df_OHLCV_fdr = fdr.DataReader(code, start=start_date, end=end_date)
+        #df_OHLCV_fdr = fdr.DataReader(code, start=start_date, end=end_date,  exchange='KRX-DELISTING')
+        df_OHLCV_fdr = fdr.DataReader('KRX-DELISTING:000030', start='2000-01-04', end='2002-04-26')
+        #df_OHLCV_fdr = fdr.DataReader(code, start=start_date, end=end_date)
         df_OHLCV_fdr.drop(['Change'], axis=1, inplace=True)
+        # 상폐 종목은 추가 열 삭제 필요
         df_OHLCV_fdr.reset_index(inplace=True)
         df_OHLCV_fdr['Date'] = pd.to_datetime(df_OHLCV_fdr['Date']).dt.strftime('%Y-%m-%d')  # 인덱스 열을 바꾸는 것으로 코드 수정
         df_OHLCV_fdr[['Open', 'High', 'Low', 'Close']] = df_OHLCV_fdr[['Open', 'High', 'Low', 'Close']].astype(float)
@@ -46,6 +49,7 @@ class GetOHLCV:
         # df_holiday_ref 에 있는 휴장일에 해당하는 데이터 삭제시킴
         indices_to_drop = df_OHLCV_fdr.index.intersection(df_holiday_ref.index)
         df_OHLCV_fdr.drop(indices_to_drop, inplace=True)
+        #상폐 종목은 날짜별 오름차순 리셋 필요
 
         df_OHLCV_pykrx = stock.get_market_ohlcv_by_date(fromdate=start_date, todate=end_date, ticker=code)
         df_OHLCV_pykrx.drop(['등락률'], axis=1, inplace=True)
@@ -98,11 +102,15 @@ class GetOHLCV:
         else:
             return True, df_combined  # df_OHLCV_pykrx
 
-    def get_OHLCV_original(self, code, datemanage, listed_status):
+    def get_OHLCV_original(self, code, start_date, end_date, datemanage, listed_status, df_holiday_ref): # 한종목에 대해 상당 기간에 해당하는 OHLCV 데이터 읽어옴
         #code = '005930'
         #listed_status = 'Listed'
-        df_holiday_ref = pd.read_excel(f'{self.path_date_ref}\\holiday_ref_{datemanage.workday_str}.xlsx', index_col=0)
-        result = self.get_OHLCV(code, datemanage.startday_str, datemanage.workday_str, listed_status, df_holiday_ref)
+        if code[-1] != '0':
+            code_modified = code[:-1] + '0'
+        else:
+            code_modified = code
+
+        result = self.get_OHLCV(code_modified, start_date, end_date, listed_status, df_holiday_ref)
         folder = f"{self.path_OHLCV_init}\\{listed_status}\\{datemanage.workday_str}\\"
         if result[0] == True: # 엑셀 파일 저장
             #folder = f"{self.path_OHLCV_init}\\{listed_status}\\{datemanage.workday_str}\\"
@@ -116,6 +124,31 @@ class GetOHLCV:
             utils.save_df_to_excel(result[2], code, custom_string, folder)
             custom_string = f"_{self.suffix}_{datemanage.workday_str}"
             utils.save_df_to_excel(result[3], code, custom_string, folder)
+
+    def run_get_OHLCV_original(self, datemanage): # 전체 code list 에 대해 get_OHLCV_original 실행시킴
+        df_holiday_ref = pd.read_excel(f'{self.path_date_ref}\\holiday_ref_{datemanage.workday_str}.xlsx', index_col=0)
+
+        #category = ['Listed', 'Delisted']
+        category = ['Delisted']
+        for listed_status in category:
+            # 코드리스트 읽어오기
+            codelist_path = f'{self.path_codeLists}\\{listed_status}\\{listed_status}_Ticker_{datemanage.workday_str}_modified.xlsx'
+            df_codelist = pd.read_excel(codelist_path, index_col=0)
+            df_codelist['Code'] = df_codelist['Code'].astype(str)
+            df_codelist['Code'] = df_codelist['Code'].str.zfill(6)  # 코드가 6자리에 못 미치면 앞에 0 채워넣기
+            for index, row in df_codelist.iterrows():
+                listing_date_obj = datetime.strptime(row['ListingDate'], '%Y-%m-%d').date()
+                delisting_date_obj = datetime.strptime(row['DelistingDate'], '%Y-%m-%d').date()
+                if datemanage.startday <= delisting_date_obj:
+                    if datemanage.startday <= listing_date_obj:
+                        start_date = listing_date_obj.strftime('%Y-%m-%d')
+                    else:
+                        start_date = datemanage.startday_str
+                    if datemanage.workday >= delisting_date_obj:
+                        end_date = delisting_date_obj.strftime('%Y-%m-%d')
+                    else:
+                        end_date = datemanage.workday_str
+                    self.get_OHLCV_original(row['Code'], start_date, end_date, datemanage, listed_status, df_holiday_ref)
 
     def update_OHLCV_original(self, code, datemanage, listed_status):
         #기존 OHLCV 로드
