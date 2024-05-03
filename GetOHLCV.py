@@ -201,17 +201,18 @@ class GetOHLCV:
                 utils.save_list_to_file_append(OHCLV_not_existed, path)  # 텍스트 파일에 오류 부분 저장
                 self.logger.info("OHLCV Origin 파일이 없음: %s" % code)
 
-            #`self.check_integrity(code,
+            self.check_integrity(code, df_b_day_ref, df_OHLCV, datemanage, listed_status) # 무결성 검사
 
-
-
-    def check_integrity(self, codelist, df_b_day_ref, code, df_OHLCV):
+    def check_integrity(self, code, df_b_day_ref, df_OHLCV, datemanage, listed_status):
         # 여기서 무결성 검사는 다 하자.
 
         # 무결성 검사 2. NaN 있는지 확인
         rows_with_nan = df_OHLCV.isna().any(axis=1)  # NaN 있는지 확인
         if rows_with_nan.any():
-            self.logger.info("NaN 값이 있는 날짜: %s" % df_OHLCV[rows_with_nan].index.tolist())
+            self.logger.info(f"{code}, NaN 값이 있는 날짜: {df_OHLCV[rows_with_nan].index.tolist()}")
+            path = f"{self.path_OHLCV_init}\\{listed_status}\\{datemanage.workday_str}\\NaN_exists_list.txt"
+            NaN_exists = [f"{code}, NaN 값이 있는 날짜: {df_OHLCV[rows_with_nan].index.tolist()}"]
+            utils.save_list_to_file_append(NaN_exists, path)  # 텍스트 파일에 오류 부분 저장
 
         # 무결성 검사 3. 시간적 일관성 확인
         #ref에서 시간 범위를 현재 코드와 맞춰야 한다 --> codelist 에서 읽어올 것.
