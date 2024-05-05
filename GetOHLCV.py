@@ -224,12 +224,13 @@ class GetOHLCV:
             self.logger.info("df_OHLCV에 없는 날짜 날짜: %s" % unique_to_ref)
         if unique_to_df_OHLCV is not None:
             self.logger.info("df_OHLCV에만 추가로 있는 날짜: %s" % unique_to_df_OHLCV)
-        # 시간 순으로 정렬되지 않은 행 찾기
-        df_OHLCV['Out_of_Order'] = df_OHLCV['Date'] < df_OHLCV['Date'].shift(1)
+        # 시간 순으로 정렬되지 않은 행 찾기. 같은 날짜가 또 있는 것도 포함
+        df_OHLCV['Out_of_Order'] = df_OHLCV['Date'] <= df_OHLCV['Date'].shift(1)
         out_of_order_rows = df_OHLCV[df_OHLCV['Out_of_Order']]
         if not out_of_order_rows.empty:
             self.logger.info("날짜가 역순인 부분: %s" % out_of_order_rows)
         df_OHLCV.drop(['Out_of_Order'], axis=1, inplace=True)
+        #
 
         # 무결성 검사 4. outlier 검출 - 가격제한폭 초과 변동
         df_OHLCV['Pre_Close'] = df_OHLCV['Close'].shift(1)  # 전날의 Close 값 계산
