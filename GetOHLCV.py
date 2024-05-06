@@ -195,63 +195,83 @@ class GetOHLCV:
             path_OHLCV = f"{self.path_OHLCV_init}\\{listed_status}\\{datemanage.workday_str}\\{code}_{self.suffix}_{datemanage.workday_str}.xlsx"
             if os.path.exists(path_OHLCV):
                 df_OHLCV = pd.read_excel(path_OHLCV, index_col=0)
+                self.check_integrity(code, df_b_day_ref, df_OHLCV, datemanage, listed_status)  # 무결성 검사
             else:
                 path = f"{self.path_OHLCV_init}\\{listed_status}\\{datemanage.workday_str}\\OHCLV_not_existed_list.txt"
                 OHCLV_not_existed = [code]
                 utils.save_list_to_file_append(OHCLV_not_existed, path)  # 텍스트 파일에 오류 부분 저장
                 self.logger.info("OHLCV Origin 파일이 없음: %s" % code)
 
-            self.check_integrity(code, df_b_day_ref, df_OHLCV, datemanage, listed_status) # 무결성 검사
-
     def check_integrity(self, code, df_b_day_ref, df_OHLCV, datemanage, listed_status):
         # 여기서 무결성 검사는 다 하자.
+        df_OHLCV.reset_index(inplace=True)
+        df_OHLCV['Date'] = pd.to_datetime(df_OHLCV['Date']).dt.date
 
         # 무결성 검사 2. NaN 있는지 확인
         rows_with_nan = df_OHLCV.isna().any(axis=1)  # NaN 있는지 확인
         if rows_with_nan.any():
-            self.logger.info(f"{code}, NaN 값이 있는 날짜: {df_OHLCV[rows_with_nan].index.tolist()}")
+            NaN_exists = df_OHLCV[rows_with_nan]['Date'].apply(lambda d: d.strftime('%Y-%m-%d')).tolist()
+            NaN_exists_list = [f"{code}, NaN 값이 있는 날짜: {NaN_exists}"]
+            #NaN_exists = [f"{code}, NaN 값이 있는 날짜: {df_OHLCV[rows_with_nan]['Date'].apply(lambda d: d.strftime('%Y-%m-%d'))}"]
+            self.logger.info(NaN_exists_list)
             path = f"{self.path_OHLCV_init}\\{listed_status}\\{datemanage.workday_str}\\NaN_exists_list.txt"
-            NaN_exists = [f"{code}, NaN 값이 있는 날짜: {df_OHLCV[rows_with_nan].index.tolist()}"]
-            utils.save_list_to_file_append(NaN_exists, path)  # 텍스트 파일에 오류 부분 저장
+            utils.save_list_to_file_append(NaN_exists_list, path)  # 텍스트 파일에 오류 부분 저장
 
         # 무결성 검사 3. 시간적 일관성 확인
-        #ref에서 시간 범위를 현재 코드와 맞춰야 한다 --> codelist 에서 읽어올 것.
-
+        path = f"{self.path_OHLCV_init}\\{listed_status}\\{datemanage.workday_str}\\time_unconsistency_list.txt"
         # ref 와 지금 받아온 OHLCV의 date 비교
         unique_to_ref = df_b_day_ref[~df_b_day_ref['Date'].isin(df_OHLCV['Date'])]  # df_date_reference에만 있고 df_OHLCV에 없는 날짜.
         unique_to_df_OHLCV = df_OHLCV[~df_OHLCV['Date'].isin(df_b_day_ref['Date'])]  # df_OHLCV에 있고 df_date_reference에만 없는 날짜.
-        if unique_to_ref is not None:
-            self.logger.info("df_OHLCV에 없는 날짜 날짜: %s" % unique_to_ref)
-        if unique_to_df_OHLCV is not None:
-            self.logger.info("df_OHLCV에만 추가로 있는 날짜: %s" % unique_to_df_OHLCV)
+        if not unique_to_ref.empty:
+            unique_to_ref = unique_to_ref['Date'].apply(lambda d: d.strftime('%Y-%m-%d')).tolist()
+            unique_to_ref_list = [f'{code}, df_OHLCV에 없는 날짜: {unique_to_ref}']
+            self.logger.info(unique_to_ref_list)
+            utils.save_list_to_file_append(unique_to_ref_list, path)  # 텍스트 파일에 오류 부분 저장
+        if not unique_to_df_OHLCV.empty:
+            unique_to_df_OHLCV = unique_to_df_OHLCV['Date'].apply(lambda d: d.strftime('%Y-%m-%d')).tolist()
+            unique_to_df_OHLCV_list = [f'{code}, df_OHLCV에만 추가로 있는 날짜: {unique_to_df_OHLCV}']
+            self.logger.info(unique_to_df_OHLCV_list)
+            utils.save_list_to_file_append(unique_to_df_OHLCV_list, path)  # 텍스트 파일에 오류 부분 저장
         # 시간 순으로 정렬되지 않은 행 찾기. 같은 날짜가 또 있는 것도 포함
         df_OHLCV['Out_of_Order'] = df_OHLCV['Date'] <= df_OHLCV['Date'].shift(1)
         out_of_order_rows = df_OHLCV[df_OHLCV['Out_of_Order']]
         if not out_of_order_rows.empty:
-            self.logger.info("날짜가 역순인 부분: %s" % out_of_order_rows)
-        df_OHLCV.drop(['Out_of_Order'], axis=1, inplace=True)
-        #
+            out_of_order_rows = out_of_order_rows['Date'].apply(lambda d: d.strftime('%Y-%m-%d')).tolist()
+            out_of_order_rows_list = [f'{code}, 날짜가 역순인 부분: {out_of_order_rows}']
+            self.logger.info(out_of_order_rows_list)
+            utils.save_list_to_file_append(out_of_order_rows_list, path)  # 텍스트 파일에 오류 부분 저장
+        #df_OHLCV.drop(['Out_of_Order'], axis=1, inplace=True) #처리를 어떻게 할지는 생각해 보자
 
-        # 무결성 검사 4. outlier 검출 - 가격제한폭 초과 변동
+        # 무결성 검사 4. outlier 검출 - 가격제한폭 초과 변동, 음수 있는지 확인
+        # 거래 정지인 경우, 상한가/하한가에서 float 값 int 로 변환했을 때 값 차이나는 경우 고려할 것
         df_OHLCV['Pre_Close'] = df_OHLCV['Close'].shift(1)  # 전날의 Close 값 계산
         # 기준일에 따른 조건 설정
         conditions_before = (df_OHLCV['Date'] < self.limit_change_day) & (
-                (df_OHLCV['Open'] > df_OHLCV['Pre_Close'] * 1.15) | (df_OHLCV['Open'] < df_OHLCV['Pre_Close'] * 0.85) |
-                (df_OHLCV['High'] > df_OHLCV['Pre_Close'] * 1.15) | (df_OHLCV['High'] < df_OHLCV['Pre_Close'] * 0.85) |
-                (df_OHLCV['Low'] > df_OHLCV['Pre_Close'] * 1.15) | (df_OHLCV['Low'] < df_OHLCV['Pre_Close'] * 0.85) |
-                (df_OHLCV['Close'] > df_OHLCV['Pre_Close'] * 1.15) | (df_OHLCV['Close'] < df_OHLCV['Pre_Close'] * 0.85)
+                (df_OHLCV['Open'] > round(df_OHLCV['Pre_Close']*1.15 + 2)) | (df_OHLCV['Open'] < np.floor(df_OHLCV['Pre_Close'] * 0.85 - 2).astype(float)) |
+                (df_OHLCV['High'] > round(df_OHLCV['Pre_Close']*1.15 + 2)) | (df_OHLCV['High'] < np.floor(df_OHLCV['Pre_Close'] * 0.85  - 2).astype(float)) |
+                (df_OHLCV['Low'] > round(df_OHLCV['Pre_Close']*1.15 + 2)) | (df_OHLCV['Low'] < np.floor(df_OHLCV['Pre_Close'] * 0.85 - 2).astype(float)) |
+                (df_OHLCV['Close'] > round(df_OHLCV['Pre_Close']*1.15 + 2)) | (df_OHLCV['Close'] < np.floor(df_OHLCV['Pre_Close'] * 0.85 - 2).astype(float))
+        ) & ~( # 거래 정지인 경우는 제외
+            (df_OHLCV['Open'] == 0) & (df_OHLCV['High'] == 0) & (df_OHLCV['Low'] == 0) & (df_OHLCV['Close'] != 0) & (df_OHLCV['Volume'] == 0)
         )
-
         conditions_after = (df_OHLCV['Date'] >= self.limit_change_day) & (
-                (df_OHLCV['Open'] > df_OHLCV['Pre_Close'] * 1.3) | (df_OHLCV['Open'] < df_OHLCV['Pre_Close'] * 0.7) |
-                (df_OHLCV['High'] > df_OHLCV['Pre_Close'] * 1.3) | (df_OHLCV['High'] < df_OHLCV['Pre_Close'] * 0.7) |
-                (df_OHLCV['Low'] > df_OHLCV['Pre_Close'] * 1.3) | (df_OHLCV['Low'] < df_OHLCV['Pre_Close'] * 0.7) |
-                (df_OHLCV['Close'] > df_OHLCV['Pre_Close'] * 1.3) | (df_OHLCV['Close'] < df_OHLCV['Pre_Close'] * 0.7)
+                (df_OHLCV['Open'] > round(df_OHLCV['Pre_Close']*1.3 + 2)) | (df_OHLCV['Open'] < np.floor(df_OHLCV['Pre_Close'] * 0.7 - 2).astype(float)) |
+                (df_OHLCV['High'] > round(df_OHLCV['Pre_Close']*1.3 + 2)) | (df_OHLCV['High'] < np.floor(df_OHLCV['Pre_Close'] * 0.7 - 2).astype(float)) |
+                (df_OHLCV['Low'] > round(df_OHLCV['Pre_Close']*1.3 + 2)) | (df_OHLCV['Low'] < np.floor(df_OHLCV['Pre_Close'] * 0.7 - 2).astype(float)) |
+                (df_OHLCV['Close'] > round(df_OHLCV['Pre_Close']*1.3 + 2)) | (df_OHLCV['Close'] < np.floor(df_OHLCV['Pre_Close'] * 0.7 - 2).astype(float))
+        )& ~( # 거래 정지인 경우는 제외
+            (df_OHLCV['Open'] == 0) & (df_OHLCV['High'] == 0) & (df_OHLCV['Low'] == 0) & (df_OHLCV['Close'] != 0) & (df_OHLCV['Volume'] == 0)
         )
-        final_conditions = conditions_before | conditions_after
+        conditions_negative = (df_OHLCV['Open'] < 0) | (df_OHLCV['High'] < 0) | (df_OHLCV['Low'] < 0) | (df_OHLCV['Close'] < 0) | (df_OHLCV['Volume'] < 0)
+        final_conditions = conditions_before | conditions_after | conditions_negative
         outliers = df_OHLCV[final_conditions]
         if not outliers.empty:
-            self.logger.info("가격제한폭 초과: %s" % outliers)
+            outliers = outliers['Date'].apply(lambda d: d.strftime('%Y-%m-%d')).tolist()
+            outliers_list = [f'{code}, 가격제한폭 초과 혹은 음수: {outliers}']
+            self.logger.info(outliers_list)
+            path = f"{self.path_OHLCV_init}\\{listed_status}\\{datemanage.workday_str}\\outliers_list.txt"
+            utils.save_list_to_file_append(outliers_list, path)  # 텍스트 파일에 오류 부분 저장
+
         df_OHLCV.drop(['Pre_Close'], axis=1, inplace=True)
 
     def make_date_reference(self):
