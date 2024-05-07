@@ -213,8 +213,8 @@ class GetTicker:
             stocks.to_excel(file_save_path)
 
     def make_txt_from_ticker(self, datemanage):
-        # category = ['Listed', 'Delisted']
-        category = ['Listed']
+        category = ['Listed', 'Delisted']
+        #category = ['Listed']
         #category = ['Delisted']
         for type_list in category:
             # 엑셀 파일 불러올 경로
@@ -236,15 +236,16 @@ class GetTicker:
             stocks.reset_index(drop=True, inplace=True)  # 인덱스 리셋
 
             # txt 파일 저장할 경로
-            base_path = 'C:\\Work_Dotori\\StockDataset\\CodeLists\\' + type_list + '\\For_Intelliquant\\' + datemanage.workday_str + '\\'
+            base_path = f'{self.path_codeLists}\\{type_list}\\For_Intelliquant\\{datemanage.workday_str}\\'
+            #base_path = 'C:\\Work_Dotori\\StockDataset\\CodeLists\\' + type_list + '\\For_Intelliquant\\' + datemanage.workday_str + '\\'
             if not os.path.exists(base_path):
                 os.makedirs(base_path)
 
             # 각 칼럼을 20개씩 끊어서 파일로 저장
             for column in ['A_Code', 'A_ListingDate', 'A_DelistingDate']:
-                for i in range(0, len(stocks), 20):
-                    subset = stocks[column][i:i + 20]
-                    file_name = f"{column}_{datemanage.workday_str}_{i // 20 + 1}.txt"
+                for i in range(0, len(stocks), 60):
+                    subset = stocks[column][i:i + 60]
+                    file_name = f"{column}_{datemanage.workday_str}_{i // 60 + 1}.txt"
                     with open(base_path + file_name, 'w') as f:
                         for idx, val in enumerate(subset):
                             f.write(val)

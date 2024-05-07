@@ -145,6 +145,7 @@ class UseIntelliquant:
 
                 #num_data_index = 1
                 for idx, k in enumerate(data_indices): # 한 파일 내에서의 인덱스
+                    #create_js_code_dataset()에 datemanage.startday_str, datemanage.workday_str 대신 listingdate_content, delistingdate_content를 보고 생성하도록 수정할 것
                     js_code_dataset = self.create_js_code_dataset(datemanage.startday_str, datemanage.workday_str,
                                                       code_content, listingdate_content,delistingdate_content, k[0], k[1])
                     #print(js_code_dataset)
