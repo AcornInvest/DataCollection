@@ -112,8 +112,6 @@ class GetOHLCV:
             return True, df_combined  # df_OHLCV_pykrx
 
     def get_OHLCV_original(self, code, start_date, end_date, datemanage, listed_status, df_holiday_ref): # 한종목에 대해 상당 기간에 해당하는 OHLCV 데이터 읽어옴
-        #code = '005930'
-        #listed_status = 'Listed'
         if code[-1] != '0':
             code_modified = code[:-1] + '0'
         else:
@@ -136,10 +134,9 @@ class GetOHLCV:
 
     def run_get_OHLCV_original(self, datemanage): # 전체 code list 에 대해 get_OHLCV_original 실행시킴
         df_holiday_ref = pd.read_excel(f'{self.path_date_ref}\\holiday_ref_{datemanage.workday_str}.xlsx', index_col=0)
-
-        #category = ['Listed', 'Delisted']
+        category = ['Listed', 'Delisted']
         #category = ['Delisted']
-        category = ['Listed']
+        #category = ['Listed']
         for listed_status in category:
             # 코드리스트 읽어오기
             codelist_path = f'{self.path_codeLists}\\{listed_status}\\{listed_status}_Ticker_{datemanage.workday_str}_modified.xlsx'
@@ -185,7 +182,9 @@ class GetOHLCV:
             listing_date = row['ListingDate']
             delisting_date = row['DelistingDate']
             # df_business_days에서 listing_date와 delisting_date 사이의 날짜 추출
-            df_b_day_ref = df_business_days[(df_business_days['Date'] >= listing_date) & (df_business_days['Date'] <= delisting_date)]
+            #df_b_day_ref = df_business_days[(df_business_days['Date'] >= listing_date) & (df_business_days['Date'] <= delisting_date)]
+            df_b_day_ref = df_business_days[(df_business_days['Date'] >= listing_date) & (df_business_days['Date'] <= delisting_date)].copy()
+
             # 시작일과 종료일 조정
             df_b_day_ref['Date'] = df_b_day_ref['Date'].apply(lambda x: max(x, datemanage.startday))
             df_b_day_ref['Date'] = df_b_day_ref['Date'].apply(lambda x: min(x, datemanage.workday))
@@ -245,6 +244,7 @@ class GetOHLCV:
         # 무결성 검사 4. outlier 검출 - 가격제한폭 초과 변동, 음수 있는지 확인
         # 거래 정지인 경우, 상한가/하한가에서 float 값 int 로 변환했을 때 값 차이나는 경우 고려할 것
         df_OHLCV['Pre_Close'] = df_OHLCV['Close'].shift(1)  # 전날의 Close 값 계산
+        '''
         # 기준일에 따른 조건 설정
         conditions_before = (df_OHLCV['Date'] < self.limit_change_day) & (
                 (df_OHLCV['Open'] > round(df_OHLCV['Pre_Close']*1.15 + 2)) | (df_OHLCV['Open'] < np.floor(df_OHLCV['Pre_Close'] * 0.85 - 2).astype(float)) |
@@ -262,6 +262,26 @@ class GetOHLCV:
         )& ~( # 거래 정지인 경우는 제외
             (df_OHLCV['Open'] == 0) & (df_OHLCV['High'] == 0) & (df_OHLCV['Low'] == 0) & (df_OHLCV['Close'] != 0) & (df_OHLCV['Volume'] == 0)
         )
+        '''
+
+        # 기준일에 따른 조건 설정
+        conditions_before = (df_OHLCV['Date'] < self.limit_change_day) & (
+                (df_OHLCV['Open'] > round(df_OHLCV['Pre_Close'] * 1.151 + 1)) | (df_OHLCV['Open'] < np.floor(df_OHLCV['Pre_Close'] * 0.849 - 1).astype(float)) |
+                (df_OHLCV['High'] > round(df_OHLCV['Pre_Close'] * 1.151 + 1)) | (df_OHLCV['High'] < np.floor(df_OHLCV['Pre_Close'] * 0.849 - 1).astype(float)) |
+                (df_OHLCV['Low'] > round(df_OHLCV['Pre_Close'] * 1.151 + 1)) | (df_OHLCV['Low'] < np.floor(df_OHLCV['Pre_Close'] * 0.849 - 1).astype(float)) |
+                (df_OHLCV['Close'] > round(df_OHLCV['Pre_Close'] * 1.151 + 1)) | (df_OHLCV['Close'] < np.floor(df_OHLCV['Pre_Close'] * 0.849 - 1).astype(float))
+        ) & ~(  # 거래 정지인 경우는 제외
+                (df_OHLCV['Open'] == 0) & (df_OHLCV['High'] == 0) & (df_OHLCV['Low'] == 0) & (df_OHLCV['Close'] != 0)
+        )
+        conditions_after = (df_OHLCV['Date'] >= self.limit_change_day) & (
+                (df_OHLCV['Open'] > round(df_OHLCV['Pre_Close'] * 1.31 + 1)) | (df_OHLCV['Open'] < np.floor(df_OHLCV['Pre_Close'] * 0.699 - 1).astype(float)) |
+                (df_OHLCV['High'] > round(df_OHLCV['Pre_Close'] * 1.31 + 1)) | (df_OHLCV['High'] < np.floor(df_OHLCV['Pre_Close'] * 0.699 - 1).astype(float)) |
+                (df_OHLCV['Low'] > round(df_OHLCV['Pre_Close'] * 1.31 + 1)) | (df_OHLCV['Low'] < np.floor(df_OHLCV['Pre_Close'] * 0.699 - 1).astype(float)) |
+                (df_OHLCV['Close'] > round(df_OHLCV['Pre_Close'] * 1.31 + 1)) | (df_OHLCV['Close'] < np.floor(df_OHLCV['Pre_Close'] * 0.699 - 1).astype(float))
+        ) & ~(  # 거래 정지인 경우는 제외
+                (df_OHLCV['Open'] == 0) & (df_OHLCV['High'] == 0) & (df_OHLCV['Low'] == 0) & (df_OHLCV['Close'] != 0)
+        )
+
         conditions_negative = (df_OHLCV['Open'] < 0) | (df_OHLCV['High'] < 0) | (df_OHLCV['Low'] < 0) | (df_OHLCV['Close'] < 0) | (df_OHLCV['Volume'] < 0)
         final_conditions = conditions_before | conditions_after | conditions_negative
         outliers = df_OHLCV[final_conditions]

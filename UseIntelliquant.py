@@ -135,7 +135,7 @@ class UseIntelliquant:
             else:
                 raise ValueError("파일 무리의 개수가 서로 다릅니다.")
 
-            for file_index in range(1, 20+ 1):  # 분할하여 시행
+            for file_index in range(59, max_file_index + 1):  # 분할하여 시행
             #for file_index in range(1, max_file_index+1): #폴더 내의 파일 갯수만큼 반복
                 length_code_list, code_content, listingdate_content, delistingdate_content = self.load_dataset_code(datemanage, file_index)
 
