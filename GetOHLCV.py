@@ -50,13 +50,22 @@ class GetOHLCV:
         df_OHLCV_fdr.reset_index(inplace=True)
         df_OHLCV_fdr['Date'] = pd.to_datetime(df_OHLCV_fdr['Date']).dt.strftime('%Y-%m-%d')  # 인덱스 열을 바꾸는 것으로 코드 수정
         df_OHLCV_fdr[['Open', 'High', 'Low', 'Close']] = df_OHLCV_fdr[['Open', 'High', 'Low', 'Close']].astype(float)
-        if listed_status == 'Delisted':  #상폐 종목은 추가 열 삭제 필요, 날짜별 오름차순 리셋 필요
+        if listed_status == 'Delisted':  #상폐 종목은 날짜별 오름차순 리셋 필요
             df_OHLCV_fdr = df_OHLCV_fdr.sort_values(by='Date')  # 날짜 오름차순 정렬
         df_OHLCV_fdr.set_index('Date', inplace=True)
         # df_holiday_ref 에 있는 휴장일에 해당하는 데이터 삭제시킴
         indices_to_drop = df_OHLCV_fdr.index.intersection(df_holiday_ref.index)
         df_OHLCV_fdr.drop(indices_to_drop, inplace=True)
         df_OHLCV_fdr = df_OHLCV_fdr[columns] # 관심있는 열만 남김
+
+        if listed_status == 'Listed':  # 상장 종목의 경우 거래량 df 정리
+            df_OHLCV_fdr_krx.reset_index(inplace=True)
+            df_OHLCV_fdr_krx['Date'] = pd.to_datetime(df_OHLCV_fdr_krx['Date']).dt.strftime('%Y-%m-%d')
+            df_OHLCV_fdr_krx.set_index('Date', inplace=True)
+            # df_holiday_ref 에 있는 휴장일에 해당하는 데이터 삭제시킴
+            indices_to_drop = df_OHLCV_fdr_krx.index.intersection(df_holiday_ref.index)
+            df_OHLCV_fdr_krx.drop(indices_to_drop, inplace=True)
+            df_OHLCV_fdr_krx = df_OHLCV_fdr_krx[['Volume']]  # 거래량 열만 남김.
 
         if listed_status == 'Delisted':
             df_OHLCV_pykrx = stock.get_market_ohlcv_by_date(fromdate=start_date, todate=end_date, ticker=code, adjusted=False)
@@ -107,10 +116,46 @@ class GetOHLCV:
             utils.save_list_to_file(diff_btw_sources, path) # 텍스트 파일에 오류 부분 저장
             self.logger.info("OHLCV Origin - 두 소스의 데이터 다름: %s" % code)
 
-        if significant_diff:
-            return False, df_OHLCV_pykrx_reindexed, df_OHLCV_fdr_reindexed, df_combined
+        volume_diff = False
+        volume_diff_source = []
+        if listed_status == 'Listed':  # 상장 종목의 경우 거래량을 KRX와 비교
+            # 거래량 편차 확인
+            all_dates = df_combined.index.union(df_OHLCV_fdr_krx.index)  # 두 DataFrame의 인덱스로 사용된 'Date'의 고유한 값들을 모두 찾기
+
+            df_combined_reindexed = df_combined.reindex(all_dates)
+            df_OHLCV_fdr_krx_reindexed = df_OHLCV_fdr_krx.reindex(all_dates)
+
+            # df_OHLCV_fdr_krx_reindexed['Volume'] 중 NaN이 아닌 행만 필터링. fdr의 KRX는 오래된 값들을 불러오지 못할 수 있다.
+            mask = df_OHLCV_fdr_krx_reindexed['Volume'].notna()
+            # 필터링된 행에서 df_combined_reindexed['Volume']와 비교
+            comparison_result = (df_combined_reindexed['Volume'][mask] == df_OHLCV_fdr_krx_reindexed['Volume'][mask])
+
+            if not comparison_result.all():
+                del_volume = df_combined_reindexed['Volume'][mask] - df_OHLCV_fdr_krx_reindexed['Volume'][mask]
+                mask2 = (del_volume.abs() > 0)
+                volume_diff_rows = mask2[mask2].index.tolist()
+                if volume_diff_rows:
+                    volume_diff = True
+                    pos_volume_diff = f'{col} 열, 행: {volume_diff_rows}'
+                    volume_diff_source.append(pos_volume_diff)
+
+            if volume_diff_source:
+                df_combined_reindexed['Volume'] = df_OHLCV_fdr_krx_reindexed['Volume']
+                folder = f"{self.path_OHLCV_init}\\{listed_status}\\{datemanage.workday_str}\\"
+                if not os.path.exists(folder):
+                    os.makedirs(folder)
+                path = f"{folder}\\{code}_volume_diff.txt"
+                utils.save_list_to_file(volume_diff_source, path)  # 텍스트 파일에 오류 부분 저장
+                self.logger.info("OHLCV Origin - KRX와 naver 거래량 다름: %s" % code)
+
         else:
-            return True, df_combined  # df_OHLCV_pykrx
+            df_combined_reindexed = df_combined
+            df_OHLCV_fdr_krx_reindexed = df_fdr
+
+        if significant_diff or volume_diff:
+            return False, df_pykrx, df_fdr, df_combined_reindexed, df_OHLCV_fdr_krx_reindexed
+        else:
+            return True, df_combined_reindexed  # df_OHLCV_pykrx
 
     def get_OHLCV_original(self, code, start_date, end_date, datemanage, listed_status, df_holiday_ref): # 한종목에 대해 상당 기간에 해당하는 OHLCV 데이터 읽어옴
         if code[-1] != '0':
@@ -132,12 +177,14 @@ class GetOHLCV:
             utils.save_df_to_excel(result[2], code, custom_string, folder)
             custom_string = f"_{self.suffix}_{datemanage.workday_str}"
             utils.save_df_to_excel(result[3], code, custom_string, folder)
+            custom_string = f"_{self.suffix}_krx_volume_{datemanage.workday_str}"
+            utils.save_df_to_excel(result[4], code, custom_string, folder)
 
     def run_get_OHLCV_original(self, datemanage): # 전체 code list 에 대해 get_OHLCV_original 실행시킴
         df_holiday_ref = pd.read_excel(f'{self.path_date_ref}\\holiday_ref_{datemanage.workday_str}.xlsx', index_col=0)
-        category = ['Listed', 'Delisted']
+        #category = ['Listed', 'Delisted']
         #category = ['Delisted']
-        #category = ['Listed']
+        category = ['Listed']
         for listed_status in category:
             # 코드리스트 읽어오기
             codelist_path = f'{self.path_codeLists}\\{listed_status}\\{listed_status}_Ticker_{datemanage.workday_str}_modified.xlsx'

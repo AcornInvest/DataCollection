@@ -27,11 +27,5 @@ file_handler_info.setFormatter(formatter)
 logger.addHandler(file_handler_info)
 
 get_OHLCV = GetOHLCV(logger)
-#get_OHLCV.run_get_OHLCV_original(datemanage)
-get_OHLCV.process_OHLCV_original(datemanage, 'Listed')
-
-
-# path_date_reference = f"{path_OHLCV_init}\\Listed\\{datemanage.workday_str}\\date_reference_{datemanage.workday_str}.xlsx"
-# df_date_reference = pd.read_excel(path_date_reference, index_col=0)
-# df_date_reference['Date'] = pd.to_datetime(df_date_reference['ListingDate']).dt.strftime('%Y-%m-%d')
-
+get_OHLCV.run_get_OHLCV_original(datemanage)
+#get_OHLCV.process_OHLCV_original(datemanage, 'Listed')
