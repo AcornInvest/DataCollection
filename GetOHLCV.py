@@ -44,6 +44,7 @@ class GetOHLCV:
             df_OHLCV_fdr = fdr.DataReader(f'KRX-DELISTING:{code}', start=start_date, end=end_date)
         else:
             df_OHLCV_fdr = fdr.DataReader(code, start=start_date, end=end_date)
+            df_OHLCV_fdr_krx = fdr.DataReader(f'KRX:{code}', start=start_date, end=end_date)  # 거래량만 가져오는 목적
 
         #df_OHLCV_fdr.drop(['Change'], axis=1, inplace=True)
         df_OHLCV_fdr.reset_index(inplace=True)
