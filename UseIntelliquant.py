@@ -4,6 +4,8 @@ from DateManage import DateManage
 import configparser
 import pandas as pd
 import utils
+from pandas import Timedelta
+import re
 
 class UseIntelliquant:
     '''
