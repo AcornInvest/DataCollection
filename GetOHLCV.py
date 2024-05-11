@@ -182,9 +182,9 @@ class GetOHLCV:
 
     def run_get_OHLCV_original(self, datemanage): # 전체 code list 에 대해 get_OHLCV_original 실행시킴
         df_holiday_ref = pd.read_excel(f'{self.path_date_ref}\\holiday_ref_{datemanage.workday_str}.xlsx', index_col=0)
-        #category = ['Listed', 'Delisted']
+        category = ['Listed', 'Delisted']
         #category = ['Delisted']
-        category = ['Listed']
+        #category = ['Listed']
         for listed_status in category:
             # 코드리스트 읽어오기
             codelist_path = f'{self.path_codeLists}\\{listed_status}\\{listed_status}_Ticker_{datemanage.workday_str}_modified.xlsx'

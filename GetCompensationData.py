@@ -16,6 +16,7 @@ class GetCompensationData(UseIntelliquant):
         # 인텔리퀀트 시뮬레이션 종목수 조회시 한번에 돌리는 종목 수.
         #self.max_batchsize = 20 # Delisted
         self.max_batchsize = 10 # Listed
+        self.max_unit_year = 480  # 한 종목, 1년을 시뮬레이션할 때가 1 유닛. 20종목*24년 = 480 유닛만큼 끊어서 시뮬레이션 하겠다는 의미
         self.path_base_code = self.cur_dir + '\\' + 'GetNoOfShares_base.js'
         self.suffix = 'compensation'  # 파일 이름 저장시 사용하는 접미사
 
@@ -30,13 +31,6 @@ class GetCompensationData(UseIntelliquant):
         self.page = config['intelliquant']['page']
         self.name = config['intelliquant']['name']
         self.path_backtest_save = config['path']['path_backtest_save']
-
-    def calculate_batch_indices(self, length_code_list, max_batchsize, listingdate_content, delistingdate_content, startday, workday): #run_backtest_rep() 에서 한번에 시뮬레이션 할 리스트 만들어서 리턴
-        indices = []
-        for start in range(0, length_code_list, max_batchsize):
-            end = min(start + max_batchsize - 1, length_code_list - 1)
-            indices.append((start, end))
-        return indices
 
     def process_backtest_result(self, path_file): #backtest result 를 처리하여 df로 반환
         # 각 코드별 데이터를 저장할 딕셔너리

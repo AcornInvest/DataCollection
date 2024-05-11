@@ -141,18 +141,18 @@ class UseIntelliquant:
 
                 # 수정할 것
                 # 파일에서 listing date의 최소(가장 과거), delisting date 의 최대(가장 최근) 날짜를 보고 startday, workday 및 batchsize 선정하기
-                data_indices = self.calculate_batch_indices(length_code_list, self.max_batchsize, listingdate_content, delistingdate_content, datemanage.startday, datemanage.workday)
+                data_indices, start_date_str, end_date_str = self.calculate_batch_indices(length_code_list, self.max_batchsize, listingdate_content, delistingdate_content, datemanage.startday, datemanage.workday)
 
                 #num_data_index = 1
                 for idx, k in enumerate(data_indices): # 한 파일 내에서의 인덱스
-                    #create_js_code_dataset()에 datemanage.startday_str, datemanage.workday_str 대신 listingdate_content, delistingdate_content를 보고 생성하도록 수정할 것
-                    js_code_dataset = self.create_js_code_dataset(datemanage.startday_str, datemanage.workday_str,
-                                                      code_content, listingdate_content,delistingdate_content, k[0], k[1])
-                    #print(js_code_dataset)
+                    #js_code_dataset = self.create_js_code_dataset(datemanage.startday_str, datemanage.workday_str, code_content, listingdate_content,delistingdate_content, k[0], k[1])
+                    # create_js_code_dataset()에 datemanage.startday_str, datemanage.workday_str 대신 listingdate_content, delistingdate_content를 보고 생성하도록 수정함
+                    js_code_dataset = self.create_js_code_dataset(start_date_str, end_date_str, code_content, listingdate_content, delistingdate_content, k[0], k[1])
                     js_code_base = self.load_base_code(self.path_base_code)
                     js_code = js_code_dataset + js_code_base
                     self.intel.update_code(js_code) #인텔리퀀트 코드창 수정
-                    backtest_list = self.intel.backtest(datemanage.startday_str, datemanage.workday_str, '10000000', self.logger)
+                    #backtest_list = self.intel.backtest(datemanage.startday_str, datemanage.workday_str, '10000000', self.logger)
+                    backtest_list = self.intel.backtest(start_date_str, end_date_str, '10000000', self.logger)
                     self.save_backtest_result(self.path_backtest_save, backtest_list, listed_status, datemanage, file_index, idx)
 
     def save_backtest_result(self, path_backtest_save, backtest_list, listed_status, datemanage, file_index, idx):
@@ -282,3 +282,53 @@ class UseIntelliquant:
                 print("결과가 'missing_in_files.txt'와 'extra_in_files.txt'에 저장되었습니다.")
             else:
                 print("모든 DataFrame의 칼럼 값이 파일 이름에 있습니다.")
+
+    def calculate_batch_indices(self, length_code_list, max_batchsize, listingdate_content, delistingdate_content, startday, workday): #run_backtest_rep() 에서 한번에 시뮬레이션 할 리스트 만들어서 리턴
+        listingdate_list = re.findall(r"new Date\('(\d{4}-\d{2}-\d{2})'\)", listingdate_content)
+        delistingdate_list = re.findall(r"new Date\('(\d{4}-\d{2}-\d{2})'\)", delistingdate_content)
+        '''
+        listingdate_list_timestamp = pd.to_datetime(listingdate_list)
+        delistingdate_list_timestamp = pd.to_datetime(delistingdate_list)
+        adjusted_listingdate_list_timestamp = [ts if ts >= startday else startday for ts in listingdate_list_timestamp]
+        adjusted_delistingdate_list_timestamp = [ts if ts <= workday else workday for ts in delistingdate_list_timestamp]
+        '''
+        # 각 종목별로 시뮬레이션 결과가 출력되는 날짜 목록 생성(상장일, 상폐일)
+        listingdate_list_datetime = pd.to_datetime(listingdate_list)
+        delistingdate_list_datetime = pd.to_datetime(delistingdate_list)
+        listingdate_list_date = [dt.date() for dt in listingdate_list_datetime]
+        delistingdate_list_date = [dt.date() for dt in delistingdate_list_datetime]
+        adjusted_listingdate_list_date = [ts if ts >= startday else startday for ts in listingdate_list_date]
+        adjusted_delistingdate_list_date = [ts if ts <= workday else workday for ts in delistingdate_list_date]
+
+        # index 생성
+        unit_year_list = []
+        td_year = Timedelta(days=365)
+        for listingdate, delistingdate in zip(adjusted_listingdate_list_date, adjusted_delistingdate_list_date):
+            unit_year = (delistingdate - listingdate)/td_year
+            unit_year_list.append(unit_year)
+
+        indices = []
+        sum_unit_year = 0
+        start_index = 0
+        end_index = 0
+        for index, unit_year in enumerate(unit_year_list):
+            if(sum_unit_year + unit_year > self.max_unit_year):
+                end_index = index - 1
+                indices.append((start_index, end_index))
+                start_index = index
+                sum_unit_year=0
+            sum_unit_year += unit_year
+
+        if sum_unit_year > 0:
+            indices.append((start_index, len(unit_year_list) - 1))
+
+        # 상장일과 상폐일에 따라 시뮬레이션 시작일과 마지막 날 정하기.
+        # 가장 빠른 날짜 추출
+        earliest_date = min(adjusted_listingdate_list_date)
+        # 가장 늦은 날짜 추출
+        latest_date = max(adjusted_delistingdate_list_date)
+        # 날짜를 'YYYY-MM-DD' 형식의 문자열로 변환
+        start_date_str = earliest_date.strftime('%Y-%m-%d')
+        end_date_str = latest_date.strftime('%Y-%m-%d')
+
+        return indices, start_date_str, end_date_str
