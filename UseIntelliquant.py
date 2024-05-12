@@ -144,7 +144,8 @@ class UseIntelliquant:
                 # 수정할 것
                 # 파일에서 listing date의 최소(가장 과거), delisting date 의 최대(가장 최근) 날짜를 보고 startday, workday 및 batchsize 선정하기
                 data_indices, start_date_str, end_date_str = self.calculate_batch_indices(length_code_list, self.max_batchsize, listingdate_content, delistingdate_content, datemanage.startday, datemanage.workday)
-
+                #start_date_str = '2000-01-04'
+                #end_date_str = '2000-01-10'
                 #num_data_index = 1
                 for idx, k in enumerate(data_indices): # 한 파일 내에서의 인덱스
                     #js_code_dataset = self.create_js_code_dataset(datemanage.startday_str, datemanage.workday_str, code_content, listingdate_content,delistingdate_content, k[0], k[1])
@@ -169,9 +170,16 @@ class UseIntelliquant:
         self.path_delisting_date_error_list = folder + '\\' + 'delisting_date_error_list_' + datemanage.workday_str + '.txt'
 
         # 각 백테스트 결과 파일 txt로 저장
+        '''
         f = open(self.path_backtest_result, 'w', encoding='utf-8')
         f.writelines(backtest_list)
         f.close()
+        '''
+
+        # 파일에 저장
+        with open(self.path_backtest_result, 'w', encoding='utf-8') as file:
+            for text in backtest_list:
+                file.write(text + '\n')
         self.logger.info("Backtest 결과 저장 완료: %s" % self.path_backtest_result)
 
         #load_failure_list, delisting_date_error_list 저장

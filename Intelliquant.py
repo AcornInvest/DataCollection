@@ -124,6 +124,7 @@ class Intelliquant:
         logger.info("Backtest 시뮬레이션 완료")
         return list
 
+    '''
     def get_backtest_result(self): # 이건 그냥 다 긁어오는 것으로 하고, GetCompensationData에서 처리한다
         # simul_list = self.driver.find_elements_by_class_name('LogItem.info')
         simul_list = self.driver.find_elements(By.CLASS_NAME, 'LogItem.info') # selenium 4.10 버전으로 오면서 형식 변경
@@ -134,4 +135,10 @@ class Intelliquant:
             string3 = string2[1]  # 형지I&C:1373
             if string3 != 'compile' and string3 != 'initialize' and string3 != 'initOrlandoSimulator' and string3 != 'init' and string3 != 'simulation':
                 backtest_list.append(string + '\n')
+        return backtest_list
+    '''
+
+    def get_backtest_result(self): # 이건 그냥 다 긁어오는 것으로 하고, GetCompensationData에서 처리한다
+        simul_list = self.driver.find_elements(By.CLASS_NAME, 'LogItem.info') # selenium 4.10 버전으로 오면서 형식 변경
+        backtest_list = [element.text for element in simul_list]
         return backtest_list
