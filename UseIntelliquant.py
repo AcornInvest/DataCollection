@@ -137,8 +137,8 @@ class UseIntelliquant:
             else:
                 raise ValueError("파일 무리의 개수가 서로 다릅니다.")
 
-            #for file_index in range(29, 29 + 1):  # 분할하여 시행
-            for file_index in range(1, max_file_index+1): #폴더 내의 파일 갯수만큼 반복
+            for file_index in range(1, 1 + 1):  # 분할하여 시행
+            #for file_index in range(1, max_file_index+1): #폴더 내의 파일 갯수만큼 반복
                 length_code_list, code_content, listingdate_content, delistingdate_content = self.load_dataset_code(datemanage, file_index)
 
                 # 수정할 것
@@ -178,8 +178,11 @@ class UseIntelliquant:
 
         # 파일에 저장
         with open(self.path_backtest_result, 'w', encoding='utf-8') as file:
+            '''
             for text in backtest_list:
                 file.write(text + '\n')
+            '''
+            file.write('\n'.join(backtest_list) + '\n')
         self.logger.info("Backtest 결과 저장 완료: %s" % self.path_backtest_result)
 
         #load_failure_list, delisting_date_error_list 저장

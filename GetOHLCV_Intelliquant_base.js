@@ -31,9 +31,11 @@ var len_data = code.length;
 var last_data_day;
 var first_data_day = new Date('2000-04-03');
 
-function getGP(stock) { 
-    return stock.getFundamentalRevenue() - stock.getFundamentalSalesCost();
+function roundToDecimal(value, decimalPlaces) {
+    var factor = Math.pow(10, decimalPlaces);
+    return Math.round(value * factor) / factor;
 }
+
 function removeA(str) {
     return str.replace(/^A/, '');
 }
@@ -109,10 +111,10 @@ function onDayClose(now){
     }
 	for (var i=0;  i<NumOfStocks; i++){
         if (DelistingDate_stock[i] >= today){ // 상폐일이 오늘 이후인 경우만 데이터 읽음
-            open[i] = Math.floor(target_stock[i].getAdjOpen());
-            high[i] = Math.floor(target_stock[i].getAdjHigh());
-            low[i] = Math.floor(target_stock[i].getAdjLow());
-            close[i] = Math.round(target_stock[i].getAdjClose());
+            open[i] = roundToDecimal(target_stock[i].getAdjOpen(),1);
+            high[i] =roundToDecimal(target_stock[i].getAdjHigh(),1);
+            low[i] = roundToDecimal(target_stock[i].getAdjLow(),1);
+            close[i] = roundToDecimal(target_stock[i].getAdjClose(),1);
             volume[i] = target_stock[i].getTradingVolume();
             capital[i] = target_stock[i].getMarketCapital();
             logger.info(removeA(target_stock_code[i]) + ', O: ' + open[i] + ', H: ' + high[i] + ', L: ' + low[i] + ', C: ' + close[i] + ', V: ' + volume[i] + ', cap: ' + capital[i]);
