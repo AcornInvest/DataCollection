@@ -296,27 +296,56 @@ class UseIntelliquant:
             else:
                 print("모든 DataFrame의 칼럼 값이 파일 이름에 있습니다.")
 
-    def calculate_batch_indices(self, length_code_list, max_batchsize, listingdate_content, delistingdate_content, startday, workday): #run_backtest_rep() 에서 한번에 시뮬레이션 할 리스트 만들어서 리턴
-        listingdate_list = re.findall(r"new Date\('(\d{4}-\d{2}-\d{2})'\)", listingdate_content)
-        delistingdate_list = re.findall(r"new Date\('(\d{4}-\d{2}-\d{2})'\)", delistingdate_content)
-        '''
-        listingdate_list_timestamp = pd.to_datetime(listingdate_list)
-        delistingdate_list_timestamp = pd.to_datetime(delistingdate_list)
-        adjusted_listingdate_list_timestamp = [ts if ts >= startday else startday for ts in listingdate_list_timestamp]
-        adjusted_delistingdate_list_timestamp = [ts if ts <= workday else workday for ts in delistingdate_list_timestamp]
-        '''
-        # 각 종목별로 시뮬레이션 결과가 출력되는 날짜 목록 생성(상장일, 상폐일)
-        listingdate_list_datetime = pd.to_datetime(listingdate_list)
-        delistingdate_list_datetime = pd.to_datetime(delistingdate_list)
-        listingdate_list_date = [dt.date() for dt in listingdate_list_datetime]
-        delistingdate_list_date = [dt.date() for dt in delistingdate_list_datetime]
-        adjusted_listingdate_list_date = [ts if ts >= startday else startday for ts in listingdate_list_date]
-        adjusted_delistingdate_list_date = [ts if ts <= workday else workday for ts in delistingdate_list_date]
+    def make_txt_from_ticker(self, datemanage):
+        #category = ['Listed', 'Delisted']
+        category = ['Listed']
+        #category = ['Delisted']
+
+        for type_list in category:
+            # 엑셀 파일 불러올 경로
+            file_path = self.path_codeLists + f'\\{type_list}\\{type_list}_Ticker_{datemanage.workday_str}_modified.xlsx'
+            stocks = pd.read_excel(file_path, index_col=0)
+
+            stocks['Code'] = stocks['Code'].astype(str)
+            stocks['Code'] = stocks['Code'].str.zfill(6)  # 코드가 6자리에 못 미치면 앞에 0 채워넣기
+            stocks['ListingDate'] = pd.to_datetime(stocks['ListingDate']).dt.date
+            stocks['DelistingDate'] = pd.to_datetime(stocks['DelistingDate']).dt.date
+            # Intelliquant 를 위한 칼럼
+            stocks['A_Code'] = "'A" + stocks['Code'] + "'"  # Code 열의 각 값에 "A"를 붙인 열 생성
+            stocks['A_ListingDate'] = "new Date('" + stocks['ListingDate'].apply(lambda x: x.strftime('%Y-%m-%d')) + "')"
+            stocks['A_DelistingDate'] = "new Date('" + stocks['DelistingDate'].apply(lambda x: x.strftime('%Y-%m-%d')) + "')"
+
+            stocks = stocks.sort_values(by='ListingDate')  # 상장일 기준 오름차순 정렬
+            stocks.reset_index(drop=True, inplace=True)  # 인덱스 리셋
+
+            # txt 파일 저장할 경로
+            base_path = f'{self.path_backtest_save}\\{type_list}\\For_Intelliquant\\{datemanage.workday_str}\\'
+            if not os.path.exists(base_path):
+                os.makedirs(base_path)
+
+            data_indices = self.calculate_batch_indices(stocks, datemanage.startday, datemanage.workday)
+
+            for column in ['A_Code', 'A_ListingDate', 'A_DelistingDate']:
+                for idx, (start_index, end_index) in enumerate(data_indices):
+                    subset = stocks[column].iloc[start_index:end_index + 1]
+                    file_name = f"{column}_{datemanage.workday_str}_{idx}.txt"
+                    with open(base_path + file_name, 'w') as f:
+                        for idx2, val in enumerate(subset):
+                            f.write(val)
+                            if (idx2 + 1) % 5 == 0 and idx2 != len(subset) - 1:
+                                f.write(',\n')
+                            elif idx2 != len(subset) - 1:
+                                f.write(',')
+
+    def calculate_batch_indices(self, stocks, startday, workday): #stocks 를 보고 max_unit_year에 맞는 indices list 만들어 리턴
+        # 각 종목별로 시뮬레이션 결과가 출력되는 기간 목록 생성(상장일~상폐일 혹은 startday~workday)
+        adjusted_listingdate_list = [ts if ts >= startday else startday for ts in stocks['ListingDate']]
+        adjusted_delistingdate_list = [ts if ts <= workday else workday for ts in stocks['DelistingDate']]
 
         # index 생성
         unit_year_list = []
         td_year = Timedelta(days=365)
-        for listingdate, delistingdate in zip(adjusted_listingdate_list_date, adjusted_delistingdate_list_date):
+        for listingdate, delistingdate in zip(adjusted_listingdate_list, adjusted_delistingdate_list):
             unit_year = (delistingdate - listingdate)/td_year
             unit_year_list.append(unit_year)
 
@@ -335,13 +364,4 @@ class UseIntelliquant:
         if sum_unit_year > 0:
             indices.append((start_index, len(unit_year_list) - 1))
 
-        # 상장일과 상폐일에 따라 시뮬레이션 시작일과 마지막 날 정하기.
-        # 가장 빠른 날짜 추출
-        earliest_date = min(adjusted_listingdate_list_date)
-        # 가장 늦은 날짜 추출
-        latest_date = max(adjusted_delistingdate_list_date)
-        # 날짜를 'YYYY-MM-DD' 형식의 문자열로 변환
-        start_date_str = earliest_date.strftime('%Y-%m-%d')
-        end_date_str = latest_date.strftime('%Y-%m-%d')
-
-        return indices, start_date_str, end_date_str
+        return indices
