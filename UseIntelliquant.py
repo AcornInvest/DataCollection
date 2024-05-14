@@ -141,6 +141,18 @@ class UseIntelliquant:
             #for file_index in range(1, max_file_index+1): #폴더 내의 파일 갯수만큼 반복
                 length_code_list, code_content, listingdate_content, delistingdate_content = self.load_dataset_code(datemanage, file_index)
 
+                이거 함수로 만들까..listingdate_content, delistingdate_content 에서 new 등 문자 제외하고 date 객체로 만든 후 비교해야 한다
+                # 상장일과 상폐일에 따라 시뮬레이션 시작일과 마지막 날 정하기.
+                # 가장 빠른 날짜 추출
+                earliest_date = min(adjusted_listingdate_list_date)
+                # 가장 늦은 날짜 추출
+                latest_date = max(adjusted_delistingdate_list_date)
+                # 날짜를 'YYYY-MM-DD' 형식의 문자열로 변환
+                start_date_str = earliest_date.strftime('%Y-%m-%d')
+                end_date_str = latest_date.strftime('%Y-%m-%d')
+
+
+
                 # 수정할 것
                 # 파일에서 listing date의 최소(가장 과거), delisting date 의 최대(가장 최근) 날짜를 보고 startday, workday 및 batchsize 선정하기
                 data_indices, start_date_str, end_date_str = self.calculate_batch_indices(length_code_list, self.max_batchsize, listingdate_content, delistingdate_content, datemanage.startday, datemanage.workday)
