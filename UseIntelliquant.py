@@ -319,8 +319,8 @@ class UseIntelliquant:
 
     def make_txt_from_ticker(self, datemanage):
         #category = ['Listed', 'Delisted']
-        category = ['Listed']
-        #category = ['Delisted']
+        #category = ['Listed']
+        category = ['Delisted']
 
         for type_list in category:
             # 엑셀 파일 불러올 경로
@@ -366,8 +366,16 @@ class UseIntelliquant:
         # index 생성
         unit_year_list = []
         td_year = Timedelta(days=365)
+        '''
         for listingdate, delistingdate in zip(adjusted_listingdate_list, adjusted_delistingdate_list):
             unit_year = (delistingdate - listingdate)/td_year
+            unit_year_list.append(unit_year)
+        '''
+        for listingdate, delistingdate in zip(adjusted_listingdate_list, adjusted_delistingdate_list):
+            delta = delistingdate - listingdate
+            unit_year = delta.days / 365  # 또는 365.25 를 사용하여 윤년 고려 가능
+            if unit_year < 0:
+                unit_year = 0
             unit_year_list.append(unit_year)
 
         indices = []
