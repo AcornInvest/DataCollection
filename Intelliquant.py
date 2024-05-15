@@ -41,11 +41,11 @@ class Intelliquant:
         self.argument = [config['path']['argument_0'], config['path']['argument_0'], config['path']['argument_0'], config['path']['argument_0']]
 
     def chrome_on(self, logger, page, name):
-        subprocess.Popen(self.path_chrome)  # 디버거 크롬 구동
+        subprocess.Popen(self.path_chrome[self.num_process])  # 디버거 크롬 구동
 
         option = Options()
-        option.add_experimental_option("debuggerAddress", self.port)
-        option.add_argument(self.argument)
+        option.add_experimental_option("debuggerAddress", self.port[self.num_process])
+        option.add_argument(self.argument[self.num_process])
 
         chrome_ver = chromedriver_autoinstaller.get_chrome_version().split('.')[0]
         driver_path = f'./{chrome_ver}/chromedriver.exe'
@@ -148,7 +148,7 @@ class Intelliquant:
 
             # 마지막 로그 위치 업데이트
             last_log_id = len(logs)
-            time.sleep(0.2)  # 너무 빈번한 확인을 방지하기 위해 적당한 휴식 시간을 설정
+            time.sleep(0.5)  # 너무 빈번한 확인을 방지하기 위해 적당한 휴식 시간을 설정
 
         logger.info("Backtest 시뮬레이션 완료")
         return backtest_list

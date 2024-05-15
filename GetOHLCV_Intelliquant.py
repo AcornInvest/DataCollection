@@ -31,7 +31,9 @@ class GetOHLCV_Intelliquant(UseIntelliquant): # 인텔리퀀트에서 모든 종
         # 설정파일 읽기
         config = configparser.ConfigParser()
         config.read(path, encoding='utf-8')
-        self.page = config['intelliquant']['page']
-        self.name = config['intelliquant']['name']
+        self.page_list = [config['intelliquant']['page_0'], config['intelliquant']['page_1'], config['intelliquant']['page_2'], config['intelliquant']['page_3']]
+        self.name_list = [config['intelliquant']['name_0'], config['intelliquant']['name_1'], config['intelliquant']['name_2'], config['intelliquant']['name_3']]
+        self.page = self.page_list[self.num_process]
+        self.name = self.name_list[self.num_process]
         self.path_backtest_save = config['path']['path_backtest_save']
         self.path_date_ref = config['path']['path_date_ref']
