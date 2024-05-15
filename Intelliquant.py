@@ -18,8 +18,9 @@ import threading
 
 
 class Intelliquant:
-    def __init__(self):
+    def __init__(self, num_process):
         self.load_config() # 설정 로드
+        self.num_process = num_process
 
     def __del__(self):
         ''' # 나중에 주석 해제하기
@@ -35,9 +36,9 @@ class Intelliquant:
         config.read(self.path, encoding='utf-8')
 
         # 설정값 읽기
-        self.path_chrome = config['path']['path_chrome']
-        self.port = config['path']['port']
-        self.argument = config['path']['argument']
+        self.path_chrome = [config['path']['path_chrome_0'], config['path']['path_chrome_1'], config['path']['path_chrome_2'], config['path']['path_chrome_3']]
+        self.port = [config['path']['port_0'], config['path']['port_1'], config['path']['port_2'], config['path']['port_3']]
+        self.argument = [config['path']['argument_0'], config['path']['argument_0'], config['path']['argument_0'], config['path']['argument_0']]
 
     def chrome_on(self, logger, page, name):
         subprocess.Popen(self.path_chrome)  # 디버거 크롬 구동
@@ -112,10 +113,11 @@ class Intelliquant:
         self.driver.find_element(By.XPATH, "//*[@id='aum_input']").send_keys(Keys.ENTER)
         self.driver.find_element(By.XPATH, "//*[@id='board']/div[1]/span[2]/button").click()  # backtest 시작
         logger.info("Backtest 시뮬레이션 시작")
-        time.sleep(0.3)
+        time.sleep(3)
 
         backtest_list = []
-
+        complete = False
+        '''
         # 스레드 종료를 위한 이벤트
         stop_event = threading.Event()
         last_log_id = 0  # 로그 수집을 시작할 초기 위치
@@ -131,17 +133,22 @@ class Intelliquant:
         # 스레드가 완료될 때까지 기다림
         log_thread.join()
         wait_thread.join()
-
-
         '''
-        try:
-            element = WebDriverWait(self.driver, 1200).until(
-                #EC.text_to_be_present_in_element((By.XPATH, "//*[@id='board']/div[1]/span[2]/button"), "백테스트 시작")
-                EC.text_to_be_present_in_element((By.XPATH, "//*[@id='board']/div[3]/div[2]"), "simulation complete")
-            )
-        finally:
-            list = self.get_backtest_result()
-        '''
+
+        last_log_id = 0
+        while complete is False:
+            log_container = self.driver.find_element(By.CLASS_NAME, "ConsoleLog.show")  # 로그 데이터가 표시되는 컨테이너의 ID
+            logs = log_container.find_elements(By.CLASS_NAME, "LogItem.info")  # 로그 라인을 식별할 셀렉터
+            new_logs = logs[last_log_id:]  # 마지막 로그 이후로 새로운 로그만 처리
+
+            for log in new_logs:
+                backtest_list.append(log.text)
+                if "simulation complete" in log.text:
+                    complete = True
+
+            # 마지막 로그 위치 업데이트
+            last_log_id = len(logs)
+            time.sleep(0.2)  # 너무 빈번한 확인을 방지하기 위해 적당한 휴식 시간을 설정
 
         logger.info("Backtest 시뮬레이션 완료")
         return backtest_list
@@ -162,7 +169,7 @@ class Intelliquant:
 
             # 마지막 로그 위치 업데이트
             last_log_id = len(logs)
-            time.sleep(0.2)  # 너무 빈번한 확인을 방지하기 위해 적당한 휴식 시간을 설정
+            time.sleep(0.5)  # 너무 빈번한 확인을 방지하기 위해 적당한 휴식 시간을 설정
 
         return last_log_id  # 종료 시 마지막 로그 위치 반환
 

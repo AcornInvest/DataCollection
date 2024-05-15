@@ -12,13 +12,13 @@ class UseIntelliquant:
    인텔리퀀트에서 데이터 가져오는 기능
    '''
 
-    def __init__(self, logger):
-        self.intel = Intelliquant()
+    def __init__(self, logger, num_process):
+        self.num_process = num_process  # 멀티 프로세스 번호
+        self.intel = Intelliquant(self.num_process)
         self.logger = logger
 
         # 설정 로드
         self.load_config()
-
         self.suffix = 'data' # 파일 이름 저장시 사용하는 접미사
 
     def load_config(self):
@@ -38,7 +38,7 @@ class UseIntelliquant:
             js_code_base = file.read()
         #print(js_code_base)
         return js_code_base
-
+    '''
     def create_js_code_dataset(self, startday, workday, code, listingdate, delistingdate, start_num, end_num):
         # 상장일, 상폐일, 코드 리스트 받아서 데이터셋 코드 형식 str 리턴
         format_code_content = self.format_string_data(code, start_num, end_num)
@@ -52,6 +52,18 @@ class UseIntelliquant:
             f"var code = [\n{format_code_content}\n];\n"
             f"var ListingDate = [\n{format_listingdate_content}\n];\n"
             f"var DelistingDate = [\n{format_delistingdate_content}\n];\n"
+            f"//Dataset End\n\n"
+        )
+    '''
+    def create_js_code_dataset(self, start_date_str, end_date_str, code_content, listingdate_content,
+                               delistingdate_content):
+        return (
+            f"//Dataset Begin\n"
+            f"var StartDate = new Date('{start_date_str}');\n"
+            f"var FinalDate = new Date('{end_date_str}');\n\n"
+            f"var code = [\n{code_content}\n];\n"
+            f"var ListingDate = [\n{listingdate_content}\n];\n"
+            f"var DelistingDate = [\n{delistingdate_content}\n];\n"
             f"//Dataset End\n\n"
         )
 
@@ -114,7 +126,7 @@ class UseIntelliquant:
         #category = ['Delisted']
         category = ['Listed']
         for listed_status in category:
-            self.path_for_intelliquant_dir = self.path_codeLists + '\\' + listed_status + '\\For_Intelliquant\\' + datemanage.workday_str + '\\'
+            self.path_for_intelliquant_dir = self.path_backtest_save + '\\' + listed_status + '\\For_Intelliquant\\' + datemanage.workday_str + '\\'
             # max_file_index(폴더 내 데이터 파일 수) 계산
             # 파일 무리별 카운터 초기화
             count_code = 0
@@ -137,42 +149,39 @@ class UseIntelliquant:
             else:
                 raise ValueError("파일 무리의 개수가 서로 다릅니다.")
 
-            for file_index in range(1, 1 + 1):  # 분할하여 시행
+            for file_index in range(2, 5 + 1):  # 분할하여 시행
             #for file_index in range(1, max_file_index+1): #폴더 내의 파일 갯수만큼 반복
                 length_code_list, code_content, listingdate_content, delistingdate_content = self.load_dataset_code(datemanage, file_index)
 
-                이거 함수로 만들까..listingdate_content, delistingdate_content 에서 new 등 문자 제외하고 date 객체로 만든 후 비교해야 한다
+                listingdate_list = re.findall(r"new Date\('(\d{4}-\d{2}-\d{2})'\)", listingdate_content)
+                delistingdate_list = re.findall(r"new Date\('(\d{4}-\d{2}-\d{2})'\)", delistingdate_content)
+                # 각 종목별로 시뮬레이션 결과가 출력되는 기간의 날짜 계산(상장일, 상폐일을 startdat, workday와 비교)
+                listingdate_list_datetime = pd.to_datetime(listingdate_list)
+                delistingdate_list_datetime = pd.to_datetime(delistingdate_list)
+                listingdate_list_date = [dt.date() for dt in listingdate_list_datetime]
+                delistingdate_list_date = [dt.date() for dt in delistingdate_list_datetime]
+                adjusted_listingdate_list_date = [ts if ts >= datemanage.startday else datemanage.startday for ts in listingdate_list_date]
+                adjusted_delistingdate_list_date = [ts if ts <= datemanage.workday else datemanage.workday for ts in delistingdate_list_date]
+
                 # 상장일과 상폐일에 따라 시뮬레이션 시작일과 마지막 날 정하기.
-                # 가장 빠른 날짜 추출
-                earliest_date = min(adjusted_listingdate_list_date)
-                # 가장 늦은 날짜 추출
-                latest_date = max(adjusted_delistingdate_list_date)
+                earliest_date = min(adjusted_listingdate_list_date) # 가장 빠른 날짜 추출
+                latest_date = max(adjusted_delistingdate_list_date) # 가장 늦은 날짜 추출
                 # 날짜를 'YYYY-MM-DD' 형식의 문자열로 변환
                 start_date_str = earliest_date.strftime('%Y-%m-%d')
                 end_date_str = latest_date.strftime('%Y-%m-%d')
-
-
-
-                # 수정할 것
-                # 파일에서 listing date의 최소(가장 과거), delisting date 의 최대(가장 최근) 날짜를 보고 startday, workday 및 batchsize 선정하기
-                data_indices, start_date_str, end_date_str = self.calculate_batch_indices(length_code_list, self.max_batchsize, listingdate_content, delistingdate_content, datemanage.startday, datemanage.workday)
                 #start_date_str = '2000-01-04'
                 #end_date_str = '2000-01-10'
-                #num_data_index = 1
-                for idx, k in enumerate(data_indices): # 한 파일 내에서의 인덱스
-                    #js_code_dataset = self.create_js_code_dataset(datemanage.startday_str, datemanage.workday_str, code_content, listingdate_content,delistingdate_content, k[0], k[1])
-                    # create_js_code_dataset()에 datemanage.startday_str, datemanage.workday_str 대신 listingdate_content, delistingdate_content를 보고 생성하도록 수정함
-                    js_code_dataset = self.create_js_code_dataset(start_date_str, end_date_str, code_content, listingdate_content, delistingdate_content, k[0], k[1])
-                    js_code_base = self.load_base_code(self.path_base_code)
-                    js_code = js_code_dataset + js_code_base
-                    self.intel.update_code(js_code) #인텔리퀀트 코드창 수정
-                    #backtest_list = self.intel.backtest(datemanage.startday_str, datemanage.workday_str, '10000000', self.logger)
-                    backtest_list = self.intel.backtest(start_date_str, end_date_str, '10000000', self.logger)
-                    self.save_backtest_result(self.path_backtest_save, backtest_list, listed_status, datemanage, file_index, idx)
+                js_code_dataset = self.create_js_code_dataset(start_date_str, end_date_str, code_content, listingdate_content, delistingdate_content)
+                js_code_base = self.load_base_code(self.path_base_code)
+                js_code = js_code_dataset + js_code_base
+                self.intel.update_code(js_code) #인텔리퀀트 코드창 수정
+                #backtest_list = self.intel.backtest(datemanage.startday_str, datemanage.workday_str, '10000000', self.logger)
+                backtest_list = self.intel.backtest(start_date_str, end_date_str, '10000000', self.logger)
+                self.save_backtest_result(self.path_backtest_save, backtest_list, listed_status, datemanage, file_index)
 
-    def save_backtest_result(self, path_backtest_save, backtest_list, listed_status, datemanage, file_index, idx):
+    def save_backtest_result(self, path_backtest_save, backtest_list, listed_status, datemanage, file_index):
         #path_compensation 변수 파라미터로 받아오자
-        self.path_backtest_result = path_backtest_save + '\\' + listed_status + '\\From_Intelliquant\\' + datemanage.workday_str + '\\' + 'backtest_result_' + datemanage.workday_str + '_' + str(file_index) + '_' + str(idx) + '.txt'
+        self.path_backtest_result = path_backtest_save + '\\' + listed_status + '\\From_Intelliquant\\' + datemanage.workday_str + '\\' + 'backtest_result_' + datemanage.workday_str + '_' + str(file_index) + '.txt'
         folder = os.path.dirname(self.path_backtest_result)
         # 폴더가 존재하지 않으면 생성
         if not os.path.exists(folder):
