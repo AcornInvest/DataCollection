@@ -34,7 +34,7 @@ for i in range(2):
 def run_process(index, datemanage, logger):
     get_OHLCV_Intelliquant = GetOHLCV_Intelliquant(logger, index)
     get_OHLCV_Intelliquant.intel.chrome_on(logger, get_OHLCV_Intelliquant.page, get_OHLCV_Intelliquant.name)
-    get_OHLCV_Intelliquant.run_backtest_rep(datemanage, index * 5, index * 5 + 4)
+    get_OHLCV_Intelliquant.run_backtest_rep(datemanage, (index+2)*5 , (index+2)*5 + 4)
 
 if __name__ == "__main__":
     processes = []
