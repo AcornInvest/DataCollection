@@ -263,7 +263,6 @@ class UseIntelliquant:
         #category = ['Delisted']
         category = ['Listed']
         for listed_status in category:
-
             # 폴더에서 backtest 파일 이름 목록 찾기 --> file_names
             backtest_result_folder = self.path_backtest_save + '\\' + listed_status + '\\From_Intelliquant\\' + datemanage.workday_str + '\\'
             start_string = 'backtest_result_' + datemanage.workday_str
@@ -292,7 +291,9 @@ class UseIntelliquant:
             codelist['Code'] = codelist['Code'].astype(str)
             codelist['Code'] = codelist['Code'].str.zfill(6)  # 코드가 6자리에 못 미치면 앞에 0 채워넣기
             #codelist.loc[:, 'Code'] = codelist['Code'].apply(lambda x: f"{x:06d}")  # Code 열 str, 6글자로 맞추기
-            codelist_filtered = codelist[codelist['DelistingDate'] >= datemanage.startday] # 상폐일이 기준일(2000.1.4) 보다 앞선 것은 제외시키기
+            #codelist_filtered = codelist[codelist['DelistingDate'] >= datemanage.startday] # 상폐일이 시뮬레이션 시작일보다 앞선 것은 제외시키기
+            # 상폐일이 시뮬레이션 시작일보다 늦고, 상장일이 시뮬레이션 마지막 날보다 빠른 것만 남기기
+            codelist_filtered = codelist[(codelist['DelistingDate'] >= datemanage.startday) & (codelist['ListingDate'] <= datemanage.workday)]
             codes = set(codelist_filtered['Code']) # Ticker 파일에서 가져온 Code column
 
             if file_prefixes != codes or len(codelist_filtered) != len(file_prefixes):
