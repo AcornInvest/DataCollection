@@ -85,6 +85,7 @@ class Intelliquant:
         self.driver.find_element(By.LINK_TEXT, name).click() # 알고리즘으로 이동. selenium 4.10 버전으로 오면서 형식 변경
         logger.info("Chrome 켜기 완료") #이거 저장 설정 해야한다.
 
+    '''
     def update_code(self, js_code):
         pyperclip.copy(js_code)
         self.driver.implicitly_wait(3)
@@ -94,6 +95,20 @@ class Intelliquant:
         actions.click(element).key_down(Keys.CONTROL).send_keys('a').key_up(Keys.CONTROL).send_keys(Keys.DELETE).key_down(Keys.CONTROL).send_keys('v').key_up(Keys.CONTROL)
         self.driver.implicitly_wait(3)
         actions.perform()
+        self.driver.find_element(By.XPATH, "//*[@id='editor']/div[1]/span/button[2]").click()  # 저장 버튼
+        self.driver.implicitly_wait(3)
+        self.driver.find_element(By.XPATH, "/html/body/div[12]/div/div[1]/div/div/div[2]/button").click()  # 저장 후 팝업에서 OK 버튼
+    '''
+    def update_code(self, js_code):
+        pyperclip.copy(js_code)
+        self.driver.implicitly_wait(2)
+        element = self.driver.find_element(By.CLASS_NAME, 'cm-comment')
+        actions = ActionChains(self.driver)
+        self.driver.implicitly_wait(2)
+        actions.click(element).key_down(Keys.CONTROL).send_keys('a').key_up(Keys.CONTROL).send_keys(Keys.DELETE).key_down(Keys.CONTROL).send_keys('v').key_up(Keys.CONTROL)
+        self.driver.implicitly_wait(2)
+        actions.perform()
+        self.driver.implicitly_wait(2)
         self.driver.find_element(By.XPATH, "//*[@id='editor']/div[1]/span/button[2]").click()  # 저장 버튼
         self.driver.implicitly_wait(3)
         self.driver.find_element(By.XPATH, "/html/body/div[12]/div/div[1]/div/div/div[2]/button").click()  # 저장 후 팝업에서 OK 버튼

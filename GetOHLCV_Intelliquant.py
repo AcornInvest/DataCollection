@@ -52,7 +52,7 @@ class GetOHLCV_Intelliquant(UseIntelliquant): # 인텔리퀀트에서 모든 종
         low_pattern = r'L: (\d+(\.\d+)?),'
         close_pattern = r'C: (\d+(\.\d+)?),'
         volume_pattern = r'V: (\d+),'
-        cap_pattern = r'cap: (\d+),'
+        cap_pattern = r'cap: (\d+)'
         num_codes = 0
         num_stocks = 0
         num_load_failure_stocks = 0
@@ -62,7 +62,7 @@ class GetOHLCV_Intelliquant(UseIntelliquant): # 인텔리퀀트에서 모든 종
                 if re.search(data_pattern, line):  # 일반 데이터 처리
                     date = re.search(date_pattern, line).group(1)
                     code = re.search(code_pattern, line).group(1)
-                    open = re.search(open_pattern, line).group(1)
+                    Open = re.search(open_pattern, line).group(1)
                     high = re.search(high_pattern, line).group(1)
                     low = re.search(low_pattern, line).group(1)
                     close = re.search(close_pattern, line).group(1)
@@ -72,7 +72,7 @@ class GetOHLCV_Intelliquant(UseIntelliquant): # 인텔리퀀트에서 모든 종
                     # 코드에 따라 데이터 묶기
                     if code not in data_by_code:
                         data_by_code[code] = []
-                    data_by_code[code].append((date, open, high, low, close, volume, cap))
+                    data_by_code[code].append((date, Open, high, low, close, volume, cap))
                 elif 'list_index:' in line:
                     num_codes = int(line.split('list_index:')[1].strip())
                 elif 'NumOfStocks:' in line:

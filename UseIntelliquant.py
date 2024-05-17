@@ -287,7 +287,8 @@ class UseIntelliquant:
 
             codelist_path = self.path_codeLists + '\\' + listed_status + '\\' + listed_status + '_Ticker_' + datemanage.workday_str + '_modified.xlsx'
             codelist = pd.read_excel(codelist_path, index_col=0)
-            codelist['DelistingDate'] = pd.to_datetime(codelist['DelistingDate'])
+            codelist['ListingDate'] = pd.to_datetime(codelist['ListingDate']).apply(lambda x: x.date())
+            codelist['DelistingDate'] = pd.to_datetime(codelist['DelistingDate']).apply(lambda x: x.date())
             codelist['Code'] = codelist['Code'].astype(str)
             codelist['Code'] = codelist['Code'].str.zfill(6)  # 코드가 6자리에 못 미치면 앞에 0 채워넣기
             #codelist.loc[:, 'Code'] = codelist['Code'].apply(lambda x: f"{x:06d}")  # Code 열 str, 6글자로 맞추기
