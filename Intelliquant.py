@@ -99,6 +99,7 @@ class Intelliquant:
         self.driver.implicitly_wait(3)
         self.driver.find_element(By.XPATH, "/html/body/div[12]/div/div[1]/div/div/div[2]/button").click()  # 저장 후 팝업에서 OK 버튼
     '''
+    '''
     def update_code(self, js_code):
         pyperclip.copy(js_code)
         self.driver.implicitly_wait(2)
@@ -109,6 +110,160 @@ class Intelliquant:
         self.driver.implicitly_wait(2)
         actions.perform()
         self.driver.implicitly_wait(2)
+        self.driver.find_element(By.XPATH, "//*[@id='editor']/div[1]/span/button[2]").click()  # 저장 버튼
+        self.driver.implicitly_wait(3)
+        self.driver.find_element(By.XPATH, "/html/body/div[12]/div/div[1]/div/div/div[2]/button").click()  # 저장 후 팝업에서 OK 버튼
+    '''
+
+    '''
+    def update_code(self, js_code):
+        pyperclip.copy(js_code)
+        self.driver.implicitly_wait(2)
+        element = self.driver.find_element(By.CLASS_NAME, 'cm-comment').click()
+        #element = self.driver.find_element(By.CLASS_NAME, 'cm-comment')
+        self.driver.implicitly_wait(2)
+        actions = ActionChains(self.driver)
+        actions.click(element).key_down(Keys.CONTROL).send_keys('a')
+        actions.perform()
+        self.driver.implicitly_wait(1)
+
+        actions.click(element).key_up(Keys.CONTROL).send_keys(Keys.DELETE)
+        actions.perform()
+        self.driver.implicitly_wait(1)
+
+        actions.click(element).key_down(Keys.CONTROL).send_keys('v').key_up(Keys.CONTROL)
+        actions.perform()
+        self.driver.implicitly_wait(1)
+
+        #self.driver.implicitly_wait(2)
+        self.driver.find_element(By.XPATH, "//*[@id='editor']/div[1]/span/button[2]").click()  # 저장 버튼
+        self.driver.implicitly_wait(3)
+        self.driver.find_element(By.XPATH, "/html/body/div[12]/div/div[1]/div/div/div[2]/button").click()  # 저장 후 팝업에서 OK 버튼
+    '''
+
+    '''
+    def update_code(self, js_code):
+        pyperclip.copy(js_code)
+        self.driver.implicitly_wait(2)
+        #element = self.driver.find_element(By.CLASS_NAME, 'cm-comment').click()
+        element = self.driver.find_element(By.CLASS_NAME, 'cm-comment')
+        self.driver.implicitly_wait(2)
+
+        actions = ActionChains(self.driver)
+        actions.click(element)
+        actions.perform()
+        self.driver.implicitly_wait(1)
+
+        actions = ActionChains(self.driver)
+        actions.key_down(Keys.CONTROL).send_keys('a')
+        actions.perform()
+        self.driver.implicitly_wait(1)
+
+        actions.key_up(Keys.CONTROL).send_keys(Keys.DELETE).key_down(Keys.CONTROL).send_keys('v').key_up(Keys.CONTROL)
+        actions.perform()
+        self.driver.implicitly_wait(1)
+
+        # self.driver.implicitly_wait(2)
+        self.driver.find_element(By.XPATH, "//*[@id='editor']/div[1]/span/button[2]").click()  # 저장 버튼
+        self.driver.implicitly_wait(3)
+        self.driver.find_element(By.XPATH, "/html/body/div[12]/div/div[1]/div/div/div[2]/button").click()  # 저장 후 팝업에서 OK 버튼
+    '''
+
+    '''
+    def update_code(self, js_code):
+        pyperclip.copy(js_code)
+         # WebDriverWait을 사용하여 요소가 특정 텍스트를 포함하는지 확인
+        WebDriverWait(self.driver, 10).until(
+            EC.presence_of_element_located((By.CLASS_NAME, 'cm-comment'))
+            # EC.presence_of_element_located((By.CLASS_NAME, 'cm-comment'))
+            #EC.presence_of_element_located(EC.text_to_be_present_in_element((By.CSS_SELECTOR, 'span.cm-comment'), "//Dataset Begin"))
+        )
+
+        element = self.driver.find_element(By.CLASS_NAME, 'CodeMirror-cursors')
+        actions = ActionChains(self.driver)
+        actions.click(element).perform()
+        time.sleep(1)
+
+        actions.key_down(Keys.CONTROL).send_keys('a').perform()
+        time.sleep(0.5)
+
+        actions.key_up(Keys.CONTROL).send_keys(Keys.DELETE).perform()
+        time.sleep(0.5)
+
+        actions.key_down(Keys.CONTROL).send_keys('v').key_up(Keys.CONTROL).perform()
+        self.driver.implicitly_wait(1)
+
+        # self.driver.implicitly_wait(2)
+        self.driver.find_element(By.XPATH, "//*[@id='editor']/div[1]/span/button[2]").click()  # 저장 버튼
+        self.driver.implicitly_wait(3)
+        self.driver.find_element(By.XPATH, "/html/body/div[12]/div/div[1]/div/div/div[2]/button").click()  # 저장 후 팝업에서 OK 버튼
+    '''
+
+    '''
+    def update_code(self, js_code):
+        WebDriverWait(self.driver, 10).until(
+            #EC.presence_of_element_located((By.CLASS_NAME, 'cm-comment'))
+            EC.presence_of_element_located((By.CLASS_NAME, 'cm-comment'))
+        )
+        element = self.driver.find_element(By.CLASS_NAME, 'cm-comment')
+
+        actions = ActionChains(self.driver)
+        actions.click(element)
+        actions.perform()
+        self.driver.implicitly_wait(1)
+
+        actions = ActionChains(self.driver)
+        actions.key_down(Keys.CONTROL).send_keys('a')
+        actions.perform()
+        self.driver.implicitly_wait(1)
+
+        actions.key_up(Keys.CONTROL).send_keys(Keys.DELETE)
+        actions.perform()
+        self.driver.implicitly_wait(1)
+
+        element = self.driver.find_element(By.CLASS_NAME, 'CodeMirror-cursors')
+        #self.driver.execute_script("arguments[0].innerText = arguments[1];", element, js_code)
+        #self.driver.execute_script("arguments[0].value = arguments[1];", element, js_code)
+        #self.driver.execute_script("arguments[0].innerHTML = arguments[1];", element, js_code)
+        self.driver.execute_script("arguments[0].textContent = arguments[1];", element, js_code)
+
+        # self.driver.implicitly_wait(2)
+        self.driver.find_element(By.XPATH, "//*[@id='editor']/div[1]/span/button[2]").click()  # 저장 버튼
+        self.driver.implicitly_wait(3)
+        self.driver.find_element(By.XPATH, "/html/body/div[12]/div/div[1]/div/div/div[2]/button").click()  # 저장 후 팝업에서 OK 버튼
+    '''
+
+    def update_code(self, js_code):
+        pyperclip.copy(js_code)
+        # WebDriverWait을 사용하여 텍스트 편집기 창 요소가 가시성이 있는지 확인
+        wait = WebDriverWait(self.driver, 10)
+        editor_element = wait.until(EC.visibility_of_element_located((By.CLASS_NAME, 'cm-comment')))
+
+        actions = ActionChains(self.driver)
+
+        # edit 창을 클릭하기 위한 시도
+        success = self.click_element(self.driver, actions, By.CLASS_NAME, 'cm-comment')
+
+        # 필요시 여러 번 시도
+        if not success:
+            for _ in range(3):  # 최대 3번 추가 시도
+                time.sleep(1)  # 잠시 대기 후 재시도
+                if self.click_element(self.driver, By.CLASS_NAME, 'cm-comment'):
+                    break
+
+        #actions.move_to_element(editor_element).click().perform()
+        time.sleep(1)
+
+        actions.key_down(Keys.CONTROL).send_keys('a').perform()
+        time.sleep(0.5)
+
+        actions.key_up(Keys.CONTROL).send_keys(Keys.DELETE).perform()
+        time.sleep(0.5)
+
+        actions.key_down(Keys.CONTROL).send_keys('v').key_up(Keys.CONTROL).perform()
+        self.driver.implicitly_wait(1)
+
+        # self.driver.implicitly_wait(2)
         self.driver.find_element(By.XPATH, "//*[@id='editor']/div[1]/span/button[2]").click()  # 저장 버튼
         self.driver.implicitly_wait(3)
         self.driver.find_element(By.XPATH, "/html/body/div[12]/div/div[1]/div/div/div[2]/button").click()  # 저장 후 팝업에서 OK 버튼
@@ -194,3 +349,17 @@ class Intelliquant:
             EC.text_to_be_present_in_element((By.XPATH, "//*[@id='board']/div[3]/div[2]"), "simulation complete")
         )
         stop_event.set()  # 로그 수집을 중단하기 위해 이벤트를 설정
+
+    def click_element(self, driver, actions, by, value):
+        try:
+            # 요소가 클릭 가능할 때까지 기다리기
+            element = WebDriverWait(driver, 10).until(
+                EC.element_to_be_clickable((by, value))
+            )
+            #actions = ActionChains(driver)
+            actions.move_to_element(element).click().perform()
+            print("Element clicked successfully")
+            return True
+        except Exception as e:
+            print(f"Error clicking element: {e}")
+            return False
