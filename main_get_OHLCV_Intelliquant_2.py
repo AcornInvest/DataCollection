@@ -32,4 +32,7 @@ logger.addHandler(file_handler_info)
 
 get_OHLCV_Intelliquant = GetOHLCV_Intelliquant(logger, i)
 get_OHLCV_Intelliquant.intel.chrome_on(logger, get_OHLCV_Intelliquant.page, get_OHLCV_Intelliquant.name)
-get_OHLCV_Intelliquant.run_backtest_rep(datemanage, 10, 81)
+#get_OHLCV_Intelliquant.run_backtest_rep(datemanage, 259, 388)  #workday = date(2015, 12, 31)
+#get_OHLCV_Intelliquant.run_backtest_rep(datemanage, 180, 269) # workday = date(2015, 12, 31)
+
+get_OHLCV_Intelliquant.run_backtest_rep(datemanage, 0, 80) # workday = date(2007, 12, 31)

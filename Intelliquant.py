@@ -233,22 +233,33 @@ class Intelliquant:
         self.driver.find_element(By.XPATH, "/html/body/div[12]/div/div[1]/div/div/div[2]/button").click()  # 저장 후 팝업에서 OK 버튼
     '''
 
+    '''
     def update_code(self, js_code):
         pyperclip.copy(js_code)
-        # WebDriverWait을 사용하여 텍스트 편집기 창 요소가 가시성이 있는지 확인
-        wait = WebDriverWait(self.driver, 10)
-        editor_element = wait.until(EC.visibility_of_element_located((By.CLASS_NAME, 'cm-comment')))
 
+        # WebDriverWait을 사용하여 텍스트 편집기 창 요소가 가시성이 있는지 확인
+        
+        #wait = WebDriverWait(self.driver, 10)
+        #editor_element = wait.until(EC.visibility_of_element_located((By.CLASS_NAME, 'cm-comment')))
+        #editor_element = wait.until(EC.presence_of_element_located((By.XPATH, '//*[@id="editor"]/div[3]/div/div/div[6]/div[1]/div/div/div/div[5]/div[1]/pre/span/span')))                                                                               
+        
+
+        self.driver.implicitly_wait(5)
         actions = ActionChains(self.driver)
 
         # edit 창을 클릭하기 위한 시도
-        success = self.click_element(self.driver, actions, By.CLASS_NAME, 'cm-comment')
+        #success = self.click_element(self.driver, actions, By.CLASS_NAME, 'cm-comment')
+        #success = self.click_element(self.driver, actions, By.CLASS_NAME, 'editor')
+        #success = self.click_element(self.driver, actions, By.XPATH, '//*[@id="editor"]/div[3]/div/div/div[6]/div[1]/div/div/div/div[5]/div[1]/pre/span/span')
+        success = self.click_element(self.driver, actions, By.XPATH, "//*[contains(text(), 'Parameters')]")
 
         # 필요시 여러 번 시도
         if not success:
             for _ in range(3):  # 최대 3번 추가 시도
                 time.sleep(1)  # 잠시 대기 후 재시도
-                if self.click_element(self.driver, By.CLASS_NAME, 'cm-comment'):
+                #if self.click_element(self.driver, actions, By.XPATH, '//*[@id="editor"]/div[3]/div/div/div[6]/div[1]/div/div/div/div[5]/div[1]/pre/span/span'):
+                if self.click_element(self.driver, actions, By.XPATH, "//*[contains(text(), 'Parameters')]"):
+                #if self.click_element(self.driver, actions, By.CLASS_NAME, 'editor'):
                     break
 
         #actions.move_to_element(editor_element).click().perform()
@@ -262,6 +273,35 @@ class Intelliquant:
 
         actions.key_down(Keys.CONTROL).send_keys('v').key_up(Keys.CONTROL).perform()
         self.driver.implicitly_wait(1)
+
+        # self.driver.implicitly_wait(2)
+        self.driver.find_element(By.XPATH, "//*[@id='editor']/div[1]/span/button[2]").click()  # 저장 버튼
+        self.driver.implicitly_wait(3)
+        self.driver.find_element(By.XPATH, "/html/body/div[12]/div/div[1]/div/div/div[2]/button").click()  # 저장 후 팝업에서 OK 버튼
+    '''
+    def update_code(self, js_code):
+        # WebDriverWait을 사용하여 전략이름 요소가 가시성이 있는지 확인
+        wait = WebDriverWait(self.driver, 10)
+        #editor_element = wait.until(EC.visibility_of_element_located((By.CLASS_NAME, 'cm-comment')))
+        element = wait.until(EC.presence_of_element_located((By.XPATH, "/html/body/div[2]/div/div[1]/div[1]/input")))
+
+        self.driver.find_element(By.XPATH, "/html/body/div[2]/div/div[1]/div[1]/input").click()
+        time.sleep(0.5)
+        actions = ActionChains(self.driver)
+        for _ in range(5):
+            actions.send_keys(Keys.TAB)
+        actions.perform()
+        time.sleep(0.5)
+
+        actions.key_down(Keys.CONTROL).send_keys('a').perform()
+        time.sleep(0.5)
+
+        actions.key_up(Keys.CONTROL).send_keys(Keys.DELETE).perform()
+        time.sleep(0.5)
+
+        pyperclip.copy(js_code)
+        actions.key_down(Keys.CONTROL).send_keys('v').key_up(Keys.CONTROL).perform()
+        self.driver.implicitly_wait(0.5)
 
         # self.driver.implicitly_wait(2)
         self.driver.find_element(By.XPATH, "//*[@id='editor']/div[1]/span/button[2]").click()  # 저장 버튼

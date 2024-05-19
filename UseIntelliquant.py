@@ -123,8 +123,8 @@ class UseIntelliquant:
         #chrome_on()은 되어 있는 상태에서 호출
 
         #category = ['Delisted', 'Listed']
-        category = ['Delisted']
-        #category = ['Listed']
+        #category = ['Delisted']
+        category = ['Listed']
         for listed_status in category:
             self.path_for_intelliquant_dir = self.path_backtest_save + '\\' + listed_status + '\\For_Intelliquant\\' + datemanage.workday_str + '\\'
             # max_file_index(폴더 내 데이터 파일 수) 계산
@@ -260,8 +260,8 @@ class UseIntelliquant:
 
     def run_backtest_process(self, datemanage): # Backtest 결과를 가지고 xlsx 파일로 처리
         # category = ['Delisted', 'Listed']
-        #category = ['Delisted']
-        category = ['Listed']
+        category = ['Delisted']
+        #category = ['Listed']
         for listed_status in category:
             # 폴더에서 backtest 파일 이름 목록 찾기 --> file_names
             backtest_result_folder = self.path_backtest_save + '\\' + listed_status + '\\From_Intelliquant\\' + datemanage.workday_str + '\\'

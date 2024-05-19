@@ -64,7 +64,7 @@ function initialize() {
                 ListingDate_stock[NumOfStocks] = ListingDate[list_index]; // target stock의 상장일 맵핑
                 DelistingDate_stock[NumOfStocks] = DelistingDate[list_index]; // target stock의 상폐일 맵핑                                
                 NumOfStocks++;
-                logger.info('_stock: ' + _stock.name + ', ' + NumOfStocks );
+                logger.info(target_stock_code[NumOfStocks] + ': ' + _stock.name + ', ' + NumOfStocks );
             }
             else
             {
@@ -97,7 +97,7 @@ function onDayClose(now){
                 ListingDate_stock[NumOfStocks] = ListingDate[list_index]; // target stock의 상장일 맵핑
                 DelistingDate_stock[NumOfStocks] = DelistingDate[list_index]; // target stock의 상폐일 맵핑
                 NumOfStocks++;
-                logger.info(_stock.name);
+                logger.info(target_stock_code[NumOfStocks] + ': ' + _stock.name + ', ' + NumOfStocks );
             }
             else
             {
