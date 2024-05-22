@@ -15,12 +15,12 @@ formatter = logging.Formatter("%(asctime)s - %(levelname)s - [%(funcName)s:%(lin
 i = 0
 
 filename = f'{os.path.splitext(os.path.basename(__file__))[0]}_Proc_{i}'  # 실행하고 있는 스크립트 파일 이름 가져오기
-startday = date(2000, 1, 4)
-workday = date(2007, 12, 31)
+#startday = date(2000, 1, 4)
+#workday = date(2007, 12, 31)
 #startday = date(2008, 1, 1)
 #workday = date(2015, 12, 31)
-#startday = date(2016, 1, 1)
-#workday = date(2024, 3, 29)
+startday = date(2016, 1, 1)
+workday = date(2024, 3, 29)
 datemanage = DateManage(filename)
 datemanage.SetStartday(startday)
 datemanage.SetWorkday(workday)

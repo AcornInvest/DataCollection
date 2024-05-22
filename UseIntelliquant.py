@@ -266,10 +266,12 @@ class UseIntelliquant:
             # 폴더에서 backtest 파일 이름 목록 찾기 --> file_names
             backtest_result_folder = self.path_backtest_save + '\\' + listed_status + '\\From_Intelliquant\\' + datemanage.workday_str + '\\'
             start_string = 'backtest_result_' + datemanage.workday_str
+            #start_string = 'backtest_result_' + datemanage.workday_str + '_19'
             file_names = self.get_files_starting_with(backtest_result_folder, start_string)
 
             # 처리 결과 저장할 폴더
             process_result_folder = self.path_backtest_save + '\\' + listed_status + '\\' + datemanage.workday_str + '\\'
+            #process_result_folder = self.path_backtest_save + '\\' + listed_status + '\\' + datemanage.workday_str + '_temp\\'
 
             # 폴더가 존재하지 않으면 생성
             if not os.path.exists(process_result_folder):
@@ -281,7 +283,7 @@ class UseIntelliquant:
                 utils.save_dfs_to_excel(df_processed_stock_data, ('_' + self.suffix + '_' + datemanage.workday_str), process_result_folder)
 
             #처리한 엑셀 파일들이 Codelist에 있는 모든 종목들을 다 커버하는지 확인
-            processed_file_names = self.find_files_with_keyword(process_result_folder, self.suffix)  # 데이터 처리 결과 파일 목록. compensation이 포함된 파일만 골라냄
+            processed_file_names = self.find_files_with_keyword(process_result_folder, self.suffix)  # 데이터 처리 결과 파일 목록. 특정 suffix가 포함된 파일만 골라냄
             file_prefixes = set([name[:6] for name in processed_file_names]) # 각 파일명의 처음 6글자 추출
             # 파일 처음 6글자가 숫자로 시작하는 것만으로 제한할 것
 
@@ -321,8 +323,8 @@ class UseIntelliquant:
 
     def make_txt_from_ticker(self, datemanage):
         #category = ['Listed', 'Delisted']
-        #category = ['Listed']
-        category = ['Delisted']
+        category = ['Listed']
+        #category = ['Delisted']
 
         for type_list in category:
             # 엑셀 파일 불러올 경로
@@ -342,7 +344,8 @@ class UseIntelliquant:
             stocks.reset_index(drop=True, inplace=True)  # 인덱스 리셋
 
             # txt 파일 저장할 경로
-            base_path = f'{self.path_backtest_save}\\{type_list}\\For_Intelliquant\\{datemanage.workday_str}\\'
+            #base_path = f'{self.path_backtest_save}\\{type_list}\\For_Intelliquant\\{datemanage.workday_str}\\'
+            base_path = f'{self.path_backtest_save}\\{type_list}\\For_Intelliquant\\{datemanage.workday_str}_temp\\'
             if not os.path.exists(base_path):
                 os.makedirs(base_path)
 
