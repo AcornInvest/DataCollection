@@ -35,3 +35,4 @@ get_OHLCV_Intelliquant = GetOHLCV_Intelliquant(logger, i)
 #get_OHLCV_Intelliquant.intel.chrome_on(logger, get_OHLCV_Intelliquant.page, get_OHLCV_Intelliquant.name)
 #get_OHLCV_Intelliquant.run_backtest_rep(datemanage, 0, 99)
 get_OHLCV_Intelliquant.run_backtest_process(datemanage) # 인텔리퀀트로 얻은 백테스트 raw 데이터 처리
+

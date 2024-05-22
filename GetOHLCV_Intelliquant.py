@@ -43,7 +43,7 @@ class GetOHLCV_Intelliquant(UseIntelliquant): # 인텔리퀀트에서 모든 종
         # 각 코드별 데이터를 저장할 딕셔너리
         data_by_code = {}
 
-        # financial backtest 일반 데이터 패턴: 숫자가 5개 또는 6개 연속으로 있고, 그 뒤에 옵셔널하게 알파벳 문자가 1개 있는 것
+        # OHLCV backtest 일반 데이터 패턴: 숫자가 5개 또는 6개 연속으로 있고, 그 뒤에 옵셔널하게 알파벳 문자가 1개 있는 것
         data_pattern = r'\[\d{4}-\d{2}-\d{2}\]\s\d{5,6}[A-Za-z]?,'
         date_pattern = r'\[(\d{4}-\d{2}-\d{2})\]'
         code_pattern = r'\] (\d{5}[A-Za-z]?|\d{6}),'

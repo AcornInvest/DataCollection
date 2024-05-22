@@ -36,4 +36,7 @@ get_OHLCV_Intelliquant.intel.chrome_on(logger, get_OHLCV_Intelliquant.page, get_
 #get_OHLCV_Intelliquant.run_backtest_rep(datemanage, 0, 128) # workday = date(2024, 3, 29)
 #get_OHLCV_Intelliquant.run_backtest_rep(datemanage, 0, 89) # workday = date(2015, 12, 31)
 
-get_OHLCV_Intelliquant.run_backtest_rep(datemanage, 150, 235) # workday = date(2007, 12, 31)
+#get_OHLCV_Intelliquant.run_backtest_rep(datemanage, 12, 12) # workday = date(2007, 12, 31)
+
+for num in [87,26,1,52,59]:
+    get_OHLCV_Intelliquant.run_backtest_rep(datemanage, num, num)  # workday = date(2007, 12, 31)
