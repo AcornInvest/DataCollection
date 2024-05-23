@@ -1,13 +1,9 @@
 import os
-import logging
-from datetime import date
-from DateManage import DateManage
-from GetCompensationData import GetCompensationData
-from GetFinancialData import GetFinancialData
-from GetTicker import GetTicker
-from GetOHLCV import GetOHLCV
 from GetOHLCV_Intelliquant import GetOHLCV_Intelliquant
-from multiprocessing import Process
+from MergeData import MergeData
+from DateManage import DateManage
+from datetime import date
+import logging
 
 # 3 formatter 지정하여 log head를 구성해줍니다.
 formatter = logging.Formatter("%(asctime)s - %(levelname)s - [%(funcName)s:%(lineno)d] - %(message)s")
@@ -31,8 +27,7 @@ file_handler_info.setFormatter(formatter)
 logger.addHandler(file_handler_info)
 
 get_OHLCV_Intelliquant = GetOHLCV_Intelliquant(logger, i)
-#get_OHLCV_Intelliquant.make_txt_from_ticker(datemanage)
-#get_OHLCV_Intelliquant.intel.chrome_on(logger, get_OHLCV_Intelliquant.page, get_OHLCV_Intelliquant.name)
-#get_OHLCV_Intelliquant.run_backtest_rep(datemanage, 0, 99)
-get_OHLCV_Intelliquant.run_backtest_process(datemanage) # 인텔리퀀트로 얻은 백테스트 raw 데이터 처리
-
+merge_data = MergeData(logger)
+#merge_data.merge_files('Listed','2007-12-31','2015-12-31', get_OHLCV_Intelliquant.path_backtest_save , get_OHLCV_Intelliquant.suffix)
+#merge_data.merge_files('Delisted','2007-12-31','2015-12-31', get_OHLCV_Intelliquant.path_backtest_save , get_OHLCV_Intelliquant.suffix)
+merge_data.merge_files('Delisted','2015-12-31','2024-03-29', get_OHLCV_Intelliquant.path_backtest_save , get_OHLCV_Intelliquant.suffix)

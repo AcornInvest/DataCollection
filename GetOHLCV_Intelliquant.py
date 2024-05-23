@@ -87,9 +87,9 @@ class GetOHLCV_Intelliquant(UseIntelliquant): # 인텔리퀀트에서 모든 종
                     num_delisting_data_error_stocks = len(delisting_data_error_stocks)
 
         if num_codes != (num_stocks + num_load_failure_stocks + num_delisting_data_error_stocks):
-            print('backtest 결과 이상. num_code != num_stock + num_load_failure_stocks + num_delisting_data_error_stocks')
+            print(path_file, ': backtest 결과 이상. num_code != num_stock + num_load_failure_stocks + num_delisting_data_error_stocks')
             self.logger.info(
-                "Backtest 결과 이상: %s, num_code = %d, num_stocks = %d, num_load_failure_stocks = %d, num_delisting_data_error_stocks = %d" % (
+                'Backtest 결과 이상: %s, num_code = %d, num_stocks = %d, num_load_failure_stocks = %d, num_delisting_data_error_stocks = %d' % (
                 path_file, num_codes, num_stocks, num_load_failure_stocks, num_delisting_data_error_stocks))
 
         # 각 코드별로 DataFrame 객체 생성

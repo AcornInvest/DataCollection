@@ -38,23 +38,7 @@ class UseIntelliquant:
             js_code_base = file.read()
         #print(js_code_base)
         return js_code_base
-    '''
-    def create_js_code_dataset(self, startday, workday, code, listingdate, delistingdate, start_num, end_num):
-        # 상장일, 상폐일, 코드 리스트 받아서 데이터셋 코드 형식 str 리턴
-        format_code_content = self.format_string_data(code, start_num, end_num)
-        format_listingdate_content = self.format_string_data(listingdate, start_num, end_num)
-        format_delistingdate_content = self.format_string_data(delistingdate, start_num, end_num)
 
-        return (
-            f"//Dataset Begin\n"
-            f"var StartDate = new Date('{startday}');\n"
-            f"var FinalDate = new Date('{workday}');\n\n"
-            f"var code = [\n{format_code_content}\n];\n"
-            f"var ListingDate = [\n{format_listingdate_content}\n];\n"
-            f"var DelistingDate = [\n{format_delistingdate_content}\n];\n"
-            f"//Dataset End\n\n"
-        )
-    '''
     def create_js_code_dataset(self, start_date_str, end_date_str, code_content, listingdate_content,
                                delistingdate_content):
         return (
@@ -260,8 +244,8 @@ class UseIntelliquant:
 
     def run_backtest_process(self, datemanage): # Backtest 결과를 가지고 xlsx 파일로 처리
         # category = ['Delisted', 'Listed']
-        #category = ['Delisted']
-        category = ['Listed']
+        category = ['Delisted']
+        #category = ['Listed']
         for listed_status in category:
             # 폴더에서 backtest 파일 이름 목록 찾기 --> file_names
             backtest_result_folder = self.path_backtest_save + '\\' + listed_status + '\\From_Intelliquant\\' + datemanage.workday_str + '\\'
