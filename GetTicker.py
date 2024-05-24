@@ -6,6 +6,7 @@ import numpy as np
 import os
 import configparser
 from string import ascii_uppercase
+from datetime import date
 
 class GetTicker:
     '''
@@ -106,15 +107,20 @@ class GetTicker:
         '''
 
     def process_tickerlist(self, datemanage): # 1차 생성된 tickerlist 엑셀 파일을 받아와서 예외처리하여 엑셀로 저장함
-        #category = ['Delisted']
-        category = ['Listed']
+        category = ['Delisted']
+        #category = ['Listed']
         for type_list in category:
             # original ticker list loading
             file_read_path = self.path_codeLists + f'\\{type_list}\\{type_list}_Ticker_{datemanage.workday_str}.xlsx'
             stocks = pd.read_excel(file_read_path, index_col=0)
+            # 상폐일이 시뮬레이션 시작일보다 늦고, 상장일이 시뮬레이션 마지막 날보다 빠른 것만 남기기
+            stocks['ListingDate'] = pd.to_datetime(stocks['ListingDate']).apply(lambda x: x.date())
+            stocks['DelistingDate'] = pd.to_datetime(stocks['DelistingDate']).apply(lambda x: x.date())
+            stocks = stocks[(stocks['DelistingDate'] >= datemanage.startday) & (stocks['ListingDate'] <= datemanage.workday)]
+
             stocks['Code'] = stocks['Code'].astype(str)
             stocks['Code'] = stocks['Code'].str.zfill(6)  # 코드가 6자리에 못 미치면 앞에 0 채워넣기
-            stocks['ListingDate'] = pd.to_datetime(stocks['ListingDate']).dt.strftime('%Y-%m-%d')  # LIstingDate 열 type 변경
+            stocks['ListingDate'] = pd.to_datetime(stocks['ListingDate']).dt.strftime('%Y-%m-%d')  # ListingDate 열 type 변경
             stocks['DelistingDate'] = pd.to_datetime(stocks['DelistingDate']).dt.strftime('%Y-%m-%d')  # LIstingDate 열 type 변경
 
             date_str = '2024-03-29' # exception_list에 적용되는 날짜 str. 나중에는 각 파일마다 따로 찾는 루틴 있어야 함.
@@ -137,7 +143,9 @@ class GetTicker:
             #  제외 목록 불러오기 - 상장 폐쇄형 펀드, 스팩, 주식수 zero
             file_read_path = self.path_codeLists + f'\\{type_list}\\exception_list\\{type_list}_Ticker_{date_str}_제외목록.xlsx'
             if os.path.exists(file_read_path):
-                stocks_excepted = pd.read_excel(file_read_path, index_col=0)
+                str_columns = ['ListingDate', 'DelistingDate']  # 문자열 형식으로 읽어올 열 이름 리스트
+                stocks_excepted = pd.read_excel(file_read_path, index_col=0, dtype={col: str for col in str_columns})
+                #stocks_excepted = pd.read_excel(file_read_path, index_col=0)
                 stocks_excepted['Code'] = stocks_excepted['Code'].astype(str)
                 stocks_excepted['Code'] = stocks_excepted['Code'].str.zfill(6)  # 코드가 6자리에 못 미치면 앞에 0 채워넣기
                 #  제외 목록을 원래 list에서 삭제
@@ -190,7 +198,8 @@ class GetTicker:
                 stocks_relisted['ListingDate'] = pd.to_datetime(stocks_relisted['ListingDate']).dt.strftime('%Y-%m-%d')
                 stocks_relisted['DelistingDate'] = pd.to_datetime(stocks_relisted['DelistingDate']).dt.strftime('%Y-%m-%d')
                 # 동일한 Code를 갖는 그룹에 modify_code 함수 적용
-                stocks_relisted = stocks_relisted.groupby('Code').apply(self.modify_code).reset_index(drop=True)
+                #stocks_relisted = stocks_relisted.groupby('Code').apply(self.modify_code).reset_index(drop=True)
+                stocks_relisted = stocks_relisted.groupby('Code', group_keys=False).apply(self.modify_code).reset_index(drop=True)
 
                 # '예전상장정보'를 포함하는 stocks_relisted의 행 필터링
                 filtered_relisted = stocks_relisted[stocks_relisted['설명'].str.contains('예전상장정보')]
