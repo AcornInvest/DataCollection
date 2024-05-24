@@ -56,6 +56,7 @@ class VerifyData:
             code = row['Code']
             #path_OHLCV = f"{self.path_data}\\{listed_status}\\{datemanage.workday_str}\\{code}_{self.suffix}_{datemanage.workday_str}.xlsx"
             path_file = f"{self.path_data}\\{listed_status}\\{datemanage.workday_str}_merged\\{code}_{self.suffix}_{datemanage.workday_str}_merged.xlsx" # 임시
+
             # 데이터 완전성 검사 - 모든 code 에 해당하는 데이터가 다 있는지
             if os.path.exists(path_file):
                 df_OHLCV = pd.read_excel(path_file, index_col=0)
