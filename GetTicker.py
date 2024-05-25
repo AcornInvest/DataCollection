@@ -107,13 +107,13 @@ class GetTicker:
         '''
 
     def process_tickerlist(self, datemanage): # 1차 생성된 tickerlist 엑셀 파일을 받아와서 예외처리하여 엑셀로 저장함
-        category = ['Delisted']
+        category = ['Delisted'] # 상폐일이 시뮬레이션 시작일보다 늦고, 상장일이 시뮬레이션 마지막 날보다 빠른 것만 남기기
         #category = ['Listed']
         for type_list in category:
             # original ticker list loading
             file_read_path = self.path_codeLists + f'\\{type_list}\\{type_list}_Ticker_{datemanage.workday_str}.xlsx'
             stocks = pd.read_excel(file_read_path, index_col=0)
-            # 상폐일이 시뮬레이션 시작일보다 늦고, 상장일이 시뮬레이션 마지막 날보다 빠른 것만 남기기
+
             stocks['ListingDate'] = pd.to_datetime(stocks['ListingDate']).apply(lambda x: x.date())
             stocks['DelistingDate'] = pd.to_datetime(stocks['DelistingDate']).apply(lambda x: x.date())
             stocks = stocks[(stocks['DelistingDate'] >= datemanage.startday) & (stocks['ListingDate'] <= datemanage.workday)]
