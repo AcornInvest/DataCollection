@@ -15,6 +15,7 @@ class VerifyOHLCV(VerifyData):
         super().__init__(logger)
         self.suffix = 'OHLCV_intelliquant'  # 파일 이름 저장시 사용하는 접미사
         self.limit_change_day = date(2015, 6, 15)  # 가격제한폭이 30%로 확대된 날
+        self.clearance_days = 17 # 정리매매 기간 최대 15일 + 상폐직전 마진 2일
 
     def load_config(self):
         super().load_config()
@@ -73,25 +74,15 @@ class VerifyOHLCV(VerifyData):
         # 무결성 검사 4. outlier 검출 - 가격제한폭 초과 변동, 음수 있는지 확인
         # 거래 정지인 경우, 상한가/하한가에서 float 값 int 로 변환했을 때 값 차이나는 경우 고려할 것
         df_OHLCV['Pre_Close'] = df_OHLCV['Close'].shift(1)  # 전날의 Close 값 계산
-        '''
-        # 기준일에 따른 조건 설정
-        conditions_before = (df_OHLCV['Date'] < self.limit_change_day) & (
-                (df_OHLCV['Open'] > round(df_OHLCV['Pre_Close']*1.15 + 2)) | (df_OHLCV['Open'] < np.floor(df_OHLCV['Pre_Close'] * 0.85 - 2).astype(float)) |
-                (df_OHLCV['High'] > round(df_OHLCV['Pre_Close']*1.15 + 2)) | (df_OHLCV['High'] < np.floor(df_OHLCV['Pre_Close'] * 0.85  - 2).astype(float)) |
-                (df_OHLCV['Low'] > round(df_OHLCV['Pre_Close']*1.15 + 2)) | (df_OHLCV['Low'] < np.floor(df_OHLCV['Pre_Close'] * 0.85 - 2).astype(float)) |
-                (df_OHLCV['Close'] > round(df_OHLCV['Pre_Close']*1.15 + 2)) | (df_OHLCV['Close'] < np.floor(df_OHLCV['Pre_Close'] * 0.85 - 2).astype(float))
-        ) & ~( # 거래 정지인 경우는 제외
-            (df_OHLCV['Open'] == 0) & (df_OHLCV['High'] == 0) & (df_OHLCV['Low'] == 0) & (df_OHLCV['Close'] != 0) & (df_OHLCV['Volume'] == 0)
+
+        # 정리 매매 고려 조건: 상폐일로부터 self.clearance_days 동안은 outlier 고려 안함
+        last_index = len(df_OHLCV) - 1
+        clearance_start_index = max(0, last_index - self.clearance_days)
+
+        clearance_condition = (
+                (listed_status != 'Delisted') |
+                (df_OHLCV.index <= clearance_start_index)
         )
-        conditions_after = (df_OHLCV['Date'] >= self.limit_change_day) & (
-                (df_OHLCV['Open'] > round(df_OHLCV['Pre_Close']*1.3 + 2)) | (df_OHLCV['Open'] < np.floor(df_OHLCV['Pre_Close'] * 0.7 - 2).astype(float)) |
-                (df_OHLCV['High'] > round(df_OHLCV['Pre_Close']*1.3 + 2)) | (df_OHLCV['High'] < np.floor(df_OHLCV['Pre_Close'] * 0.7 - 2).astype(float)) |
-                (df_OHLCV['Low'] > round(df_OHLCV['Pre_Close']*1.3 + 2)) | (df_OHLCV['Low'] < np.floor(df_OHLCV['Pre_Close'] * 0.7 - 2).astype(float)) |
-                (df_OHLCV['Close'] > round(df_OHLCV['Pre_Close']*1.3 + 2)) | (df_OHLCV['Close'] < np.floor(df_OHLCV['Pre_Close'] * 0.7 - 2).astype(float))
-        )& ~( # 거래 정지인 경우는 제외
-            (df_OHLCV['Open'] == 0) & (df_OHLCV['High'] == 0) & (df_OHLCV['Low'] == 0) & (df_OHLCV['Close'] != 0) & (df_OHLCV['Volume'] == 0)
-        )
-        '''
 
         # 기준일에 따른 조건 설정
         conditions_before = (df_OHLCV['Date'] < self.limit_change_day) & (
@@ -104,6 +95,7 @@ class VerifyOHLCV(VerifyData):
                 (df_OHLCV['Close'] > round(df_OHLCV['Pre_Close'] * 1.151 + 1)) | (
                             df_OHLCV['Close'] < np.floor(df_OHLCV['Pre_Close'] * 0.849 - 1).astype(float))
         ) & ~(df_OHLCV['Volume'] == 0) #거래 정지인 경우는 제외
+        #conditions_before = conditions_before & clearance_condition
 
         conditions_after = (df_OHLCV['Date'] >= self.limit_change_day) & (
                 (df_OHLCV['Open'] > round(df_OHLCV['Pre_Close'] * 1.31 + 1)) | (
@@ -115,10 +107,11 @@ class VerifyOHLCV(VerifyData):
                 (df_OHLCV['Close'] > round(df_OHLCV['Pre_Close'] * 1.31 + 1)) | (
                             df_OHLCV['Close'] < np.floor(df_OHLCV['Pre_Close'] * 0.699 - 1).astype(float))
         ) & ~(df_OHLCV['Volume'] == 0) #거래 정지인 경우는 제외
+        #conditions_after = conditions_after & clearance_condition
 
         conditions_negative = (df_OHLCV['Open'] <= 0) | (df_OHLCV['High'] <= 0) | (df_OHLCV['Low'] <= 0) | (
                     df_OHLCV['Close'] <= 0) | (df_OHLCV['Volume'] < 0)
-        final_conditions = conditions_before | conditions_after | conditions_negative
+        final_conditions = (conditions_before | conditions_after | conditions_negative) & clearance_condition
         outliers = df_OHLCV[final_conditions]
         if not outliers.empty:
             outliers = outliers['Date'].apply(lambda d: d.strftime('%Y-%m-%d')).tolist()
