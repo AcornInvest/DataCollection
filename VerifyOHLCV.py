@@ -116,8 +116,8 @@ class VerifyOHLCV(VerifyData):
                             df_OHLCV['Close'] < np.floor(df_OHLCV['Pre_Close'] * 0.699 - 1).astype(float))
         ) & ~(df_OHLCV['Volume'] == 0) #거래 정지인 경우는 제외
 
-        conditions_negative = (df_OHLCV['Open'] < 0) | (df_OHLCV['High'] < 0) | (df_OHLCV['Low'] < 0) | (
-                    df_OHLCV['Close'] < 0) | (df_OHLCV['Volume'] < 0)
+        conditions_negative = (df_OHLCV['Open'] <= 0) | (df_OHLCV['High'] <= 0) | (df_OHLCV['Low'] <= 0) | (
+                    df_OHLCV['Close'] <= 0) | (df_OHLCV['Volume'] < 0)
         final_conditions = conditions_before | conditions_after | conditions_negative
         outliers = df_OHLCV[final_conditions]
         if not outliers.empty:
