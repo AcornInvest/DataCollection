@@ -33,6 +33,7 @@ class VerifyOHLCV(VerifyData):
         df_OHLCV.reset_index(inplace=True)
         df_OHLCV['Date'] = pd.to_datetime(df_OHLCV['Date']).dt.date
 
+        '''
         # 무결성 검사 2. NaN 있는지 확인
         rows_with_nan = df_OHLCV.isna().any(axis=1)  # NaN 있는지 확인
         if rows_with_nan.any():
@@ -70,15 +71,16 @@ class VerifyOHLCV(VerifyData):
             self.logger.info(out_of_order_rows_list)
             utils.save_list_to_file_append(out_of_order_rows_list, path)  # 텍스트 파일에 오류 부분 저장
         # df_OHLCV.drop(['Out_of_Order'], axis=1, inplace=True) #처리를 어떻게 할지는 생각해 보자
+        '''
 
         # 무결성 검사 4. outlier 검출 - 가격제한폭 초과 변동, 음수 있는지 확인, 이틀이상 값이 동일한지 확인
         # 거래 정지인 경우, 상한가/하한가에서 float 값 int 로 변환했을 때 값 차이나는 경우 고려할 것
-        df_OHLCV['Pre_Open'] = df_OHLCV['Close'].shift(1)  # 전날의 Close 값 계산
-        df_OHLCV['Pre_High'] = df_OHLCV['High'].shift(1)  # 전날의 Close 값 계산
-        df_OHLCV['Pre_Low'] = df_OHLCV['Low'].shift(1)  # 전날의 Close 값 계산
+        df_OHLCV['Pre_Open'] = df_OHLCV['Open'].shift(1)  # 전날의 Open 값 계산
+        df_OHLCV['Pre_High'] = df_OHLCV['High'].shift(1)  # 전날의 High 값 계산
+        df_OHLCV['Pre_Low'] = df_OHLCV['Low'].shift(1)  # 전날의 Low 값 계산
         df_OHLCV['Pre_Close'] = df_OHLCV['Close'].shift(1)  # 전날의 Close 값 계산
-        df_OHLCV['Pre_Volume'] = df_OHLCV['Volume'].shift(1)  # 전날의 Close 값 계산
-
+        df_OHLCV['Pre_Volume'] = df_OHLCV['Volume'].shift(1)  # 전날의 Volume 값 계산
+        '''
         # 정리 매매 고려 조건: 상폐일로부터 self.clearance_days 동안은 outlier 고려 안함
         last_index = len(df_OHLCV) - 1
         clearance_start_index = max(0, last_index - self.clearance_days)
@@ -125,5 +127,29 @@ class VerifyOHLCV(VerifyData):
             #path = f"{self.path_data}\\{listed_status}\\{datemanage.workday_str}\\outliers_list.txt"
             path = f"{self.path_data}\\{listed_status}\\{datemanage.workday_str}_merged\\outliers_list.txt" # 임시
             utils.save_list_to_file_append(outliers_list, path)  # 텍스트 파일에 오류 부분 저장
+        '''
+        # 무결성 검사 5. 값이 이틀 연속 같은 경우 검출 - OHLC 중 이틀연속 값이 같은 컬럼이 2개 이상인 경우.
+        # 거래 정지인 경우는 검출 제외
+        consecutive_same_values = df_OHLCV[df_OHLCV.apply(self.filter_rows, axis=1)]
+        if not consecutive_same_values.empty:
+            consecutive_same_values = consecutive_same_values['Date'].apply(lambda d: d.strftime('%Y-%m-%d')).tolist()
+            consecutive_same_values_list = [f'{code}, 값이 이틀 연속 같은 경우: {consecutive_same_values}']
+            self.logger.info(consecutive_same_values_list)
+            path = f"{self.path_data}\\{listed_status}\\{datemanage.workday_str}_merged\\consecutive_same_values_list.txt" # 임시
+            utils.save_list_to_file_append(consecutive_same_values_list, path)  # 텍스트 파일에 오류 부분 저장
 
-        df_OHLCV.drop(['Pre_Close'], axis=1, inplace=True)
+    def filter_rows(self, row): # 값이 이틀 연속 같은 경우의 행을 추출
+        if row['Volume'] == 0 or row['Pre_Volume'] == 0:
+            return False
+        '''
+        for col in ['Open', 'High', 'Low', 'Close']:
+            if row[col] == 0:
+                return False
+        '''
+        same_value_count = sum([
+            row['Open'] == row['Pre_Open'],
+            row['High'] == row['Pre_High'],
+            row['Low'] == row['Pre_Low'],
+            row['Close'] == row['Pre_Close']
+        ])
+        return same_value_count >= 4
