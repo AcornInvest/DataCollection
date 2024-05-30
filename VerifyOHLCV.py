@@ -71,9 +71,13 @@ class VerifyOHLCV(VerifyData):
             utils.save_list_to_file_append(out_of_order_rows_list, path)  # 텍스트 파일에 오류 부분 저장
         # df_OHLCV.drop(['Out_of_Order'], axis=1, inplace=True) #처리를 어떻게 할지는 생각해 보자
 
-        # 무결성 검사 4. outlier 검출 - 가격제한폭 초과 변동, 음수 있는지 확인
+        # 무결성 검사 4. outlier 검출 - 가격제한폭 초과 변동, 음수 있는지 확인, 이틀이상 값이 동일한지 확인
         # 거래 정지인 경우, 상한가/하한가에서 float 값 int 로 변환했을 때 값 차이나는 경우 고려할 것
+        df_OHLCV['Pre_Open'] = df_OHLCV['Close'].shift(1)  # 전날의 Close 값 계산
+        df_OHLCV['Pre_High'] = df_OHLCV['High'].shift(1)  # 전날의 Close 값 계산
+        df_OHLCV['Pre_Low'] = df_OHLCV['Low'].shift(1)  # 전날의 Close 값 계산
         df_OHLCV['Pre_Close'] = df_OHLCV['Close'].shift(1)  # 전날의 Close 값 계산
+        df_OHLCV['Pre_Volume'] = df_OHLCV['Volume'].shift(1)  # 전날의 Close 값 계산
 
         # 정리 매매 고려 조건: 상폐일로부터 self.clearance_days 동안은 outlier 고려 안함
         last_index = len(df_OHLCV) - 1
@@ -111,6 +115,7 @@ class VerifyOHLCV(VerifyData):
 
         conditions_negative = (df_OHLCV['Open'] <= 0) | (df_OHLCV['High'] <= 0) | (df_OHLCV['Low'] <= 0) | (
                     df_OHLCV['Close'] <= 0) | (df_OHLCV['Volume'] < 0)
+
         final_conditions = (conditions_before | conditions_after | conditions_negative) & clearance_condition
         outliers = df_OHLCV[final_conditions]
         if not outliers.empty:

@@ -22,5 +22,6 @@ file_handler_info.setFormatter(formatter)
 logger.addHandler(file_handler_info)
 
 verify_OHLCV = VerifyOHLCV(logger)
-verify_OHLCV.check_data(datemanage, 'Delisted')
+#verify_OHLCV.check_data(datemanage, 'Delisted')
+verify_OHLCV.check_data(datemanage, 'Listed')
 
