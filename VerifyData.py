@@ -28,7 +28,7 @@ class VerifyData:
 
     def check_data(self, datemanage, listed_status):
         # 거래일 목록 ref 읽어오기
-        path_date_ref = f'{self.path_date_ref}\\bussiness_day_ref_{datemanage.workday_str}.xlsx'
+        path_date_ref = f'{self.path_date_ref}\\{self.date_prefix}_{datemanage.workday_str}.xlsx'
         df_business_days = pd.read_excel(path_date_ref)
         df_business_days['Date'] = pd.to_datetime(df_business_days['Date']).dt.date
 
@@ -59,8 +59,8 @@ class VerifyData:
 
             # 데이터 완전성 검사 - 모든 code 에 해당하는 데이터가 다 있는지
             if os.path.exists(path_file):
-                df_OHLCV = pd.read_excel(path_file, index_col=0)
-                self.check_integrity(code, df_b_day_ref, df_OHLCV, datemanage, listed_status)  # 무결성 검사. 자식클래스에서 선언할 것
+                df_data = pd.read_excel(path_file, index_col=0)
+                self.check_integrity(code, df_b_day_ref, df_data, datemanage, listed_status)  # 무결성 검사. 자식클래스에서 선언할 것
             else:
                 #path = f"{self.path_data}\\{listed_status}\\{datemanage.workday_str}\\{self.suffix}_not_existed_list.txt"
                 path = f"{self.path_data}\\{listed_status}\\{datemanage.workday_str}_merged\\{self.suffix}_not_existed_list.txt" # 임시
