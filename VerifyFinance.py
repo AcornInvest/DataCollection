@@ -15,8 +15,6 @@ class VerifyFinance(VerifyData):
         super().__init__(logger)
         self.suffix = 'financial'  # 파일 이름 저장시 사용하는 접미사
         self.date_prefix = 'financial_day_ref' # date reference 파일의 접미사
-        #self.limit_change_day = date(2015, 6, 15)  # 가격제한폭이 30%로 확대된 날
-        #self.clearance_days = 17 # 정리매매 기간 최대 15일 + 상폐직전 마진 2일
 
     def load_config(self):
         super().load_config()
@@ -73,5 +71,30 @@ class VerifyFinance(VerifyData):
         # df_data.drop(['Out_of_Order'], axis=1, inplace=True) #처리를 어떻게 할지는 생각해 보자
 
         # 무결성 검사 4. outlier 검출 - 음수 있는지 확인(RV), 연속값이 동일한지 확인
-        # 거래 정지인 경우, 상한가/하한가에서 float 값 int 로 변환했을 때 값 차이나는 경우 고려할 것
-        df_data['Pre_Close'] = df_data['Close'].shift(1)  # 전날의 Close 값 계산
+        # Check for negative values in RV column
+        outliers = df_data[df_data["RV"] < 0]
+
+        if not outliers.empty:
+            outliers = outliers['Date'].apply(lambda d: d.strftime('%Y-%m-%d')).tolist()
+            outliers_list = [f'{code}, RV 음수: {outliers}']
+            self.logger.info(outliers_list)
+            path = f"{self.path_data}\\{listed_status}\\{datemanage.workday_str}_merged\\outliers_list.txt" # 임시
+            utils.save_list_to_file_append(outliers_list, path)  # 텍스트 파일에 오류 부분 저장
+
+        # 무결성 검사 5. # 연속적으로 같은 값을 가지는지 여부를 판별
+        # 값이 두번 연속 같은 경우 검출 - 모든 항목에 대해서. 0인 경우는 제외
+        consecutive_rows = []
+        columns = ["RV", "GP", "OI", "NP"]
+
+        for col in columns:
+            for i in range(1, len(df_data)):
+                if df_data.loc[i, col] == df_data.loc[i - 1, col] and df_data.loc[i, col] != 0:
+                    consecutive_rows.append(df_data.iloc[i])
+
+        consecutive_same_values = pd.DataFrame(consecutive_rows)
+        if not consecutive_same_values.empty:
+            consecutive_same_values = consecutive_same_values['Date'].apply(lambda d: d.strftime('%Y-%m-%d')).tolist()
+            consecutive_same_values_list = [f'{code}, 값이 2일 연속 같은 경우: {consecutive_same_values}']
+            self.logger.info(consecutive_same_values_list)
+            path = f"{self.path_data}\\{listed_status}\\{datemanage.workday_str}_merged\\consecutive_same_values_list.txt"  # 임시
+            utils.save_list_to_file_append(consecutive_same_values_list, path)  # 텍스트 파일에 오류 부분 저장
