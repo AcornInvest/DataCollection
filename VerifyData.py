@@ -54,17 +54,24 @@ class VerifyData:
 
             # 코드에 해당하는 데이터 불러와서 무결성 검사
             code = row['Code']
-            #path_OHLCV = f"{self.path_data}\\{listed_status}\\{datemanage.workday_str}\\{code}_{self.suffix}_{datemanage.workday_str}.xlsx"
-            path_file = f"{self.path_data}\\{listed_status}\\{datemanage.workday_str}_merged\\{code}_{self.suffix}_{datemanage.workday_str}_merged.xlsx" # 임시
+            path_file = f"{self.path_data}\\{listed_status}\\{datemanage.workday_str}\\{code}_{self.suffix}_{datemanage.workday_str}.xlsx"
+            #path_file = f"{self.path_data}\\{listed_status}\\{datemanage.workday_str}_merged\\{code}_{self.suffix}_{datemanage.workday_str}_merged.xlsx" # 임시
 
             # 데이터 완전성 검사 - 모든 code 에 해당하는 데이터가 다 있는지
+            no_error = True
             if os.path.exists(path_file):
                 df_data = pd.read_excel(path_file, index_col=0)
-                self.check_integrity(code, df_b_day_ref, df_data, datemanage, listed_status)  # 무결성 검사. 자식클래스에서 선언할 것
+                no_error = self.check_integrity(code, df_b_day_ref, df_data, datemanage, listed_status)  # 무결성 검사. 자식클래스에서 선언할 것
             else:
-                #path = f"{self.path_data}\\{listed_status}\\{datemanage.workday_str}\\{self.suffix}_not_existed_list.txt"
-                path = f"{self.path_data}\\{listed_status}\\{datemanage.workday_str}_merged\\{self.suffix}_not_existed_list.txt" # 임시
+                path = f"{self.path_data}\\{listed_status}\\{datemanage.workday_str}\\{self.suffix}_not_existed_list.txt"
+                #path = f"{self.path_data}\\{listed_status}\\{datemanage.workday_str}_merged\\{self.suffix}_not_existed_list.txt" # 임시
                 data_not_existed = [code]
                 utils.save_list_to_file_append(data_not_existed, path)  # 텍스트 파일에 오류 부분 저장
                 print(f"{self.suffix}, {code} 파일이 없음")
                 self.logger.info(f"{self.suffix}, {code} 파일이 없음")
+
+            if no_error == False:
+                flag_no_error = False
+
+        if flag_no_error:
+            print("에러 없음")
