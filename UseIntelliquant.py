@@ -107,8 +107,8 @@ class UseIntelliquant:
         #chrome_on()은 되어 있는 상태에서 호출
 
         #category = ['Delisted', 'Listed']
-        #category = ['Delisted']
-        category = ['Listed']
+        category = ['Delisted']
+        #category = ['Listed']
         for listed_status in category:
             self.path_for_intelliquant_dir = self.path_backtest_save + '\\' + listed_status + '\\For_Intelliquant\\' + datemanage.workday_str + '\\'
             # max_file_index(폴더 내 데이터 파일 수) 계산
@@ -307,8 +307,8 @@ class UseIntelliquant:
 
     def make_txt_from_ticker(self, datemanage):
         #category = ['Listed', 'Delisted']
-        category = ['Listed']
-        #category = ['Delisted']
+        #category = ['Listed']
+        category = ['Delisted']
 
         for type_list in category:
             # 엑셀 파일 불러올 경로
@@ -328,8 +328,8 @@ class UseIntelliquant:
             stocks.reset_index(drop=True, inplace=True)  # 인덱스 리셋
 
             # txt 파일 저장할 경로
-            #base_path = f'{self.path_backtest_save}\\{type_list}\\For_Intelliquant\\{datemanage.workday_str}\\'
-            base_path = f'{self.path_backtest_save}\\{type_list}\\For_Intelliquant\\{datemanage.workday_str}_temp\\'
+            base_path = f'{self.path_backtest_save}\\{type_list}\\For_Intelliquant\\{datemanage.workday_str}\\'
+            #base_path = f'{self.path_backtest_save}\\{type_list}\\For_Intelliquant\\{datemanage.workday_str}_temp\\'
             if not os.path.exists(base_path):
                 os.makedirs(base_path)
 

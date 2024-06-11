@@ -40,6 +40,7 @@ class VerifyData:
         df_codelist['ListingDate'] = pd.to_datetime(df_codelist['ListingDate']).dt.date
         df_codelist['DelistingDate'] = pd.to_datetime(df_codelist['DelistingDate']).dt.date
 
+        flag_no_error = True # 에러가 없다고 플래그 초기값 설정
         for index, row in df_codelist.iterrows():
             listing_date = row['ListingDate']
             delisting_date = row['DelistingDate']

@@ -27,4 +27,4 @@ logger.addHandler(file_handler_info)
 
 get_ticker = GetTicker(logger)
 get_ticker.process_tickerlist(datemanage) # original ticker list 데이터의 처리
-#get_ticker.make_txt_from_ticker(datemanage) # 처리된 tickerlist xlsx 파일에서 txt 생성
+#get_ticker.make_txt_from_ticker(datemanage) # 처리된 tickerlist xlsx 파일에서 txt 생성 --> 이거 각각의 get~에서 하도록 함

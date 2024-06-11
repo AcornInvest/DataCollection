@@ -81,7 +81,7 @@ class GetTicker:
         '''
         return stocks
 
-    def get_delistingstocks_test(self):  # 우선주만 남기는 테스트 용도
+    def get_delistingstocks_test(self):  # 우선주만 남기는 코드. 테스트 용도
         stocks = fdr.StockListing('KRX-DELISTING')  # 코스피, 코스닥, 코넥스 전체
         cond = stocks['Market'] != 'KONEX'
         stocks = stocks.loc[cond]  # market == 'KONEX' 제외
@@ -107,8 +107,8 @@ class GetTicker:
         '''
 
     def process_tickerlist(self, datemanage): # 1차 생성된 tickerlist 엑셀 파일을 받아와서 예외처리하여 엑셀로 저장함
-        category = ['Delisted'] # 상폐일이 시뮬레이션 시작일보다 늦고, 상장일이 시뮬레이션 마지막 날보다 빠른 것만 남기기
-        #category = ['Listed']
+        #category = ['Delisted'] # 상폐일이 시뮬레이션 시작일보다 늦고, 상장일이 시뮬레이션 마지막 날보다 빠른 것만 남기기
+        category = ['Listed']
         for type_list in category:
             # original ticker list loading
             file_read_path = self.path_codeLists + f'\\{type_list}\\{type_list}_Ticker_{datemanage.workday_str}.xlsx'
@@ -123,7 +123,9 @@ class GetTicker:
             stocks['ListingDate'] = pd.to_datetime(stocks['ListingDate']).dt.strftime('%Y-%m-%d')  # ListingDate 열 type 변경
             stocks['DelistingDate'] = pd.to_datetime(stocks['DelistingDate']).dt.strftime('%Y-%m-%d')  # LIstingDate 열 type 변경
 
-            date_str = '2024-03-29' # exception_list에 적용되는 날짜 str. 나중에는 각 파일마다 따로 찾는 루틴 있어야 함.
+            #date_str = '2024-03-29' # exception_list에 적용되는 날짜 str. 나중에는 각 파일마다 따로 찾는 루틴 있어야 함.
+            date_str = datemanage.workday_str  # exception_list에 적용되는 날짜 str
+
             #  스팩 우회 상장 목록 불러오기
             file_read_path = self.path_codeLists + f'\\{type_list}\\exception_list\\{type_list}_Ticker_{date_str}_스팩우회상장.xlsx'
             if os.path.exists(file_read_path):

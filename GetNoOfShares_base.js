@@ -104,7 +104,8 @@ function onDayClose(now){
             NoShare[j] = target_stock[j].getNoOfShare();
         	if (NoShare[j] != NoShare_old[j]){
             //logger.info(ModifyDate(stock_listed.getDate(i)) + ', ' + removeA(target_stock[j].code) + ', o: ' + NoShare_old[j] + ', n: ' + NoShare[j]);
-            logger.info(ModifyDate(stock_listed.getDate()) + ', ' + removeA(target_stock_code[j]) + ', o: ' + NoShare_old[j] + ', n: ' + NoShare[j]);
+            //logger.info(ModifyDate(stock_listed.getDate()) + ', ' + removeA(target_stock_code[j]) + ', o: ' + NoShare_old[j] + ', n: ' + NoShare[j]);
+            logger.info(removeA(target_stock_code[j]) + ', o: ' + NoShare_old[j] + ', n: ' + NoShare[j]);
             NoShare_old[j] = NoShare[j];
         	}
     	}        

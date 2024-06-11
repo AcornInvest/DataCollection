@@ -6,17 +6,17 @@ from DateManage import DateManage
 from datetime import date
 import configparser
 from UseIntelliquant import UseIntelliquant
-import json
-import math
 import pandas as pd
+import re
 
 class GetCompensationData(UseIntelliquant):
-    def __init__(self, logger):
-        super().__init__(logger)
+    def __init__(self, logger, num_process):
+        super().__init__(logger, num_process)
         # 인텔리퀀트 시뮬레이션 종목수 조회시 한번에 돌리는 종목 수.
         #self.max_batchsize = 20 # Delisted
-        self.max_batchsize = 10 # Listed
+        #self.max_batchsize = 10 # Listed
         self.max_unit_year = 480  # 한 종목, 1년을 시뮬레이션할 때가 1 유닛. 20종목*24년 = 480 유닛만큼 끊어서 시뮬레이션 하겠다는 의미
+        self.max_unit_year = 4800 # 480*10
         self.path_base_code = self.cur_dir + '\\' + 'GetNoOfShares_base.js'
         self.suffix = 'compensation'  # 파일 이름 저장시 사용하는 접미사
 
@@ -32,6 +32,65 @@ class GetCompensationData(UseIntelliquant):
         self.name = config['intelliquant']['name']
         self.path_backtest_save = config['path']['path_backtest_save']
 
+    def process_backtest_result(self, path_file):  # backtest result 를 처리하여 df로 반환
+        # 각 코드별 데이터를 저장할 딕셔너리
+        data_by_code = {}
+
+        # OHLCV backtest 일반 데이터 패턴: 숫자가 5개 또는 6개 연속으로 있고, 그 뒤에 옵셔널하게 알파벳 문자가 1개 있는 것
+        data_pattern = r'\[\d{4}-\d{2}-\d{2}\]\s\d{5,6}[A-Za-z]?,'
+        date_pattern = r'\[(\d{4}-\d{2}-\d{2})\]'
+        code_pattern = r'\] (\d{5}[A-Za-z]?|\d{6}),'
+        old_pattern = r'o: (\d+),'
+        new_pattern = r'n: (\d+)'
+        num_codes = 0
+        num_stocks = 0
+        num_load_failure_stocks = 0
+        num_delisting_data_error_stocks = 0
+        with open(path_file, 'r', encoding='utf-8') as file:
+            for line in file:
+                if re.search(data_pattern, line):  # 일반 데이터 처리
+                    date = re.search(date_pattern, line).group(1)
+                    code = re.search(code_pattern, line).group(1)
+                    old = re.search(old_pattern, line).group(1)
+                    new = re.search(new_pattern, line).group(1)
+                    # 코드에 따라 데이터 묶기
+                    if code not in data_by_code:
+                        data_by_code[code] = []
+                    data_by_code[code].append((date, old, new))
+                elif 'list_index:' in line:
+                    num_codes = int(line.split('list_index:')[1].strip())
+                elif 'NumOfStocks:' in line:
+                    num_stocks = int(line.split('NumOfStocks:')[1].strip())
+                elif 'load_failure_list:' in line:
+                    extracted_data = line.split("load_failure_list: [")[1].split("]")[0].split(",")
+                    load_failure_stocks = [x.strip() for x in extracted_data if x.strip()]  # 비어있지 않은 요소만 추가
+                    num_load_failure_stocks = len(load_failure_stocks)
+                elif 'DelistingDate_Error_list:' in line:
+                    extracted_data = line.split("DelistingDate_Error_list: [")[1].split("]")[0].split(",")
+                    delisting_data_error_stocks = [x.strip() for x in extracted_data if x.strip()]
+                    num_delisting_data_error_stocks = len(delisting_data_error_stocks)
+
+        if num_codes != (num_stocks + num_load_failure_stocks + num_delisting_data_error_stocks):
+            print(path_file, ': backtest 결과 이상. num_code != num_stock + num_load_failure_stocks + num_delisting_data_error_stocks')
+            self.logger.info(
+                'Backtest 결과 이상: %s, num_code = %d, num_stocks = %d, num_load_failure_stocks = %d, num_delisting_data_error_stocks = %d' % (
+                path_file, num_codes, num_stocks, num_load_failure_stocks, num_delisting_data_error_stocks))
+
+        # 각 코드별로 DataFrame 객체 생성
+        dataframes = {}
+        for code, data in data_by_code.items():
+            df = pd.DataFrame(data, columns=['Date', 'OldNoShare', 'NewNoShare'])
+            # 날짜순으로 정렬
+            df['Date'] = pd.to_datetime(df['Date']).dt.strftime('%Y-%m-%d')
+            df.sort_values('Date', inplace=True)
+            # Reset index
+            df.reset_index(drop=True, inplace=True)
+            dataframes[code] = df
+
+        return dataframes
+
+    # 2024.6.11 기준 예전 코드
+    '''
     def process_backtest_result(self, path_file): #backtest result 를 처리하여 df로 반환
         # 각 코드별 데이터를 저장할 딕셔너리
         data_by_code = {}
@@ -109,43 +168,4 @@ class GetCompensationData(UseIntelliquant):
 
             dataframes[code] = df
         return dataframes
-
-'''
-오늘(log용), 기준일(tikerlist 받아온 작업일) 정보 필요
-
- # 필요한 파일 이름들이 뭐가 있지?
- 로그
-불러올 파일 - for intelliquant
-
-저장할 파일 - intelliquant results, Noshare xls 파일
-
-# 통합하는 프로그램에서는 필요한 파일 이름들이 뭐가 있지?
-불러올 파일: intelliquant result, ohlcv results, tickerlist xls 파일
-저장할 파일: ohlcv results
-'''
-
-'''
-filename = os.path.splitext(os.path.basename(__file__))[0]  # 실행하고 있는 스크립트 파일 이름 가져오기
-startday = datetime(2000, 1, 4)
-workday = datetime(2024, 3, 29)
-datemanage = DateManage(filename)
-datemanage.SetStartday(startday)
-datemanage.SetWorkday(workday)
-
-logger = logging.getLogger('GetCompensationData')
-logger.setLevel(logging.INFO)
-# 3 formatter 지정하여 log head를 구성해줍니다.
-## asctime - 시간정보
-## levelname - logging level
-## funcName - log가 기록된 함수
-## lineno - log가 기록된 line
-formatter = logging.Formatter("%(asctime)s - %(levelname)s - [%(funcName)s:%(lineno)d] - %(message)s")
-file_handler_info = logging.FileHandler(filename=datemanage.path_log)
-file_handler_info.setFormatter(formatter)
-logger.addHandler(file_handler_info)
-
-GetCompData = GetCompensationData(logger)
-GetCompData.intel.chrome_on(logger, GetCompData.page, GetCompData.name)
-GetCompData.run_backtest_rep(datemanage) # 인텔리퀀트로 백테스트 돌려서 no_share raw data 크롤링
-#GetCompData.run_backtest_process(datemanage) # 인텔리퀀트로 얻은 백테스트 raw 데이터 처리
-'''
+        '''
