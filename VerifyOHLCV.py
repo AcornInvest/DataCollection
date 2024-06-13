@@ -33,6 +33,7 @@ class VerifyOHLCV(VerifyData):
     def check_integrity(self, code, df_b_day_ref, df_data, datemanage, listed_status):
         df_data.reset_index(inplace=True)
         df_data['Date'] = pd.to_datetime(df_data['Date']).dt.date
+        no_error = True
 
         # 무결성 검사 2. NaN 있는지 확인
         rows_with_nan = df_data.isna().any(axis=1)  # NaN 있는지 확인
@@ -40,13 +41,14 @@ class VerifyOHLCV(VerifyData):
             NaN_exists = df_data[rows_with_nan]['Date'].apply(lambda d: d.strftime('%Y-%m-%d')).tolist()
             NaN_exists_list = [f"{code}, NaN 값이 있는 날짜: {NaN_exists}"]
             self.logger.info(NaN_exists_list)
-            #path = f"{self.path_data}\\{listed_status}\\{datemanage.workday_str}\\NaN_exists_list.txt"
-            path = f"{self.path_data}\\{listed_status}\\{datemanage.workday_str}_merged\\NaN_exists_list.txt" # 임시
+            path = f"{self.path_data}\\{listed_status}\\{datemanage.workday_str}\\NaN_exists_list.txt"
+            #path = f"{self.path_data}\\{listed_status}\\{datemanage.workday_str}_merged\\NaN_exists_list.txt" # 임시
             utils.save_list_to_file_append(NaN_exists_list, path)  # 텍스트 파일에 오류 부분 저장
+            no_error = False
 
         # 무결성 검사 3. 시간적 일관성 확인
-        # path = f"{self.path_data}\\{listed_status}\\{datemanage.workday_str}\\time_unconsistency_list.txt"
-        path = f"{self.path_data}\\{listed_status}\\{datemanage.workday_str}_merged\\time_unconsistency_list.txt" # 임시
+        path = f"{self.path_data}\\{listed_status}\\{datemanage.workday_str}\\time_unconsistency_list.txt"
+        #path = f"{self.path_data}\\{listed_status}\\{datemanage.workday_str}_merged\\time_unconsistency_list.txt" # 임시
         # ref 와 지금 받아온 OHLCV의 date 비교
         unique_to_ref = df_b_day_ref[
             ~df_b_day_ref['Date'].isin(df_data['Date'])]  # df_date_reference에만 있고 df_OHLCV에 없는 날짜.
@@ -57,11 +59,13 @@ class VerifyOHLCV(VerifyData):
             unique_to_ref_list = [f'{code}, df_OHLCV에 없는 날짜: {unique_to_ref}']
             self.logger.info(unique_to_ref_list)
             utils.save_list_to_file_append(unique_to_ref_list, path)  # 텍스트 파일에 오류 부분 저장
+            no_error = False
         if not unique_to_df_OHLCV.empty:
             unique_to_df_OHLCV = unique_to_df_OHLCV['Date'].apply(lambda d: d.strftime('%Y-%m-%d')).tolist()
             unique_to_df_OHLCV_list = [f'{code}, df_OHLCV에만 추가로 있는 날짜: {unique_to_df_OHLCV}']
             self.logger.info(unique_to_df_OHLCV_list)
             utils.save_list_to_file_append(unique_to_df_OHLCV_list, path)  # 텍스트 파일에 오류 부분 저장
+            no_error = False
         # 시간 순으로 정렬되지 않은 행 찾기. 같은 날짜가 또 있는 것도 포함
         df_data['Out_of_Order'] = df_data['Date'] <= df_data['Date'].shift(1)
         out_of_order_rows = df_data[df_data['Out_of_Order']]
@@ -70,6 +74,7 @@ class VerifyOHLCV(VerifyData):
             out_of_order_rows_list = [f'{code}, 날짜가 역순인 부분: {out_of_order_rows}']
             self.logger.info(out_of_order_rows_list)
             utils.save_list_to_file_append(out_of_order_rows_list, path)  # 텍스트 파일에 오류 부분 저장
+            no_error = False
         # df_data.drop(['Out_of_Order'], axis=1, inplace=True) #처리를 어떻게 할지는 생각해 보자
 
         # 무결성 검사 4. outlier 검출 - 가격제한폭 초과 변동, 음수 있는지 확인, 이틀이상 값이 동일한지 확인
@@ -119,9 +124,10 @@ class VerifyOHLCV(VerifyData):
             outliers = outliers['Date'].apply(lambda d: d.strftime('%Y-%m-%d')).tolist()
             outliers_list = [f'{code}, 가격제한폭 초과 혹은 음수: {outliers}']
             self.logger.info(outliers_list)
-            #path = f"{self.path_data}\\{listed_status}\\{datemanage.workday_str}\\outliers_list.txt"
-            path = f"{self.path_data}\\{listed_status}\\{datemanage.workday_str}_merged\\outliers_list.txt" # 임시
+            path = f"{self.path_data}\\{listed_status}\\{datemanage.workday_str}\\outliers_list.txt"
+            #path = f"{self.path_data}\\{listed_status}\\{datemanage.workday_str}_merged\\outliers_list.txt" # 임시
             utils.save_list_to_file_append(outliers_list, path)  # 텍스트 파일에 오류 부분 저장
+            no_error = False
 
         # 무결성 검사 5. # 연속적으로 같은 값을 가지는지 여부를 판별
         # 값이 이틀 연속 같은 경우 검출 - OHLC 중 이틀연속 값이 같은 컬럼이 2개 이상인 경우.
@@ -159,6 +165,7 @@ class VerifyOHLCV(VerifyData):
             path = f"{self.path_data}\\{listed_status}\\{datemanage.workday_str}_merged\\consecutive_same_values_list.txt" # 임시
             utils.save_list_to_file_append(consecutive_same_values_list, path)  # 텍스트 파일에 오류 부분 저장
         '''
+        return no_error
 
     # n일간 연속적으로 같은 값을 가지는지 판별하는 함수
     def check_continuous_same_value(self, df, n, compare_columns):

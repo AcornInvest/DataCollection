@@ -19,7 +19,9 @@ filename = f'{os.path.splitext(os.path.basename(__file__))[0]}_Proc_{i}'  # ì‹¤í
 #workday = date(2007, 12, 31)
 #startday = date(2008, 1, 1)
 #workday = date(2015, 12, 31)
-startday = date(2016, 1, 1)
+#startday = date(2016, 1, 1)
+#workday = date(2024, 3, 29)
+startday = date(2000, 1, 4)
 workday = date(2024, 3, 29)
 datemanage = DateManage(filename)
 datemanage.SetStartday(startday)
@@ -32,13 +34,17 @@ logger.addHandler(file_handler_info)
 
 get_OHLCV_Intelliquant = GetOHLCV_Intelliquant(logger, i)
 get_OHLCV_Intelliquant.intel.chrome_on(logger, get_OHLCV_Intelliquant.page, get_OHLCV_Intelliquant.name)
-#get_OHLCV_Intelliquant.run_backtest_rep(datemanage, 111, 128) # workday = date(2024, 3, 29)
+#get_OHLCV_Intelliquant.run_backtest_rep(datemanage, 307, 340) # workday = date(2024, 3, 29)
 #get_OHLCV_Intelliquant.run_backtest_rep(datemanage, 0, 128) # workday = date(2024, 3, 29)
-#get_OHLCV_Intelliquant.run_backtest_rep(datemanage, 0, 89) # workday = date(2015, 12, 31)
-#get_OHLCV_Intelliquant.run_backtest_rep(datemanage, 356, 356) # workday = date(2007, 12, 31)
 
-for num in [167, 36, 219, 178, 65, 74, 210, 98, 158, 152, \
-            154, 169, 199, 72, 63, 48, 1, 184, 215, 34, \
-            161, 412, 43, 408, 190, 67, 78, 188, 174, 88, \
-            182, 21, 69, 186, 76, 156, 83]:
+'''
+for num in [343, 346, 349, 352, 355, 358, 361, 364, 367, 370, 373,\
+            683, 686, 689, 692, 695, 697, 700, 703, 706, 709, 712, 715, \
+            967 \
+            ]:
+    get_OHLCV_Intelliquant.run_backtest_rep(datemanage, num, num)
+'''
+
+
+for num in [643, 1065]:
     get_OHLCV_Intelliquant.run_backtest_rep(datemanage, num, num)

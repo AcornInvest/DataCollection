@@ -19,7 +19,9 @@ filename = f'{os.path.splitext(os.path.basename(__file__))[0]}_Proc_{i}'  # ì‹¤í
 #workday = date(2007, 12, 31)
 #startday = date(2008, 1, 1)
 #workday = date(2015, 12, 31)
-startday = date(2016, 1, 1)
+#startday = date(2016, 1, 1)
+#workday = date(2024, 3, 29)
+startday = date(2000, 1, 4)
 workday = date(2024, 3, 29)
 datemanage = DateManage(filename)
 datemanage.SetStartday(startday)
@@ -35,4 +37,4 @@ get_OHLCV_Intelliquant.intel.chrome_on(logger, get_OHLCV_Intelliquant.page, get_
 #get_OHLCV_Intelliquant.run_backtest_rep(datemanage, 389, 517) #workday = date(2015, 12, 31)
 #get_OHLCV_Intelliquant.run_backtest_rep(datemanage, 270, 355) # workday = date(2015, 12, 31)
 
-get_OHLCV_Intelliquant.run_backtest_rep(datemanage, 0, 23) # workday = date(2007, 12, 31)
+get_OHLCV_Intelliquant.run_backtest_rep(datemanage, 1447, 1501) # workday = date(2007, 12, 31)
