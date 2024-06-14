@@ -7,6 +7,7 @@ from GetFinancialData import GetFinancialData
 from GetTicker import GetTicker
 from GetOHLCV import GetOHLCV
 from GetOHLCV_Intelliquant import GetOHLCV_Intelliquant
+from GetVolume import GetVolume
 from multiprocessing import Process
 
 # 3 formatter 지정하여 log head를 구성해줍니다.
@@ -32,9 +33,9 @@ file_handler_info = logging.FileHandler(filename=datemanage.path_log)
 file_handler_info.setFormatter(formatter)
 logger.addHandler(file_handler_info)
 
-get_OHLCV_Intelliquant = GetOHLCV_Intelliquant(logger, i)
-get_OHLCV_Intelliquant.make_txt_from_ticker(datemanage)
-#get_OHLCV_Intelliquant.intel.chrome_on(logger, get_OHLCV_Intelliquant.page, get_OHLCV_Intelliquant.name)
-#get_OHLCV_Intelliquant.run_backtest_rep(datemanage, 0, 99)
-#get_OHLCV_Intelliquant.run_backtest_process(datemanage) # 인텔리퀀트로 얻은 백테스트 raw 데이터 처리
+get_volume = GetVolume(logger, i)
+#get_volume.make_txt_from_ticker(datemanage)
+get_volume.intel.chrome_on(logger, get_volume.page, get_volume.name)
+get_volume.run_backtest_rep(datemanage, 0, 99)
+#get_volume.run_backtest_process(datemanage) # 인텔리퀀트로 얻은 백테스트 raw 데이터 처리
 
