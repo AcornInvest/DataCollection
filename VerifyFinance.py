@@ -50,17 +50,17 @@ class VerifyFinance(VerifyData):
         # ref 와 지금 받아온 finance의 date 비교
         unique_to_ref = df_b_day_ref[
             ~df_b_day_ref['Date'].isin(df_data['Date'])]  # df_date_reference에만 있고 df_OHLCV에 없는 날짜.
-        unique_to_df_OHLCV = df_data[
+        unique_to_df_data = df_data[
             ~df_data['Date'].isin(df_b_day_ref['Date'])]  # df_OHLCV에 있고 df_date_reference에만 없는 날짜.
         if not unique_to_ref.empty:
             unique_to_ref = unique_to_ref['Date'].apply(lambda d: d.strftime('%Y-%m-%d')).tolist()
-            unique_to_ref_list = [f'{code}, df_OHLCV에 없는 날짜: {unique_to_ref}']
+            unique_to_ref_list = [f'{code}, df_data에 없는 날짜: {unique_to_ref}']
             self.logger.info(unique_to_ref_list)
             utils.save_list_to_file_append(unique_to_ref_list, path)  # 텍스트 파일에 오류 부분 저장
             no_error = False
-        if not unique_to_df_OHLCV.empty:
-            unique_to_df_OHLCV = unique_to_df_OHLCV['Date'].apply(lambda d: d.strftime('%Y-%m-%d')).tolist()
-            unique_to_df_OHLCV_list = [f'{code}, df_OHLCV에만 추가로 있는 날짜: {unique_to_df_OHLCV}']
+        if not unique_to_df_data.empty:
+            unique_to_df_OHLCV = unique_to_df_data['Date'].apply(lambda d: d.strftime('%Y-%m-%d')).tolist()
+            unique_to_df_OHLCV_list = [f'{code}, df_data에만 추가로 있는 날짜: {unique_to_df_OHLCV}']
             self.logger.info(unique_to_df_OHLCV_list)
             utils.save_list_to_file_append(unique_to_df_OHLCV_list, path)  # 텍스트 파일에 오류 부분 저장
             no_error = False

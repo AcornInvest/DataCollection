@@ -12,7 +12,7 @@ import pandas as pd
 from pandas import Timedelta
 import re
 
-class GetVolume(UseIntelliquant): # 인텔리퀀트에서 모든 종목 OHLCV 3일씩
+class GetVolume(UseIntelliquant): # 인텔리퀀트에서 거래량 구하기
     def __init__(self, logger, num_process):
         super().__init__(logger, num_process)
         # 인텔리퀀트 시뮬레이션 종목수 조회시 한번에 돌리는 종목 수.
@@ -44,12 +44,10 @@ class GetVolume(UseIntelliquant): # 인텔리퀀트에서 모든 종목 OHLCV 3�
         data_pattern = r'\[\d{4}-\d{2}-\d{2}\]\s\d{5,6}[A-Za-z]?,'
         date_pattern = r'\[(\d{4}-\d{2}-\d{2})\]'
         code_pattern = r'\] (\d{5}[A-Za-z]?|\d{6}),'
-        open_pattern = r'O: (\d+(\.\d+)?),'
-        high_pattern = r'H: (\d+(\.\d+)?),'
-        low_pattern = r'L: (\d+(\.\d+)?),'
-        close_pattern = r'C: (\d+(\.\d+)?),'
         volume_pattern = r'V: (\d+),'
-        cap_pattern = r'cap: (\d+)'
+        volume_forn_pattern = r'F: (-?\d+)'
+        volume_inst_pattern = r'I: (-?\d+)'
+        volume_retail_pattern = r'R: (-?\d+)'
         num_codes = 0
         num_stocks = 0
         num_load_failure_stocks = 0
@@ -59,17 +57,14 @@ class GetVolume(UseIntelliquant): # 인텔리퀀트에서 모든 종목 OHLCV 3�
                 if re.search(data_pattern, line):  # 일반 데이터 처리
                     date = re.search(date_pattern, line).group(1)
                     code = re.search(code_pattern, line).group(1)
-                    Open = re.search(open_pattern, line).group(1)
-                    high = re.search(high_pattern, line).group(1)
-                    low = re.search(low_pattern, line).group(1)
-                    close = re.search(close_pattern, line).group(1)
                     volume = re.search(volume_pattern, line).group(1)
-                    cap = re.search(cap_pattern, line).group(1)
-
+                    volume_forn = re.search(volume_forn_pattern, line).group(1)
+                    volume_inst = re.search(volume_inst_pattern, line).group(1)
+                    volume_retail = re.search(volume_retail_pattern, line).group(1)
                     # 코드에 따라 데이터 묶기
                     if code not in data_by_code:
                         data_by_code[code] = []
-                    data_by_code[code].append((date, Open, high, low, close, volume, cap))
+                    data_by_code[code].append((date, volume, volume_forn, volume_inst, volume_retail))
                 elif 'list_index:' in line:
                     num_codes = int(line.split('list_index:')[1].strip())
                 elif 'NumOfStocks:' in line:
@@ -92,7 +87,7 @@ class GetVolume(UseIntelliquant): # 인텔리퀀트에서 모든 종목 OHLCV 3�
         # 각 코드별로 DataFrame 객체 생성
         dataframes = {}
         for code, data in data_by_code.items():
-            df = pd.DataFrame(data, columns=['Date', 'Open', 'High', 'Low', 'Close', 'Volume', 'Cap'])
+            df = pd.DataFrame(data, columns=['Date', 'Volume', 'VF', 'VI', 'VR'])
             # 날짜순으로 정렬
             df['Date'] = pd.to_datetime(df['Date']).dt.strftime('%Y-%m-%d')
             df.sort_values('Date', inplace=True)
