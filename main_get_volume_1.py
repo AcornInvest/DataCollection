@@ -7,12 +7,13 @@ from GetFinancialData import GetFinancialData
 from GetTicker import GetTicker
 from GetOHLCV import GetOHLCV
 from GetOHLCV_Intelliquant import GetOHLCV_Intelliquant
+from GetVolume import GetVolume
 from multiprocessing import Process
 
 # 3 formatter 지정하여 log head를 구성해줍니다.
 formatter = logging.Formatter("%(asctime)s - %(levelname)s - [%(funcName)s:%(lineno)d] - %(message)s")
 
-i = 0
+i = 1
 
 filename = f'{os.path.splitext(os.path.basename(__file__))[0]}_Proc_{i}'  # 실행하고 있는 스크립트 파일 이름 가져오기
 #startday = date(2000, 1, 4)
@@ -32,19 +33,6 @@ file_handler_info = logging.FileHandler(filename=datemanage.path_log)
 file_handler_info.setFormatter(formatter)
 logger.addHandler(file_handler_info)
 
-get_OHLCV_Intelliquant = GetOHLCV_Intelliquant(logger, i)
-get_OHLCV_Intelliquant.intel.chrome_on(logger, get_OHLCV_Intelliquant.page, get_OHLCV_Intelliquant.name)
-#get_OHLCV_Intelliquant.run_backtest_rep(datemanage, 307, 340) # workday = date(2024, 3, 29)
-#get_OHLCV_Intelliquant.run_backtest_rep(datemanage, 15, 15) # workday = date(2024, 3, 29)
-
-'''
-for num in [343, 346, 349, 352, 355, 358, 361, 364, 367, 370, 373,\
-            683, 686, 689, 692, 695, 697, 700, 703, 706, 709, 712, 715, \
-            967 \
-            ]:
-    get_OHLCV_Intelliquant.run_backtest_rep(datemanage, num, num)
-'''
-
-
-for num in [1210, 1343]:
-    get_OHLCV_Intelliquant.run_backtest_rep(datemanage, num, num)
+get_volume = GetVolume(logger, i)
+get_volume.intel.chrome_on(logger, get_volume.page, get_volume.name)
+get_volume.run_backtest_rep(datemanage, 0, 1)
