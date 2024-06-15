@@ -305,7 +305,7 @@ class Intelliquant:
 
         # self.driver.implicitly_wait(2)
         self.driver.find_element(By.XPATH, "//*[@id='editor']/div[1]/span/button[2]").click()  # 저장 버튼
-        self.driver.implicitly_wait(3)
+        self.driver.implicitly_wait(7)
         self.driver.find_element(By.XPATH, "/html/body/div[12]/div/div[1]/div/div/div[2]/button").click()  # 저장 후 팝업에서 OK 버튼
 
     def backtest(self, start_date_str, end_date_str, simul_money_str, logger): # 시작일, 종료일 따로 입력하도록 수정 필요
