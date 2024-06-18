@@ -22,6 +22,6 @@ file_handler_info.setFormatter(formatter)
 logger.addHandler(file_handler_info)
 
 verify_volume = VerifyVolume(logger)
-#verify_volume.check_data(datemanage, 'Delisted')
-verify_volume.check_data(datemanage, 'Listed')
+verify_volume.check_data(datemanage, 'Delisted')
+#verify_volume.check_data(datemanage, 'Listed')
 

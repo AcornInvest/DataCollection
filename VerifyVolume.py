@@ -75,12 +75,14 @@ class VerifyVolume(VerifyData):
             no_error = False
         # df_data.drop(['Out_of_Order'], axis=1, inplace=True) #처리를 어떻게 할지는 생각해 보자
 
-        # 무결성 검사 4. outlier 검출 - volume이 음수인 경우, volume이 0인데 다른 값들이 0이 아닌 경우, F+I+R !=0인 경우
+        # 무결성 검사 4. outlier 검출 - volume이 음수인 경우, volume이 0인데 다른 값들이 0이 아닌 경우,
+        # F+I+R !=0인 경우 --> 이건 제외한다. 기타 법인, 국가등이 있을 수 있다.
         conditions_negative = df_data['Volume'] < 0
         conditions_FIR_nonzero = (df_data['Volume'] == 0) & ((df_data['VF'] != 0) | (df_data['VI'] != 0) | (df_data['VR'] != 0))
-        conditions_FIR_sum_nonzero = (df_data['VF'] + df_data['VI'] + df_data['VR']) != 0
+        #conditions_FIR_sum_nonzero = (df_data['VF'] + df_data['VI'] + df_data['VR']) != 0
 
-        final_conditions = (conditions_negative | conditions_FIR_nonzero | conditions_FIR_sum_nonzero)
+        #final_conditions = (conditions_negative | conditions_FIR_nonzero | conditions_FIR_sum_nonzero)
+        final_conditions = (conditions_negative | conditions_FIR_nonzero)
         outliers = df_data[final_conditions]
         if not outliers.empty:
             outliers = outliers['Date'].apply(lambda d: d.strftime('%Y-%m-%d')).tolist()
@@ -92,14 +94,43 @@ class VerifyVolume(VerifyData):
 
         # 무결성 검사 5. # 연속적으로 같은 값을 가지는지 여부를 판별
         # 값이 이틀 연속 같은 경우 검출
+        '''
         df_data['Pre_Volume'] = df_data['Volume'].shift(1)  # 전날의 Volume 값 계산
-        df_data['Pre_VF'] = df_data['VF'].shift(1)  # 전날의 Volume 값 계산
-        df_data['Pre_VI'] = df_data['VI'].shift(1)  # 전날의 Volume 값 계산
-        df_data['Pre_VR'] = df_data['VR'].shift(1)  # 전날의 Volume 값 계산
+        df_data['Pre_VF'] = df_data['VF'].shift(1)  # 전날의 VF 값 계산
+        df_data['Pre_VI'] = df_data['VI'].shift(1)  # 전날의 VI 값 계산
+        df_data['Pre_VR'] = df_data['VR'].shift(1)  # 전날의 VR 값 계산
 
-        conditions_same_value = (df_data['Volume'] != 0) & \
-                                ( df_data['Pre_Volume'] == df_data['Volume'])
+        conditions_same_value = ((df_data['Volume'] != 0) & ( df_data['Pre_Volume'] == df_data['Volume']) & \
+        (df_data['VF'] != 0) & (df_data['Pre_VF'] == df_data['Volume']) & \
+        (df_data['VI'] != 0) & (df_data['Pre_VI'] == df_data['Volume']) & \
+        (df_data['VR'] != 0) & (df_data['Pre_VR'] == df_data['Volume']))
+
         consecutive_same_values = df_data[conditions_same_value]
+        '''
+        #if code == '00003A':
+        # 각 행에서 [Volume, VF, VI, VR] 열의 값이 2행 동안 연속적으로 동일한 값이 n개 이상인 행을 찾는 함수
+        # n=3 인 경우도 많다. 네이버 증권에서 검색해도 동일하다
+        def has_n_consecutive_same_values(df, n):
+            result_indices = []
+
+            # 행을 순회하며 연속된 2행의 동일한 값 체크
+            for i in range(len(df) - 1):
+                row1 = df.iloc[i]
+                row2 = df.iloc[i + 1]
+                count = sum((row1 == row2) & (row1 != 0) & (row2 != 0))
+                if count >= n:
+                    result_indices.append(i)
+                    result_indices.append(i + 1)
+
+            # 결과 인덱스에서 중복 제거
+            result_indices = sorted(set(result_indices))
+            return df.iloc[result_indices]
+
+        # 최소 연속 값의 수
+        n = 4
+
+        # 연속된 동일한 값이 n개 이상인 행 찾기
+        consecutive_same_values = has_n_consecutive_same_values(df_data, n)
 
         if not consecutive_same_values.empty:
             consecutive_same_values = consecutive_same_values['Date'].apply(lambda d: d.strftime('%Y-%m-%d')).tolist()

@@ -250,7 +250,8 @@ class UseIntelliquant:
             # 폴더에서 backtest 파일 이름 목록 찾기 --> file_names
             backtest_result_folder = self.path_backtest_save + '\\' + listed_status + '\\From_Intelliquant\\' + datemanage.workday_str + '\\'
             start_string = 'backtest_result_' + datemanage.workday_str
-            #start_string = 'backtest_result_' + datemanage.workday_str + '_19'
+            #start_string = 'backtest_result_' + datemanage.workday_str + '_90'
+            #start_string = 'backtest_result_' + datemanage.workday_str + '_482'
             file_names = self.get_files_starting_with(backtest_result_folder, start_string)
 
             # 처리 결과 저장할 폴더

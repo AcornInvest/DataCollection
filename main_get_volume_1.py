@@ -35,4 +35,4 @@ logger.addHandler(file_handler_info)
 
 get_volume = GetVolume(logger, i)
 get_volume.intel.chrome_on(logger, get_volume.page, get_volume.name)
-get_volume.run_backtest_rep(datemanage, 479, 680)
+get_volume.run_backtest_rep(datemanage, 489, 680)

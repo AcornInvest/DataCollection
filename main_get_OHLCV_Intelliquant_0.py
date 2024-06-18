@@ -46,5 +46,5 @@ for num in [343, 346, 349, 352, 355, 358, 361, 364, 367, 370, 373,\
 '''
 
 
-for num in [1210, 1343]:
+for num in [482]:
     get_OHLCV_Intelliquant.run_backtest_rep(datemanage, num, num)
