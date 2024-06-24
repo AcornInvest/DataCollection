@@ -28,10 +28,10 @@ class CombineData:
         self.path_codeLists = config['path']['path_codelists']
         self.path_savedata = config['path']['path_savedata'] # combined 결과물 저장할 폴더
         self.suffix = 'combined'
-        self.path_date_ref = config['path']['path_date_ref']
-        self.date_prefix = 'bussiness_day_ref'  # date reference 파일의 접미사
+        #self.path_date_ref = config['path']['path_date_ref']
+        #self.date_prefix = 'bussiness_day_ref'  # date reference 파일의 접미사
 
-    def check_file_lists(self, datemanage): # 각 폴더의 데이터가 codelist의 모든 목록을 포함하는지 확인
+    def combine_data(self, datemanage): # 각 폴더의 데이터가 codelist의 모든 목록을 포함하는지 확인
         category = ['Delisted', 'Listed']
         for listed_status in category:
             codelist_path = self.path_codeLists + '\\' + listed_status + '\\' + listed_status + '_Ticker_' + datemanage.workday_str + '_modified.xlsx'
@@ -102,83 +102,22 @@ class CombineData:
                 file_path_OHLCV = f'{files_path_OHLCV}\\{code}_{suffix_OHLCV}_{datemanage.workday_str}.xlsx'
                 file_path_compensation = f'{files_path_compensation}\\{code}_{suffix_compensation}_{datemanage.workday_str}.xlsx'
                 file_path_volume = f'{files_path_volume}\\{code}_{suffix_volume}_{datemanage.workday_str}.xlsx'
-                df_OHLCV = pd.read_excel(file_path_OHLCV)
-                df_compensation = pd.read_excel(file_path_compensation)
-                df_volume = pd.read_excel(file_path_volume)
+                df_OHLCV = pd.read_excel(file_path_OHLCV, index_col=0)
+                df_compensation = pd.read_excel(file_path_compensation, index_col=0)
+                df_volume = pd.read_excel(file_path_volume, index_col=0)
 
                 col_OHLCV = ['Open', 'High', 'Low', 'Close', 'Cap']
                 col_volume = ['Volume', 'VF', 'VI', 'VR']
+                col_compenston = ['NewNoShare']
 
                 # 필요한 열만 선택
                 df_OHLCV_filtered = df_OHLCV[col_OHLCV]
                 df_volume_filtered = df_volume[col_volume]
+                df_compensation_filtered = df_compensation[col_compenston]
 
-                df_combined_0 = df_OHLCV_filtered.join(df_volume_filtered, how='outer')
+                df_combined = df_OHLCV_filtered.join(df_volume_filtered, how='outer')
+                df_combined = df_combined.join(df_compensation_filtered, how='outer')
+                df_combined.rename(columns={'NewNoShare': 'Share'}, inplace=True)
+                df_combined['Share'] = df_combined['Share'].fillna(method='ffill')
                 #df_combined = pd.merge(df_OHLCV_filtered, df_volume_filtered, on='Date', how='outer')
-                #utils.save_df_to_excel(df_combined, code, ('_' + self.suffix + '_' + datemanage.workday_str), savedata_folder)
-
-
-
-
-
-
-    def combine_data(self, datemanage):
-        pass
-
-
-    def merge_files(self, listed_status, date_before, date_recent, path_data, suffix):
-        folder_data_before = f'{path_data}\\{listed_status}\\{date_before}_merged'
-        folder_data_recent = f'{path_data}\\{listed_status}\\{date_recent}'
-        folder_data_result = f'{path_data}\\{listed_status}\\{date_recent}_merged'
-
-        # Ensure result folder exists
-        os.makedirs(folder_data_result, exist_ok=True)
-
-        file_names_data_before = [f for f in os.listdir(folder_data_before) if suffix in f]
-        file_names_data_recent = [f for f in os.listdir(folder_data_recent) if suffix in f]
-
-        codes_before = {f.split('_')[0]: f for f in file_names_data_before}
-        codes_recent = {f.split('_')[0]: f for f in file_names_data_recent}
-
-        only_in_before = set(codes_before.keys()) - set(codes_recent.keys())
-        only_in_recent = set(codes_recent.keys()) - set(codes_before.keys())
-        in_both = set(codes_before.keys()) & set(codes_recent.keys())
-
-        # Save only_in_before list to a text file
-        with open(os.path.join(folder_data_result, f'only_existed_in_before_{date_before}.txt'), 'w') as file:
-            for code in only_in_before:
-                file.write(f'{code}\n')
-
-        # Save only_in_recent list to a text file
-        with open(os.path.join(folder_data_result, f'only_existed_in_recent_{date_recent}.txt'), 'w') as file:
-            for code in only_in_recent:
-                file.write(f'{code}\n')
-
-        # Process only_in_before files
-        for code in only_in_before:
-            src_file = os.path.join(folder_data_before, codes_before[code])
-            dest_file = os.path.join(folder_data_result, f'{code}_{suffix}_{date_recent}_merged.xlsx')
-            shutil.copy2(src_file, dest_file)
-
-        # Process only_in_recent files
-        for code in only_in_recent:
-            src_file = os.path.join(folder_data_recent, codes_recent[code])
-            dest_file = os.path.join(folder_data_result, f'{code}_{suffix}_{date_recent}_merged.xlsx')
-            shutil.copy2(src_file, dest_file)
-
-        # Process files in both
-        for code in in_both:
-            file_before = os.path.join(folder_data_before, codes_before[code])
-            file_recent = os.path.join(folder_data_recent, codes_recent[code])
-
-            df_before = pd.read_excel(file_before)
-            df_recent = pd.read_excel(file_recent)
-
-            # Combine dataframes and drop duplicates
-            combined_df = pd.concat([df_before, df_recent]).drop_duplicates(subset='Date').reset_index(drop=True)
-
-            dest_file = os.path.join(folder_data_result, f'{code}_{suffix}_{date_recent}_merged.xlsx')
-            combined_df.to_excel(dest_file, index=False)
-
-        print(f'{folder_data_before}, {folder_data_recent} 파일 merge 완료')
-        self.logger.info(f'{folder_data_before}, {folder_data_recent} 파일 merge 완료')
+                utils.save_df_to_excel(df_combined, code, ('_' + self.suffix + '_' + datemanage.workday_str), savedata_folder)
