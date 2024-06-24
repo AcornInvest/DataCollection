@@ -26,3 +26,9 @@ def save_list_to_file_append(data_list, filename):
     with open(filename, 'a') as file:  # 'a' 모드는 파일에 내용을 추가합니다
         for item in data_list:
             file.write(f"{item}\n")
+
+# folder_path에서 keyword를 갖는 파일이름의 목록을 리턴
+def find_files_with_keyword(folder_path, keyword):
+    files = os.listdir(folder_path)
+    files_with_keyword = [file for file in files if keyword in file]
+    return files_with_keyword

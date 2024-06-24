@@ -229,11 +229,6 @@ class UseIntelliquant:
                 files_starting_with.append(filename)
         return files_starting_with
 
-    def find_files_with_keyword(self, folder_path, keyword):
-        files = os.listdir(folder_path)
-        files_with_keyword = [file for file in files if keyword in file]
-        return files_with_keyword
-
     '''
     def save_dfs_to_excel(self, dfs_dict, custom_string, folder):
         for code, df in dfs_dict.items():
@@ -268,7 +263,7 @@ class UseIntelliquant:
                 utils.save_dfs_to_excel(df_processed_stock_data, ('_' + self.suffix + '_' + datemanage.workday_str), process_result_folder)
 
             #처리한 엑셀 파일들이 Codelist에 있는 모든 종목들을 다 커버하는지 확인
-            processed_file_names = self.find_files_with_keyword(process_result_folder, self.suffix)  # 데이터 처리 결과 파일 목록. 특정 suffix가 포함된 파일만 골라냄
+            processed_file_names = utils.find_files_with_keyword(process_result_folder, self.suffix)  # 데이터 처리 결과 파일 목록. 특정 suffix가 포함된 파일만 골라냄
             file_prefixes = set([name[:6] for name in processed_file_names]) # 각 파일명의 처음 6글자 추출
             # 파일 처음 6글자가 숫자로 시작하는 것만으로 제한할 것
 
