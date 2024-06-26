@@ -5,6 +5,7 @@ import pandas as pd
 import sys
 import utils
 
+
 class CombineData:
     '''
    OHLCV, NoOfshare, volume 합쳐서 Combined 폴더에 저장하는 기능
