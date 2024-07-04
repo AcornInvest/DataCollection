@@ -120,4 +120,8 @@ class CombineData:
                 df_combined.rename(columns={'NewNoShare': 'Share'}, inplace=True)
                 df_combined['Share'] = df_combined['Share'].fillna(method='ffill')
                 #df_combined = pd.merge(df_OHLCV_filtered, df_volume_filtered, on='Date', how='outer')
+                # 2024.7.4 utils의 save_df_to_excel 바뀌면서 추가됨
+                df_combined.reset_index(inplace=True)  # 인덱스를 'date' 열로 변환
+                df_combined.rename(columns={'index': 'Date'}, inplace=True)  # 'index' 열 이름을 'date'로 변경
+
                 utils.save_df_to_excel(df_combined, code, ('_' + self.suffix + '_' + datemanage.workday_str), savedata_folder)

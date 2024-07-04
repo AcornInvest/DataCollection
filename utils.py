@@ -5,7 +5,8 @@ def save_df_to_excel(df, code, custom_string, folder):
         os.makedirs(folder)
     filename = f"{code}{custom_string}.xlsx"
     path_file = folder + filename
-    df.to_excel(path_file, index=True)
+    #df.to_excel(path_file, index=True)
+    df.to_excel(path_file, index=False) # 2024.7.4 변경. save_dfs_to_excel와의 통일성 맞추기 위해
 
 def save_dfs_to_excel(dfs_dict, custom_string, folder):
     if not os.path.exists(folder):
