@@ -20,6 +20,6 @@ file_handler_info.setFormatter(formatter)
 logger.addHandler(file_handler_info)
 
 verify_finance = VerifyFinance(logger)
-#verify_OHLCV.check_data(datemanage, 'Delisted')
-verify_finance.check_data(datemanage, 'Listed')
+verify_finance.check_data(datemanage, 'Delisted')
+#verify_finance.check_data(datemanage, 'Listed')
 

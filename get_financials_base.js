@@ -159,10 +159,10 @@ function onDayClose(now){
     if (today >= FinalDate){ // 백테스트 마지막날
         for (var i=0;  i<NumOfStocks; i++){
             if( ListingDate_stock[i]>last_data_day){ // 상장일이 마지막 fiancial data 습득일보다 뒤인 경우
-				logger.info(removeA(target_stock_code[i]) + ', RV: 0, GP: 0, OI: 0, NP: 0');
+				logger.info(removeA(target_stock_code[i]) + ', RV: 0, GP: 0, OI: 0, NP: 0' + ' 상장일이 마지막 fiancial data 습득일보다 뒤');
 			}
 			else if ( DelistingDate_stock[i] < first_data_day){ // 상폐일이 첫번째 fiancial data 습득일보다 먼저인 경우
-				logger.info(removeA(target_stock_code[i]) + ', RV: 0, GP: 0, OI: 0, NP: 0');
+				logger.info(removeA(target_stock_code[i]) + ', RV: 0, GP: 0, OI: 0, NP: 0' + '상폐일이 첫번째 fiancial data 습득일보다 먼저');
 			}
 		}       
         logger.info('list_index: ' + list_index);

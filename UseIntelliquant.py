@@ -239,8 +239,8 @@ class UseIntelliquant:
 
     def run_backtest_process(self, datemanage): # Backtest 결과를 가지고 xlsx 파일로 처리
         # category = ['Delisted', 'Listed']
-        #category = ['Delisted']
-        category = ['Listed']
+        category = ['Delisted']
+        #category = ['Listed']
         for listed_status in category:
             # 폴더에서 backtest 파일 이름 목록 찾기 --> file_names
             backtest_result_folder = self.path_backtest_save + '\\' + listed_status + '\\From_Intelliquant\\' + datemanage.workday_str + '\\'
@@ -303,8 +303,8 @@ class UseIntelliquant:
 
     def make_txt_from_ticker(self, datemanage):
         #category = ['Listed', 'Delisted']
-        category = ['Listed']
-        #category = ['Delisted']
+        #category = ['Listed']
+        category = ['Delisted']
 
         for type_list in category:
             # 엑셀 파일 불러올 경로

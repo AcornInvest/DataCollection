@@ -39,14 +39,14 @@ class VerifyFinance(VerifyData):
             NaN_exists = df_data[rows_with_nan]['Date'].apply(lambda d: d.strftime('%Y-%m-%d')).tolist()
             NaN_exists_list = [f"{code}, NaN 값이 있는 날짜: {NaN_exists}"]
             self.logger.info(NaN_exists_list)
-            #path = f"{self.path_data}\\{listed_status}\\{datemanage.workday_str}\\NaN_exists_list.txt"
-            path = f"{self.path_data}\\{listed_status}\\{datemanage.workday_str}_merged\\NaN_exists_list.txt" # 임시
+            path = f"{self.path_data}\\{listed_status}\\{datemanage.workday_str}\\NaN_exists_list.txt"
+            #path = f"{self.path_data}\\{listed_status}\\{datemanage.workday_str}_merged\\NaN_exists_list.txt" # 임시
             utils.save_list_to_file_append(NaN_exists_list, path)  # 텍스트 파일에 오류 부분 저장
             no_error = False
 
         # 무결성 검사 3. 시간적 일관성 확인
-        # path = f"{self.path_data}\\{listed_status}\\{datemanage.workday_str}\\time_unconsistency_list.txt"
-        path = f"{self.path_data}\\{listed_status}\\{datemanage.workday_str}_merged\\time_unconsistency_list.txt" # 임시
+        path = f"{self.path_data}\\{listed_status}\\{datemanage.workday_str}\\time_unconsistency_list.txt"
+        #path = f"{self.path_data}\\{listed_status}\\{datemanage.workday_str}_merged\\time_unconsistency_list.txt" # 임시
         # ref 와 지금 받아온 finance의 date 비교
         unique_to_ref = df_b_day_ref[
             ~df_b_day_ref['Date'].isin(df_data['Date'])]  # df_date_reference에만 있고 df_OHLCV에 없는 날짜.
@@ -83,7 +83,8 @@ class VerifyFinance(VerifyData):
             outliers = outliers['Date'].apply(lambda d: d.strftime('%Y-%m-%d')).tolist()
             outliers_list = [f'{code}, RV 음수: {outliers}']
             self.logger.info(outliers_list)
-            path = f"{self.path_data}\\{listed_status}\\{datemanage.workday_str}_merged\\outliers_list.txt" # 임시
+            path = f"{self.path_data}\\{listed_status}\\{datemanage.workday_str}\\outliers_list.txt"
+            #path = f"{self.path_data}\\{listed_status}\\{datemanage.workday_str}_merged\\outliers_list.txt" # 임시
             utils.save_list_to_file_append(outliers_list, path)  # 텍스트 파일에 오류 부분 저장
             no_error = False
 
@@ -102,7 +103,8 @@ class VerifyFinance(VerifyData):
             consecutive_same_values = consecutive_same_values['Date'].apply(lambda d: d.strftime('%Y-%m-%d')).tolist()
             consecutive_same_values_list = [f'{code}, 값이 2일 연속 같은 경우: {consecutive_same_values}']
             self.logger.info(consecutive_same_values_list)
-            path = f"{self.path_data}\\{listed_status}\\{datemanage.workday_str}_merged\\consecutive_same_values_list.txt"  # 임시
+            path = f"{self.path_data}\\{listed_status}\\{datemanage.workday_str}\\consecutive_same_values_list.txt"
+            #path = f"{self.path_data}\\{listed_status}\\{datemanage.workday_str}_merged\\consecutive_same_values_list.txt"  # 임시
             utils.save_list_to_file_append(consecutive_same_values_list, path)  # 텍스트 파일에 오류 부분 저장
             no_error = False
 
