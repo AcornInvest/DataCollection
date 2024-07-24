@@ -87,3 +87,8 @@ class GetFinancialData(UseIntelliquant):
             dataframes[code] = df
 
         return dataframes
+
+    def make_sql(self):
+        # 처리된 excel 데이터를 모아서 SQL로 만듦.
+        # 2024.7.24 일회성 작업에 필요. 앞으로는 intelliquant backtest results를 바로 sql로 저장함
+        pass
