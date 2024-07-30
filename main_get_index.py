@@ -5,8 +5,13 @@ from DateManage import DateManage
 from GetIndex import GetIndex
 
 filename = os.path.splitext(os.path.basename(__file__))[0]  # 실행하고 있는 스크립트 파일 이름 가져오기
+'''
 startday = date(2000, 1, 4)
 workday = date(2024, 3, 29)
+'''
+startday = date(2024, 3, 29)
+workday = date(2024, 4, 1)
+
 datemanage = DateManage(filename)
 datemanage.SetStartday(startday)
 datemanage.SetWorkday(workday)
@@ -26,6 +31,7 @@ logger.addHandler(file_handler_info)
 get_index = GetIndex(logger)
 start_date = startday.strftime('%Y-%m-%d')
 end_date = workday.strftime('%Y-%m-%d')
-get_index.get_index(start_date, end_date, datemanage)
+#get_index.get_index(start_date, end_date, datemanage)
+get_index.merge_data(datemanage)
 
 
