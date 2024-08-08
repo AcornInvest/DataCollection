@@ -20,6 +20,6 @@ file_handler_info.setFormatter(formatter)
 logger.addHandler(file_handler_info)
 
 combine_data = CombineData(logger)
-combine_data.combine_data(datemanage) # OHLCV, NoOfShare, Volume 폴더의 파일 목록과 codelist 맞는지 체크
+combine_data.combine_data(datemanage) # OHLCV, NoOfShare, Volume 폴더의 파일 목록과 codelist 맞는지 체크 후 하나로 합침
 
 

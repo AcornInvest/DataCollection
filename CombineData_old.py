@@ -4,7 +4,7 @@ import configparser
 import pandas as pd
 import sys
 import utils
-import sqlite3
+
 
 class CombineData:
     '''
@@ -35,25 +35,6 @@ class CombineData:
 
     def combine_data(self, datemanage): # 각 폴더의 데이터가 codelist의 모든 목록을 포함하는지 확인
         category = ['Delisted', 'Listed']
-
-        # 테이블 생성 쿼리
-        create_table_query = '''
-        CREATE TABLE IF NOT EXISTS combined_ohlcv (
-            stock_code TEXT,
-            date TEXT,
-            open REAL,
-            high REAL,
-            low REAL,
-            close REAL,            
-            volume INTEGER,
-            vf INTEGER,
-            vi INTEGER,
-            vr INTEGER,
-            cap INTEGER,
-            share INTEGER
-        );
-        '''
-
         for listed_status in category:
             codelist_path = self.path_codeLists + '\\' + listed_status + '\\' + listed_status + '_Ticker_' + datemanage.workday_str + '_modified.xlsx'
             codelist = pd.read_excel(codelist_path, index_col=0)
@@ -66,8 +47,8 @@ class CombineData:
             if not os.path.exists(savedata_folder):
                 os.makedirs(savedata_folder)
 
-            def check_files(codes, folder, suffix):
-                file_names = utils.find_files_with_keyword(folder, suffix)  # 데이터 처리 결과 파일 목록. 특정 suffix가 포함된 파일만 골라냄
+            def check_files(codes, files_path, suffix):
+                file_names = utils.find_files_with_keyword(files_path, suffix)  # 데이터 처리 결과 파일 목록. 특정 suffix가 포함된 파일만 골라냄
                 file_prefixes = set([name[:6] for name in file_names])  # 각 파일명의 처음 6글자 추출
 
                 if file_prefixes != codes or len(codes) != len(codes):
@@ -91,21 +72,21 @@ class CombineData:
 
             # OHLCV 확인
             #files_path = self.path_data + f'\\OHLCV\\Intelliquant\\{listed_status}\\{datemanage.workday_str}_merged'
-            folder_OHLCV = os.path.join(self.path_data, 'OHLCV', 'Intelliquant', listed_status, f'{datemanage.workday_str}_merged') # 폴더 경로
+            files_path_OHLCV = os.path.join(self.path_data, 'OHLCV', 'Intelliquant', listed_status, f'{datemanage.workday_str}_merged')
             suffix_OHLCV = 'OHLCV_intelliquant'
-            check_files(codes, folder_OHLCV, suffix_OHLCV)
+            check_files(codes, files_path_OHLCV, suffix_OHLCV)
 
             # NoOfShare 확인
             #files_path = self.path_data + f'\\OHLCV\\Compensation\\{listed_status}\\{datemanage.workday_str}_merged'
-            folder_compensation = os.path.join(self.path_data, 'OHLCV', 'Compensation', listed_status, f'{datemanage.workday_str}_merged') # 폴더 경로
+            files_path_compensation = os.path.join(self.path_data, 'OHLCV', 'Compensation', listed_status, f'{datemanage.workday_str}_merged')
             suffix_compensation = 'compensation'
-            check_files(codes, folder_compensation, suffix_compensation)
+            check_files(codes, files_path_compensation, suffix_compensation)
 
             # volume 확인
             #files_path = self.path_data + f'\\OHLCV\\volume\\{listed_status}\\{datemanage.workday_str}_merged'
-            folder_volume = os.path.join(self.path_data, 'OHLCV', 'volume', listed_status, f'{datemanage.workday_str}_merged') # 폴더 경로
+            files_path_volume = os.path.join(self.path_data, 'OHLCV', 'volume', listed_status, f'{datemanage.workday_str}_merged')
             suffix_volume = 'volume'
-            check_files(codes, folder_volume, suffix_volume)
+            check_files(codes, files_path_volume, suffix_volume)
 
             '''
             # 거래일 목록 ref 읽어오기
@@ -119,18 +100,10 @@ class CombineData:
                 # df_compensation 데이터 확장
                 pass
 
-            # SQLite 데이터베이스 파일 연결 (없으면 새로 생성)
-            filename_db = f'{self.suffix}_{listed_status}_{datemanage.workday}.db'
-            file_path_db = savedata_folder + filename_db
-            conn = sqlite3.connect(file_path_db)
-            conn.execute(create_table_query) # 테이블 생성
-            conn.commit()
-
-
             for code in codes:
-                file_path_OHLCV = f'{folder_OHLCV}\\{code}_{suffix_OHLCV}_{datemanage.workday_str}.xlsx'
-                file_path_compensation = f'{folder_compensation}\\{code}_{suffix_compensation}_{datemanage.workday_str}.xlsx'
-                file_path_volume = f'{folder_volume}\\{code}_{suffix_volume}_{datemanage.workday_str}.xlsx'
+                file_path_OHLCV = f'{files_path_OHLCV}\\{code}_{suffix_OHLCV}_{datemanage.workday_str}.xlsx'
+                file_path_compensation = f'{files_path_compensation}\\{code}_{suffix_compensation}_{datemanage.workday_str}.xlsx'
+                file_path_volume = f'{files_path_volume}\\{code}_{suffix_volume}_{datemanage.workday_str}.xlsx'
                 df_OHLCV = pd.read_excel(file_path_OHLCV, index_col=0)
                 df_compensation = pd.read_excel(file_path_compensation, index_col=0)
                 df_volume = pd.read_excel(file_path_volume, index_col=0)
@@ -147,22 +120,10 @@ class CombineData:
                 df_combined = df_OHLCV_filtered.join(df_volume_filtered, how='outer')
                 df_combined = df_combined.join(df_compensation_filtered, how='outer')
                 df_combined.rename(columns={'NewNoShare': 'Share'}, inplace=True)
-                #df_combined['Share'] = df_combined['Share'].fillna(method='ffill')
-                df_combined['Share'] = df_combined['Share'].ffill()
+                df_combined['Share'] = df_combined['Share'].fillna(method='ffill')
                 #df_combined = pd.merge(df_OHLCV_filtered, df_volume_filtered, on='Date', how='outer')
                 # 2024.7.4 utils의 save_df_to_excel 바뀌면서 추가됨
                 df_combined.reset_index(inplace=True)  # 인덱스를 'date' 열로 변환
-                df_combined.rename(columns={'index': 'date', 'Open': 'open', 'High': 'high', 'Low': 'low', 'Close': 'close', \
-                                            'Volume': 'volume', 'VF': 'vf', 'VI': 'vi', 'VR': 'vr', 'Cap': 'cap', \
-                                            'Share': 'share'}, inplace=True)  # 'index' 열 이름을 'date'로 변경, 다른 열 이름도 변경
-                df_combined['stock_code'] = code  # 종목코드 열 추가
-                df_combined.to_sql('combined_ohlcv', conn, if_exists='append', index=False)
+                df_combined.rename(columns={'index': 'Date'}, inplace=True)  # 'index' 열 이름을 'date'로 변경
 
-                #utils.save_df_to_excel(df_combined, code, ('_' + self.suffix + '_' + datemanage.workday_str), savedata_folder)
-
-            # 인덱스 생성 (쿼리 성능 향상)
-            conn.execute('CREATE INDEX IF NOT EXISTS idx_stock_code ON combined_ohlcv (stock_code);')
-            conn.execute('CREATE INDEX IF NOT EXISTS idx_date ON combined_ohlcv (date);')
-            conn.commit()
-            # 데이터베이스 연결 종료
-            conn.close()
+                utils.save_df_to_excel(df_combined, code, ('_' + self.suffix + '_' + datemanage.workday_str), savedata_folder)
