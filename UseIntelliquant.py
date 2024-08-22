@@ -107,8 +107,8 @@ class UseIntelliquant:
         #chrome_on()은 되어 있는 상태에서 호출
 
         #category = ['Delisted', 'Listed']
-        category = ['Delisted']
-        #category = ['Listed']
+        #category = ['Delisted']
+        category = ['Listed']
         for listed_status in category:
             self.path_for_intelliquant_dir = self.path_backtest_save + '\\' + listed_status + '\\For_Intelliquant\\' + datemanage.workday_str + '\\'
             # max_file_index(폴더 내 데이터 파일 수) 계산
@@ -302,9 +302,9 @@ class UseIntelliquant:
                 print("모든 DataFrame의 칼럼 값이 파일 이름에 있습니다.")
 
     def make_txt_from_ticker(self, datemanage):
-        #category = ['Listed', 'Delisted']
+        category = ['Listed', 'Delisted']
         #category = ['Listed']
-        category = ['Delisted']
+        #category = ['Delisted']
 
         for type_list in category:
             # 엑셀 파일 불러올 경로
