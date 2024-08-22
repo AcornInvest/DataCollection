@@ -47,7 +47,7 @@ function roundToDecimal(value, decimalPlaces) {
 // EV/EBITDA 구하기.
 function get_EV_EBITDA(stock) {
 	if(stock.getFundamentalEBITDA() == 0) {return 999999999;}	//EBITDA ==0 이면 EV/EBITDA 999999999 리턴
-	 return  stock.getFundamentalEV()*1000000/(stock.getFundamentalEBITDA()*1000*4)  ;
+	 return  stock.getFundamentalEV()*1000/(stock.getFundamentalEBITDA()*1000*4)  ;
 }
 //PBR
 function get_PBR(stock) {
