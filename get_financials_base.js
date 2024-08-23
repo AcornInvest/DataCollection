@@ -212,14 +212,14 @@ function onDayClose(now){
 				GP[i] = target_stock[i].getFundamentalGrossProfit(); // 매출총이익 [천원]
 				operating_income[i] = target_stock[i].getFundamentalOperatingIncome(); // 영업이익 [천원]
 				net_profit[i] = target_stock[i].getFundamentalNetProfit(); // 당기순이익 [천원]
-				EV_EVITDA[i] = roundToDecimal(get_EV_EBITDA(target_stock[i]),2);
-				PER[i] = roundToDecimal(get_PER(target_stock[i]),2);
-                PBR[i] = roundToDecimal(get_PBR(target_stock[i]),2);
-                PSR[i] = roundToDecimal(get_PSR(target_stock[i]),2);
-                PCR[i] = roundToDecimal(get_PCR(target_stock[i]),2);
-                GPA[i] = roundToDecimal(get_GPA(target_stock[i]),2);
-                ROA[i] = roundToDecimal(get_ROA(target_stock[i]),2);
-                ROE[i] = roundToDecimal(get_ROE(target_stock[i]),2);
+				EV_EVITDA[i] = roundToDecimal(get_EV_EBITDA(target_stock[i]),3);
+				PER[i] = roundToDecimal(get_PER(target_stock[i]),3);
+                PBR[i] = roundToDecimal(get_PBR(target_stock[i]),3);
+                PSR[i] = roundToDecimal(get_PSR(target_stock[i]),3);
+                PCR[i] = roundToDecimal(get_PCR(target_stock[i]),3);
+                GPA[i] = roundToDecimal(get_GPA(target_stock[i]),4);
+                ROA[i] = roundToDecimal(get_ROA(target_stock[i]),3);
+                ROE[i] = roundToDecimal(get_ROE(target_stock[i]),3);
 				logger.info(removeA(target_stock_code[i]) + ', rv: ' + revenue[i] + ', gp: ' + GP[i] + ', oi: ' + operating_income[i] + ', np: ' + net_profit[i]
                            + ', ev_evitda: ' +  EV_EVITDA[i] + ', per: ' + PER[i] + ', pbr: ' + PBR[i] + ', psr: ' + PSR[i]
                             + ', pcr: ' +  PCR[i] + ', gpa: ' + GPA[i] + ', roa: ' + ROA[i] + ', roe: ' + ROE[i]);
@@ -235,14 +235,14 @@ function onDayClose(now){
 				GP[i] = target_stock[i].getFundamentalGrossProfit(); // 매출총이익 [천원]
 				operating_income[i] = target_stock[i].getFundamentalOperatingIncome(); // 영업이익 [천원]
 				net_profit[i] = target_stock[i].getFundamentalNetProfit(); // 당기순이익 [천원]
-               	EV_EVITDA[i] = roundToDecimal(get_EV_EBITDA(target_stock[i]),2);
-				PER[i] = roundToDecimal(get_PER(target_stock[i]),2);
-                PBR[i] = roundToDecimal(get_PBR(target_stock[i]),2);
-                PSR[i] = roundToDecimal(get_PSR(target_stock[i]),2);
-                PCR[i] = roundToDecimal(get_PCR(target_stock[i]),2);
-                GPA[i] = roundToDecimal(get_GPA(target_stock[i]),2);
-                ROA[i] = roundToDecimal(get_ROA(target_stock[i]),2);
-                ROE[i] = roundToDecimal(get_ROE(target_stock[i]),2);
+               	EV_EVITDA[i] = roundToDecimal(get_EV_EBITDA(target_stock[i]),3);
+				PER[i] = roundToDecimal(get_PER(target_stock[i]),3);
+                PBR[i] = roundToDecimal(get_PBR(target_stock[i]),3);
+                PSR[i] = roundToDecimal(get_PSR(target_stock[i]),3);
+                PCR[i] = roundToDecimal(get_PCR(target_stock[i]),3);
+                GPA[i] = roundToDecimal(get_GPA(target_stock[i]),4);
+                ROA[i] = roundToDecimal(get_ROA(target_stock[i]),3);
+                ROE[i] = roundToDecimal(get_ROE(target_stock[i]),3);
 				logger.info(removeA(target_stock_code[i]) + ', rv: ' + revenue[i] + ', gp: ' + GP[i] + ', oi: ' + operating_income[i] + ', np: ' + net_profit[i]
                            + ', ev_evitda: ' +  EV_EVITDA[i] + ', per: ' + PER[i] + ', pbr: ' + PBR[i] + ', psr: ' + PSR[i]
                             + ', pcr: ' +  PCR[i] + ', gpa: ' + GPA[i] + ', roa: ' + ROA[i] + ', roe: ' + ROE[i]);
@@ -258,14 +258,14 @@ function onDayClose(now){
 				GP[i] = target_stock[i].getFundamentalGrossProfit(); // 매출총이익 [천원]
 				operating_income[i] = target_stock[i].getFundamentalOperatingIncome(); // 영업이익 [천원]
 				net_profit[i] = target_stock[i].getFundamentalNetProfit(); // 당기순이익 [천원]
-				EV_EVITDA[i] = roundToDecimal(get_EV_EBITDA(target_stock[i]),2);
-				PER[i] = roundToDecimal(get_PER(target_stock[i]),2);
-                PBR[i] = roundToDecimal(get_PBR(target_stock[i]),2);
-                PSR[i] = roundToDecimal(get_PSR(target_stock[i]),2);
-                PCR[i] = roundToDecimal(get_PCR(target_stock[i]),2);
-                GPA[i] = roundToDecimal(get_GPA(target_stock[i]),2);
-                ROA[i] = roundToDecimal(get_ROA(target_stock[i]),2);
-                ROE[i] = roundToDecimal(get_ROE(target_stock[i]),2);
+				EV_EVITDA[i] = roundToDecimal(get_EV_EBITDA(target_stock[i]),3);
+				PER[i] = roundToDecimal(get_PER(target_stock[i]),3);
+                PBR[i] = roundToDecimal(get_PBR(target_stock[i]),3);
+                PSR[i] = roundToDecimal(get_PSR(target_stock[i]),3);
+                PCR[i] = roundToDecimal(get_PCR(target_stock[i]),3);
+                GPA[i] = roundToDecimal(get_GPA(target_stock[i]),4);
+                ROA[i] = roundToDecimal(get_ROA(target_stock[i]),3);
+                ROE[i] = roundToDecimal(get_ROE(target_stock[i]),3);
 				logger.info(removeA(target_stock_code[i]) + ', rv: ' + revenue[i] + ', gp: ' + GP[i] + ', oi: ' + operating_income[i] + ', np: ' + net_profit[i]
                            + ', ev_evitda: ' +  EV_EVITDA[i] + ', per: ' + PER[i] + ', pbr: ' + PBR[i] + ', psr: ' + PSR[i]
                             + ', pcr: ' +  PCR[i] + ', gpa: ' + GPA[i] + ', roa: ' + ROA[i] + ', roe: ' + ROE[i]);
@@ -281,14 +281,14 @@ function onDayClose(now){
 				GP[i] = target_stock[i].getFundamentalGrossProfit(); // 매출총이익 [천원]
 				operating_income[i] = target_stock[i].getFundamentalOperatingIncome(); // 영업이익 [천원]
 				net_profit[i] = target_stock[i].getFundamentalNetProfit(); // 당기순이익 [천원]
-				EV_EVITDA[i] = roundToDecimal(get_EV_EBITDA(target_stock[i]),2);
-				PER[i] = roundToDecimal(get_PER(target_stock[i]),2);
-                PBR[i] = roundToDecimal(get_PBR(target_stock[i]),2);
-                PSR[i] = roundToDecimal(get_PSR(target_stock[i]),2);
-                PCR[i] = roundToDecimal(get_PCR(target_stock[i]),2);
-                GPA[i] = roundToDecimal(get_GPA(target_stock[i]),2);
-                ROA[i] = roundToDecimal(get_ROA(target_stock[i]),2);
-                ROE[i] = roundToDecimal(get_ROE(target_stock[i]),2);
+				EV_EVITDA[i] = roundToDecimal(get_EV_EBITDA(target_stock[i]),3);
+				PER[i] = roundToDecimal(get_PER(target_stock[i]),3);
+                PBR[i] = roundToDecimal(get_PBR(target_stock[i]),3);
+                PSR[i] = roundToDecimal(get_PSR(target_stock[i]),3);
+                PCR[i] = roundToDecimal(get_PCR(target_stock[i]),3);
+                GPA[i] = roundToDecimal(get_GPA(target_stock[i]),4);
+                ROA[i] = roundToDecimal(get_ROA(target_stock[i]),3);
+                ROE[i] = roundToDecimal(get_ROE(target_stock[i]),3);
 				logger.info(removeA(target_stock_code[i]) + ', rv: ' + revenue[i] + ', gp: ' + GP[i] + ', oi: ' + operating_income[i] + ', np: ' + net_profit[i]
                            + ', ev_evitda: ' +  EV_EVITDA[i] + ', per: ' + PER[i] + ', pbr: ' + PBR[i] + ', psr: ' + PSR[i]
                             + ', pcr: ' +  PCR[i] + ', gpa: ' + GPA[i] + ', roa: ' + ROA[i] + ', roe: ' + ROE[i]);
