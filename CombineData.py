@@ -9,7 +9,7 @@ import sqlite3
 class CombineData:
     '''
    OHLCV, NoOfshare, volume 합쳐서 Combined 폴더에 저장하는 기능
-   2024.8.7 이 파일은 결과를 엑셀로 저장하는 예전 버전임
+   2024.8.8 파일을 sql에 저장하도록 함
    '''
 
     def __init__(self, logger):
