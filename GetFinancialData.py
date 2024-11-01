@@ -9,8 +9,10 @@ from UseIntelliquant import UseIntelliquant
 import json
 import math
 import pandas as pd
-from pandas import Timedelta
 import re
+import sqlite3
+import utils
+import sys
 
 class GetFinancialData(UseIntelliquant):
     def __init__(self, logger, num_process):
@@ -31,7 +33,9 @@ class GetFinancialData(UseIntelliquant):
         config.read(path, encoding='utf-8')
         self.page = config['intelliquant']['page']
         self.name = config['intelliquant']['name']
+        self.path_data = config['path']['path_data']
         self.path_backtest_save = config['path']['path_backtest_save']
+        self.path_savedata = config['path']['path_savedata']  # sql 결과물 저장할 폴더
 
     def process_backtest_result(self, path_file): #backtest result 를 처리하여 df로 반환
         # 각 코드별 데이터를 저장할 딕셔너리
@@ -41,10 +45,19 @@ class GetFinancialData(UseIntelliquant):
         data_pattern = r'\[\d{4}-\d{2}-\d{2}\]\s\d{5,6}[A-Za-z]?,'
         date_pattern = r'\[(\d{4}-\d{2}-\d{2})\]'
         code_pattern = r'\] (\d{5}[A-Za-z]?|\d{6}),'
-        rv_pattern = r'RV: (-?\d+),'
-        gp_pattern = r'GP: (-?\d+),'
-        oi_pattern = r'OI: (-?\d+),'
-        np_pattern = r'NP: (-?\d+)'
+        rv_pattern = r'rv: (-?\d+),'
+        gp_pattern = r'gp: (-?\d+),'
+        oi_pattern = r'oi: (-?\d+),'
+        np_pattern = r'np: (-?\d+),'
+        ev_evitda_pattern = r'ev_evitda: (-?\d+(\.\d+)?),'
+        per_pattern = r'per: (-?\d+(\.\d+)?),'
+        pbr_pattern = r'pbr: (-?\d+(\.\d+)?),'
+        psr_pattern = r'psr: (-?\d+(\.\d+)?),'
+        pcr_pattern = r'pcr: (-?\d+(\.\d+)?),'
+        gpa_pattern = r'gpa: (-?\d+(\.\d+)?),'
+        roa_pattern = r'roa: (-?\d+(\.\d+)?),'
+        roe_pattern = r'roe: (-?\d+(\.\d+)?)'
+
         with open(path_file, 'r', encoding='utf-8') as file:
             for line in file:
                 if 'list_index:' in line:
@@ -66,11 +79,19 @@ class GetFinancialData(UseIntelliquant):
                     gp = re.search(gp_pattern, line).group(1)
                     oi = re.search(oi_pattern, line).group(1)
                     np = re.search(np_pattern, line).group(1)
+                    ev_evitda = re.search(ev_evitda_pattern, line).group(1)
+                    per = re.search(per_pattern, line).group(1)
+                    pbr = re.search(pbr_pattern, line).group(1)
+                    psr = re.search(psr_pattern, line).group(1)
+                    pcr = re.search(pcr_pattern, line).group(1)
+                    gpa = re.search(gpa_pattern, line).group(1)
+                    roa = re.search(roa_pattern, line).group(1)
+                    roe = re.search(roe_pattern, line).group(1)
 
                     # 코드에 따라 데이터 묶기
                     if code not in data_by_code:
                         data_by_code[code] = []
-                    data_by_code[code].append((date, rv, gp, oi, np))
+                    data_by_code[code].append((date, rv, gp, oi, np, ev_evitda, per, pbr, psr, pcr, gpa, roa, roe))
 
         if num_codes != (num_stocks + num_load_failure_stocks + num_delisting_data_error_stocks):
             print('backtest 결과 이상. num_code != num_stock + num_load_failure_stocks + num_delisting_data_error_stocks')
@@ -79,17 +100,110 @@ class GetFinancialData(UseIntelliquant):
         # 각 코드별로 DataFrame 객체 생성
         dataframes = {}
         for code, data in data_by_code.items():
-            df = pd.DataFrame(data, columns=['Date', 'RV', 'GP', 'OI', 'NP'])
+            df = pd.DataFrame(data, columns=['date', 'rv', 'gp', 'oi', 'np', 'ev_evitda', 'per', 'pbr', 'psr', 'pcr', 'gpa', 'roa', 'roe'])
             # 날짜순으로 정렬
-            df['Date'] = pd.to_datetime(df['Date']).dt.strftime('%Y-%m-%d')
-            df.sort_values('Date', inplace=True)
+            df['date'] = pd.to_datetime(df['date']).dt.strftime('%Y-%m-%d')
+            df.sort_values('date', inplace=True)
             # Reset index
             df.reset_index(drop=True, inplace=True)
             dataframes[code] = df
 
         return dataframes
 
-    def make_sql(self):
+    def make_sql(self, datemanage):
         # 처리된 excel 데이터를 모아서 SQL로 만듦.
         # 2024.7.24 일회성 작업에 필요. 앞으로는 intelliquant backtest results를 바로 sql로 저장함
-        pass
+        category = ['Delisted', 'Listed']
+
+        # 테이블 생성 쿼리
+        create_table_query = '''
+        CREATE TABLE IF NOT EXISTS financial (
+            stock_code TEXT,
+            date TEXT,
+            rv REAL,
+            gp REAL,
+            oi REAL,
+            np REAL,            
+            ev_evitda REAL,
+            per REAL,
+            pbr REAL,            
+            psr REAL,
+            pcr REAL,
+            gpa REAL,
+            roa REAL,
+            roe REAL           
+        );
+        '''
+
+        # sql 데이터 저장할 폴더가 존재하지 않으면 생성
+        #savedata_folder = f'{self.path_savedata}\\{listed_status}\\{datemanage.workday_str}\\'
+        savedata_folder = f'{self.path_savedata}\\{datemanage.workday_str}\\'
+        if not os.path.exists(savedata_folder):
+            os.makedirs(savedata_folder)
+
+        # SQLite 데이터베이스 파일 연결 (없으면 새로 생성)
+        #filename_db = f'{self.suffix}_{listed_status}_{datemanage.workday}.db'
+        filename_db = f'{self.suffix}_{datemanage.workday}.db'
+        file_path_db = savedata_folder + filename_db
+        conn = sqlite3.connect(file_path_db)
+        conn.execute(create_table_query)  # 테이블 생성
+        conn.commit()
+
+        def check_files(codes, folder, suffix):
+            file_names = utils.find_files_with_keyword(folder, suffix)  # 데이터 처리 결과 파일 목록. 특정 suffix가 포함된 파일만 골라냄
+            file_prefixes = set([name[:6] for name in file_names])  # 각 파일명의 처음 6글자 추출
+
+            if file_prefixes != codes or len(codes) != len(codes):
+                missing_in_files = codes - file_prefixes  # codelist에는 있는데 파일 이름에 없는 값 목록
+                extra_in_files = file_prefixes - codes  # 파일 이름에는 있는데 codelist에 없는 값 목록
+                # 결과를 텍스트 파일로 저장
+                missing_in_files_path = savedata_folder + 'missing_in_files_' + suffix + '_' + listed_status + '_' + datemanage.workday_str + '.txt'
+                with open(missing_in_files_path, 'w') as f:
+                    for item in missing_in_files:
+                        f.write("%s\n" % item)
+
+                extra_in_files_path = savedata_folder + 'extra_in_files_' + suffix + '_' + listed_status + '_' + datemanage.workday_str + '.txt'
+                with open(extra_in_files_path, 'w') as f:
+                    for item in extra_in_files:
+                        f.write("%s\n" % item)
+
+                print(
+                    f'{suffix} 데이터 에러. 결과가 {listed_status}_{suffix}_missing_in_files.txt와 {listed_status}_{suffix}_extra_in_files.txt에 저장되었습니다.')
+                sys.exit(1)
+            else:
+                print(f'모든 codelist의 목록이 {listed_status}_{suffix} 데이터에 포함되어 있습니다.')
+
+        for listed_status in category:
+            codelist_path = self.path_codeLists + '\\' + listed_status + '\\' + listed_status + '_Ticker_' + datemanage.workday_str + '_modified.xlsx'
+            codelist = pd.read_excel(codelist_path, index_col=0)
+            codelist['Code'] = codelist['Code'].astype(str)
+            codelist['Code'] = codelist['Code'].str.zfill(6)  # 코드가 6자리에 못 미치면 앞에 0 채워넣기
+            codes = set(codelist['Code'])  # Ticker 파일에서 가져온 Code column
+
+            # OHLCV 확인
+            #files_path = self.path_data + f'\\OHLCV\\Intelliquant\\{listed_status}\\{datemanage.workday_str}_merged'
+            folder_financial = os.path.join(self.path_data, 'Financial', listed_status, datemanage.workday_str) # 엑셀 파일 폴더 경로
+            suffix_financial = 'financial'
+            check_files(codes, folder_financial, suffix_financial)
+
+            for code in codes:
+                file_path_financial = f'{folder_financial}\\{code}_{suffix_financial}_{datemanage.workday_str}.xlsx'
+                df_financial = pd.read_excel(file_path_financial, index_col=None)
+
+                '''
+                # 사용할 열들
+                col_financial = ['rv', 'gp', 'oi', 'np', 'ev_evitda', 'per', 'pbr', 'psr', 'pcr', 'gpa', 'roa', 'roe']
+
+                # 필요한 열만 선택
+                df_financial_filtered = df_financial[col_financial]
+                '''
+
+                df_financial['stock_code'] = code  # 종목코드 열 추가
+                df_financial.to_sql('financial', conn, if_exists='append', index=False)
+
+        # 인덱스 생성 (쿼리 성능 향상)
+        conn.execute('CREATE INDEX IF NOT EXISTS idx_stock_code ON financial (stock_code);')
+        conn.execute('CREATE INDEX IF NOT EXISTS idx_date ON financial (date);')
+        conn.commit()
+        # 데이터베이스 연결 종료
+        conn.close()
