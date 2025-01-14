@@ -7,6 +7,8 @@ import os
 import configparser
 from string import ascii_uppercase
 from datetime import date
+import re
+from datetime import datetime
 
 class GetTicker:
     '''
@@ -81,6 +83,23 @@ class GetTicker:
         '''
         return stocks
 
+    def make_raw_ticker_list(self, datemanage):
+        date_str = datemanage.workday_str  # ticker 가져온 작업 기준일
+        listed_stocks = self.get_listingstocks()
+
+        base_path = self.path_codeLists + '\\Listed\\'
+        if not os.path.exists(base_path):
+            os.makedirs(base_path)
+        listed_stocks.to_excel(base_path + f"Listed_Ticker_{date_str}.xlsx")
+
+        delisted_stocks = self.get_delistingstocks()
+
+        base_path = "C:\\Work_Dotori\\StockDataset\\CodeLists\\Delisted\\"
+        if not os.path.exists(base_path):
+            os.makedirs(base_path)
+        delisted_stocks.to_excel(base_path + f"Delisted_Ticker_{date_str}.xlsx")
+
+
     def get_delistingstocks_test(self):  # 우선주만 남기는 코드. 테스트 용도
         stocks = fdr.StockListing('KRX-DELISTING')  # 코스피, 코스닥, 코넥스 전체
         cond = stocks['Market'] != 'KONEX'
@@ -106,9 +125,29 @@ class GetTicker:
         return stocks
         '''
 
+    def find_latest_file(self, folder_path, keyword):
+        latest_file = None
+        latest_date = None
+
+        # 정규식을 통해 날짜 패턴과 파일 이름을 매칭
+        date_pattern = re.compile(r".*" + re.escape(keyword) + r".*_(\d{4}-\d{2}-\d{2})\.xlsx$")
+
+        for file_name in os.listdir(folder_path):
+            match = date_pattern.match(file_name)
+            if match:
+                file_date_str = match.group(1)  # 날짜 추출
+                file_date = datetime.strptime(file_date_str, "%Y-%m-%d")
+
+                if latest_date is None or file_date > latest_date:
+                    latest_date = file_date
+                    latest_file = file_name
+
+        return latest_file
+
     def process_tickerlist(self, datemanage): # 1차 생성된 tickerlist 엑셀 파일을 받아와서 예외처리하여 엑셀로 저장함
         #category = ['Delisted'] # 상폐일이 시뮬레이션 시작일보다 늦고, 상장일이 시뮬레이션 마지막 날보다 빠른 것만 남기기
-        category = ['Listed']
+        #category = ['Listed']
+        category = ['Listed', 'Delisted']
         for type_list in category:
             # original ticker list loading
             file_read_path = self.path_codeLists + f'\\{type_list}\\{type_list}_Ticker_{datemanage.workday_str}.xlsx'
@@ -125,10 +164,16 @@ class GetTicker:
 
             #date_str = '2024-03-29' # exception_list에 적용되는 날짜 str. 나중에는 각 파일마다 따로 찾는 루틴 있어야 함.
             date_str = datemanage.workday_str  # exception_list에 적용되는 날짜 str
+            folder_read_path = self.path_codeLists + f'\\{type_list}\\exception_list'
 
             #  스팩 우회 상장 목록 불러오기
-            file_read_path = self.path_codeLists + f'\\{type_list}\\exception_list\\{type_list}_Ticker_{date_str}_스팩우회상장.xlsx'
-            if os.path.exists(file_read_path):
+            #file_read_path = self.path_codeLists + f'\\{type_list}\\exception_list\\{type_list}_Ticker_{date_str}_스팩우회상장.xlsx'
+            keyword = f'{type_list}_Ticker_스팩우회상장'
+            file_name = self.find_latest_file(folder_read_path, keyword)
+
+            #if os.path.exists(file_read_path):
+            if file_name:
+                file_read_path = folder_read_path + '\\' + file_name
                 stocks_spac = pd.read_excel(file_read_path, index_col=0)
                 stocks_spac['Code'] = stocks_spac['Code'].astype(str)
                 stocks_spac['Code'] = stocks_spac['Code'].str.zfill(6)  # 코드가 6자리에 못 미치면 앞에 0 채워넣기
@@ -139,23 +184,45 @@ class GetTicker:
                 #  stocks_spac의 유효한 행만 stocks에 덮어 씌우기
                 stocks.loc[stocks['ListingDate_spac'].notna(), 'ListingDate'] = stocks['ListingDate_spac']
                 stocks.loc[stocks['DelistingDate_spac'].notna(), 'DelistingDate'] = stocks['DelistingDate_spac']
+
+                # stocks_spac에만 있는 Code와 Name 찾기
+                missing_in_stocks = stocks_spac[~stocks_spac['Code'].isin(stocks['Code'])]
+                print(f"{file_name}에만 있는 종목들:")
+                print(missing_in_stocks[['Code', 'Name']])
+
                 # 불필요한 열 삭제
                 stocks = stocks.drop(columns=['Name_spac', 'ListingDate_spac', 'DelistingDate_spac', '설명'])
 
             #  제외 목록 불러오기 - 상장 폐쇄형 펀드, 스팩, 주식수 zero
-            file_read_path = self.path_codeLists + f'\\{type_list}\\exception_list\\{type_list}_Ticker_{date_str}_제외목록.xlsx'
-            if os.path.exists(file_read_path):
+            #file_read_path = self.path_codeLists + f'\\{type_list}\\exception_list\\{type_list}_Ticker_{date_str}_제외목록.xlsx'
+            keyword = f'{type_list}_Ticker_제외목록'
+            file_name = self.find_latest_file(folder_read_path, keyword)
+
+            # if os.path.exists(file_read_path):
+            if file_name:
+                file_read_path = folder_read_path + '\\' + file_name
                 str_columns = ['ListingDate', 'DelistingDate']  # 문자열 형식으로 읽어올 열 이름 리스트
                 stocks_excepted = pd.read_excel(file_read_path, index_col=0, dtype={col: str for col in str_columns})
                 #stocks_excepted = pd.read_excel(file_read_path, index_col=0)
                 stocks_excepted['Code'] = stocks_excepted['Code'].astype(str)
                 stocks_excepted['Code'] = stocks_excepted['Code'].str.zfill(6)  # 코드가 6자리에 못 미치면 앞에 0 채워넣기
+
+                # stocks_excepted 있는 Code와 Name 찾기
+                missing_in_stocks = stocks_excepted[~stocks_spac['Code'].isin(stocks['Code'])]
+                print(f"{file_name}에만 있는 종목들:")
+                print(missing_in_stocks[['Code', 'Name']])
+
                 #  제외 목록을 원래 list에서 삭제
                 stocks = stocks[~stocks['Code'].isin(stocks_excepted['Code'])]
 
             # KONEX에서 이전상장 목록 불러오기
-            file_read_path = self.path_codeLists + f'\\{type_list}\\exception_list\\{type_list}_Ticker_{date_str}_KONEX에서_이전상장.xlsx'
-            if os.path.exists(file_read_path):
+            #file_read_path = self.path_codeLists + f'\\{type_list}\\exception_list\\{type_list}_Ticker_{date_str}_KONEX에서_이전상장.xlsx'
+            keyword = f'{type_list}_Ticker_KONEX에서_이전상장'
+            file_name = self.find_latest_file(folder_read_path, keyword)
+
+            # if os.path.exists(file_read_path):
+            if file_name:
+                file_read_path = folder_read_path + '\\' + file_name
                 stocks_KONEX = pd.read_excel(file_read_path, index_col=0)
                 stocks_KONEX['Code'] = stocks_KONEX['Code'].astype(str)
                 stocks_KONEX['Code'] = stocks_KONEX['Code'].str.zfill(6)  # 코드가 6자리에 못 미치면 앞에 0 채워넣기
@@ -169,8 +236,13 @@ class GetTicker:
                 stocks = stocks.drop(columns=['설명'])  # '설명' 열 삭제
 
             # KOSDAQ에서 KOSPI로 이전상장 목록 불러오기
-            file_read_path = self.path_codeLists + f'\\{type_list}\\exception_list\\{type_list}_Ticker_{date_str}_KOSDAQ에서_이전상장.xlsx'
-            if os.path.exists(file_read_path):
+            #file_read_path = self.path_codeLists + f'\\{type_list}\\exception_list\\{type_list}_Ticker_{date_str}_KOSDAQ에서_이전상장.xlsx'
+            keyword = f'{type_list}_Ticker_KOSDAQ에서_이전상장'
+            file_name = self.find_latest_file(folder_read_path, keyword)
+
+            # if os.path.exists(file_read_path):
+            if file_name:
+                file_read_path = folder_read_path + '\\' + file_name
                 stocks_KOSDAQ = pd.read_excel(file_read_path, index_col=0)
                 stocks_KOSDAQ['Code'] = stocks_KOSDAQ['Code'].astype(str)
                 stocks_KOSDAQ['Code'] = stocks_KOSDAQ['Code'].str.zfill(6)  # 코드가 6자리에 못 미치면 앞에 0 채워넣기
@@ -192,8 +264,13 @@ class GetTicker:
                 stocks = pd.concat([stocks, stocks_KOSDAQ_merged], ignore_index=True)
 
             # 상폐후 재상장 목록 불러오기
-            file_read_path = self.path_codeLists + f'\\{type_list}\\exception_list\\{type_list}_Ticker_{date_str}_상폐후_재상장.xlsx'
-            if os.path.exists(file_read_path):
+            #file_read_path = self.path_codeLists + f'\\{type_list}\\exception_list\\{type_list}_Ticker_{date_str}_상폐후_재상장.xlsx'
+            keyword = f'{type_list}_Ticker_상폐후_재상장'
+            file_name = self.find_latest_file(folder_read_path, keyword)
+
+            # if os.path.exists(file_read_path):
+            if file_name:
+                file_read_path = folder_read_path + '\\' + file_name
                 stocks_relisted = pd.read_excel(file_read_path, index_col=0)
                 stocks_relisted['Code'] = stocks_relisted['Code'].astype(str)
                 stocks_relisted['Code'] = stocks_relisted['Code'].str.zfill(6)  # 코드가 6자리에 못 미치면 앞에 0 채워넣기
