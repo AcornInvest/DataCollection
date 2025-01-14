@@ -185,7 +185,7 @@ class GetTicker:
                 stocks.loc[stocks['ListingDate_spac'].notna(), 'ListingDate'] = stocks['ListingDate_spac']
                 stocks.loc[stocks['DelistingDate_spac'].notna(), 'DelistingDate'] = stocks['DelistingDate_spac']
 
-                # stocks_spac에만 있는 Code와 Name 찾기
+                # stocks_spac에만 있는 Code와 Name 찾기: exception list update 필요
                 missing_in_stocks = stocks_spac[~stocks_spac['Code'].isin(stocks['Code'])]
                 print(f"{file_name}에만 있는 종목들:")
                 print(missing_in_stocks[['Code', 'Name']])
@@ -207,7 +207,7 @@ class GetTicker:
                 stocks_excepted['Code'] = stocks_excepted['Code'].astype(str)
                 stocks_excepted['Code'] = stocks_excepted['Code'].str.zfill(6)  # 코드가 6자리에 못 미치면 앞에 0 채워넣기
 
-                # stocks_excepted 있는 Code와 Name 찾기
+                # stocks_excepted에만 있는 Code와 Name 찾기: exception list update 필요
                 missing_in_stocks = stocks_excepted[~stocks_spac['Code'].isin(stocks['Code'])]
                 print(f"{file_name}에만 있는 종목들:")
                 print(missing_in_stocks[['Code', 'Name']])
@@ -228,6 +228,12 @@ class GetTicker:
                 stocks_KONEX['Code'] = stocks_KONEX['Code'].str.zfill(6)  # 코드가 6자리에 못 미치면 앞에 0 채워넣기
                 stocks_KONEX['ListingDate'] = pd.to_datetime(stocks_KONEX['ListingDate']).dt.strftime('%Y-%m-%d')
                 stocks_KONEX['DelistingDate'] = pd.to_datetime(stocks_KONEX['DelistingDate']).dt.strftime('%Y-%m-%d')
+
+                # stocks_KONEX 있는 Code와 Name 찾기: exception list update 필요
+                missing_in_stocks = stocks_KONEX[~stocks_spac['Code'].isin(stocks['Code'])]
+                print(f"{file_name}에만 있는 종목들:")
+                print(missing_in_stocks[['Code', 'Name']])
+
                 #  KONEX 에 해당하는 기록의 목록을 원래 list에서 삭제
                 stocks_KONEX_filtered = stocks_KONEX[stocks_KONEX['설명'].str.contains('KONEX')] # stocks_KONEX에서 '설명' 칼럼에 'KONEX'가 포함된 행들을 찾음
                 # stocks_KONEX_filtered의 'Code', 'ListingDate', 'DelistingDate'를 기준으로 stocks에서 일치하는 행을 삭제
