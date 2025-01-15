@@ -208,7 +208,7 @@ class GetTicker:
                 stocks_excepted['Code'] = stocks_excepted['Code'].str.zfill(6)  # 코드가 6자리에 못 미치면 앞에 0 채워넣기
 
                 # stocks_excepted에만 있는 Code와 Name 찾기: exception list update 필요
-                missing_in_stocks = stocks_excepted[~stocks_spac['Code'].isin(stocks['Code'])]
+                missing_in_stocks = stocks_excepted[~stocks_excepted['Code'].isin(stocks['Code'])]
                 print(f"{file_name}에만 있는 종목들:")
                 print(missing_in_stocks[['Code', 'Name']])
 
@@ -229,15 +229,16 @@ class GetTicker:
                 stocks_KONEX['ListingDate'] = pd.to_datetime(stocks_KONEX['ListingDate']).dt.strftime('%Y-%m-%d')
                 stocks_KONEX['DelistingDate'] = pd.to_datetime(stocks_KONEX['DelistingDate']).dt.strftime('%Y-%m-%d')
 
-                # stocks_KONEX 있는 Code와 Name 찾기: exception list update 필요
-                missing_in_stocks = stocks_KONEX[~stocks_spac['Code'].isin(stocks['Code'])]
+                # stocks_KONEX 에만 있는 Code와 Name 찾기: exception list update 필요
+                missing_in_stocks = stocks_KONEX[~stocks_KONEX['Code'].isin(stocks['Code'])]
                 print(f"{file_name}에만 있는 종목들:")
                 print(missing_in_stocks[['Code', 'Name']])
 
                 #  KONEX 에 해당하는 기록의 목록을 원래 list에서 삭제
                 stocks_KONEX_filtered = stocks_KONEX[stocks_KONEX['설명'].str.contains('KONEX')] # stocks_KONEX에서 '설명' 칼럼에 'KONEX'가 포함된 행들을 찾음
                 # stocks_KONEX_filtered의 'Code', 'ListingDate', 'DelistingDate'를 기준으로 stocks에서 일치하는 행을 삭제
-                stocks = stocks.merge(stocks_KONEX_filtered, on=['Name', 'Code', 'ListingDate', 'DelistingDate'], how='left', indicator=True)
+                #stocks = stocks.merge(stocks_KONEX_filtered, on=['Name', 'Code', 'ListingDate', 'DelistingDate'], how='left', indicator=True)
+                stocks = stocks.merge(stocks_KONEX_filtered, on=['Code', 'ListingDate', 'DelistingDate'], how='left', indicator=True)
                 stocks = stocks[stocks['_merge'] == 'left_only'].drop(columns=['_merge'])
                 stocks = stocks.drop(columns=['설명'])  # '설명' 열 삭제
 
@@ -264,8 +265,23 @@ class GetTicker:
                 stocks_KOSDAQ_merged = stocks_KOSDAQ_merged.drop(columns=['설명'])
                 # stocks_KOSDAQ_merged의 Code 리스트
                 codes_to_replace = stocks_KOSDAQ_merged['Code'].unique()
+                # stocks에서 해당 코드를 제거하기 전에 Name 정보를 저장. Name 은 Exception list 가 아니라 raw값을 쓰기 위함.
+                name_mapping = (
+                    stocks[stocks['Code'].isin(codes_to_replace)]
+                    .sort_values(by='ListingDate', ascending=False)  # ListingDate 기준으로 정렬
+                    .drop_duplicates(subset='Code')  # Code별로 ListingDate가 가장 늦은 행 선택
+                    .set_index('Code')['Name']  # Code를 인덱스로 설정하고 Name 열만 저장
+                )
+
+                # stocks_KOSDAQ_merged 에만 있는 Code와 Name 찾기: exception list update 필요
+                missing_in_stocks = stocks_KOSDAQ_merged[~stocks_KOSDAQ_merged['Code'].isin(stocks['Code'])]
+                print(f"{file_name}에만 있는 종목들:")
+                print(missing_in_stocks[['Code', 'Name']])
+
                 # stocks에서 해당 Code를 가진 행을 제거
                 stocks = stocks[~stocks['Code'].isin(codes_to_replace)]
+                # stocks_KOSDAQ_merged에 Name 값을 업데이트
+                stocks_KOSDAQ_merged['Name'] = stocks_KOSDAQ_merged['Code'].map(name_mapping)
                 # stocks_KOSDAQ_merged의 데이터를 stocks에 추가
                 stocks = pd.concat([stocks, stocks_KOSDAQ_merged], ignore_index=True)
 
@@ -288,6 +304,12 @@ class GetTicker:
 
                 # '예전상장정보'를 포함하는 stocks_relisted의 행 필터링
                 filtered_relisted = stocks_relisted[stocks_relisted['설명'].str.contains('예전상장정보')]
+
+                # filtered_relisted 에만 있는 Code와 Name 찾기: exception list update 필요
+                missing_in_stocks = filtered_relisted[~filtered_relisted['Code'].isin(stocks['Code'])]
+                print(f"{file_name}에만 있는 종목들:")
+                print(missing_in_stocks[['Code', 'Name']])
+
                 # stocks_relisted의 '예전상장정보' 목록들로 stocks 객체 업데이트
                 for idx, relisted_row in filtered_relisted.iterrows():
                     mask = (
@@ -300,11 +322,27 @@ class GetTicker:
                     stocks.loc[mask, 'ListingDate'] = relisted_row['ListingDate']
                     stocks.loc[mask, 'DelistingDate'] = relisted_row['DelistingDate']
 
-            # list 상장일 기준 정렬
+                # 처리 후 stocks 에 2개 이상 code 가 있는 경우 찾기.  exception list update 필요
+                # 중복된 Code 값을 가진 행 찾기
+                duplicate_codes = stocks[stocks.duplicated(subset='Code', keep=False)]
+                # 중복된 행들에서 Code와 Name 열만 선택하여 출력
+                print(f"{type_list}_Ticker_{datemanage.workday_str} 에 복수개 코드가 있는 종목들:")
+                print(duplicate_codes[['Code', 'Name']])
+
+            # 상장일 기준 정렬
             stocks = stocks.sort_values(by='ListingDate')  # 상장일 기준 오름차순 정렬
             stocks.reset_index(drop=True, inplace=True)  # 인덱스 리셋
             file_save_path = self.path_codeLists + f'\\{type_list}\\{type_list}_Ticker_{date_str}_modified.xlsx'
             stocks.to_excel(file_save_path)
+
+    def check_code_list():
+        #예전에 상폐 후 현재는 재상장되어 listed 에 있는 경우를 찾아야 한다.
+        #새롭게 상장된 것?
+        #새롭게 상폐된 것?
+        #새롭게 스팩 우회 상장
+        # 새롭게 저외 목록
+        # 새롭게 이전 상장 - Konex, kosdaq
+        # 새롭게 상폐 후 재상장 되었다가 상폐
 
     def make_txt_from_ticker(self, datemanage):
         category = ['Listed', 'Delisted']
