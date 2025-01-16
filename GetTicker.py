@@ -145,9 +145,9 @@ class GetTicker:
         return latest_file
 
     def process_tickerlist(self, datemanage): # 1차 생성된 tickerlist 엑셀 파일을 받아와서 예외처리하여 엑셀로 저장함
-        #category = ['Delisted'] # 상폐일이 시뮬레이션 시작일보다 늦고, 상장일이 시뮬레이션 마지막 날보다 빠른 것만 남기기
+        category = ['Delisted'] # 상폐일이 시뮬레이션 시작일보다 늦고, 상장일이 시뮬레이션 마지막 날보다 빠른 것만 남기기
         #category = ['Listed']
-        category = ['Listed', 'Delisted']
+        #category = ['Listed', 'Delisted']
         for type_list in category:
             # original ticker list loading
             file_read_path = self.path_codeLists + f'\\{type_list}\\{type_list}_Ticker_{datemanage.workday_str}.xlsx'
@@ -310,19 +310,35 @@ class GetTicker:
                 stocks_relisted['Code'] = stocks_relisted['Code'].str.zfill(6)  # 코드가 6자리에 못 미치면 앞에 0 채워넣기
                 stocks_relisted['ListingDate'] = pd.to_datetime(stocks_relisted['ListingDate']).dt.strftime('%Y-%m-%d')
                 stocks_relisted['DelistingDate'] = pd.to_datetime(stocks_relisted['DelistingDate']).dt.strftime('%Y-%m-%d')
-                # 동일한 Code를 갖는 그룹에 modify_code 함수 적용
-                #stocks_relisted = stocks_relisted.groupby('Code').apply(self.modify_code).reset_index(drop=True)
-                stocks_relisted = stocks_relisted.groupby('Code', group_keys=False).apply(self.modify_code).reset_index(drop=True)
 
-                # '예전상장정보'를 포함하는 stocks_relisted의 행 필터링
-                filtered_relisted = stocks_relisted[stocks_relisted['설명'].str.contains('예전상장정보')]
-
-                # filtered_relisted 에만 있는 Code와 Name 찾기: exception list update 필요
-                missing_in_stocks = filtered_relisted[~filtered_relisted['Code'].isin(stocks['Code'])]
+                # stocks_relisted 에만 있는 Code와 Name 찾기: exception list update 필요
+                missing_in_stocks = stocks_relisted[~stocks_relisted['Code'].isin(stocks['Code'])]
                 if not missing_in_stocks.empty:
                     print(f"{file_name}에만 있는 종목들:")
                     print(missing_in_stocks[['Code', 'Name']])
 
+                # 동일한 Code를 갖는 그룹에 modify_code 함수 적용
+                #stocks_relisted = stocks_relisted.groupby('Code').apply(self.modify_code).reset_index(drop=True)
+                stocks_relisted = stocks_relisted.groupby('Code', group_keys=False).apply(self.modify_code).reset_index(drop=True)
+
+                # stocks에서 해당 Code를 모두 제거하고 Name 값을 저장
+                for code in stocks_relisted['Code'].unique():
+                    name_value = stocks.loc[stocks['Code'] == code, 'Name'].drop_duplicates()
+                    name_value = name_value.iloc[0] if not name_value.empty else None
+
+                    # 해당 Code를 가진 행 삭제
+                    stocks = stocks[stocks['Code'] != code]
+
+                    # stocks_relisted에서 Code가 일치하는 행의 Name 열 업데이트
+                    stocks_relisted.loc[stocks_relisted['Code'] == code, 'Name'] = name_value
+
+                # stocks_relisted의 데이터를 stocks에 추가
+                stocks = pd.concat([stocks, stocks_relisted], ignore_index=True)
+
+                '''                
+                # '예전상장정보'를 포함하는 stocks_relisted의 행 필터링
+                filtered_relisted = stocks_relisted[stocks_relisted['설명'].str.contains('예전상장정보')]
+                
                 # stocks_relisted의 '예전상장정보' 목록들로 stocks 객체 업데이트
                 for idx, relisted_row in filtered_relisted.iterrows():
                     mask = (
@@ -334,6 +350,7 @@ class GetTicker:
                     stocks.loc[mask, 'Name'] = relisted_row['Name']
                     stocks.loc[mask, 'ListingDate'] = relisted_row['ListingDate']
                     stocks.loc[mask, 'DelistingDate'] = relisted_row['DelistingDate']
+                '''
 
                 # 처리 후 stocks 에 2개 이상 code 가 있는 경우 찾기.  exception list update 필요(새로운 재상장 후 상폐 종목)
                 # 중복된 Code 값을 가진 행 찾기
@@ -353,9 +370,12 @@ class GetTicker:
         '''
         #예전에 상폐 후 현재는 재상장되어 listed 에 있는 경우를 찾아야 한다.
         #새롭게 상장된 것?
+            기존 listed 에 있던 것과 코드는 동일한데 이름이나 상장일이 변경된 것이 있는지 --> exception list 업데이트 필요
         #새롭게 상폐된 것?
+            기존 listed exception list 검토
+            code가 duplicate 되는 게 있는지 - 혹시 상폐후 재상장, konex/kosdaq 에서 이전상장한 정보가 넘어오는 경우
         #새롭게 스팩 우회 상장
-        # 새롭게 저외 목록
+        # 새롭게 제외 목록
         # 새롭게 이전 상장 - Konex, kosdaq
         # 새롭게 상폐 후 재상장 되었다가 상폐
         '''
