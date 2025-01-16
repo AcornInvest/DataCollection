@@ -318,8 +318,10 @@ class GetTicker:
                     print(missing_in_stocks[['Code', 'Name']])
 
                 # 동일한 Code를 갖는 그룹에 modify_code 함수 적용
-                #stocks_relisted = stocks_relisted.groupby('Code').apply(self.modify_code).reset_index(drop=True)
-                stocks_relisted = stocks_relisted.groupby('Code', group_keys=False).apply(self.modify_code).reset_index(drop=True)
+                # stocks_relisted = stocks_relisted.groupby('Code').apply(self.modify_code).reset_index(drop=True)
+                stocks_relisted = stocks_relisted.groupby('Code', group_keys=False).apply(
+                    self.modify_code).reset_index(drop=True)
+                stocks_relisted = stocks_relisted.drop(columns=['설명'])
 
                 # stocks에서 해당 Code를 모두 제거하고 Name 값을 저장
                 for code in stocks_relisted['Code'].unique():
@@ -330,7 +332,8 @@ class GetTicker:
                     stocks = stocks[stocks['Code'] != code]
 
                     # stocks_relisted에서 Code가 일치하는 행의 Name 열 업데이트
-                    stocks_relisted.loc[stocks_relisted['Code'] == code, 'Name'] = name_value
+                    if name_value is not None:
+                        stocks_relisted.loc[stocks_relisted['Code'] == code, 'Name'] = name_value
 
                 # stocks_relisted의 데이터를 stocks에 추가
                 stocks = pd.concat([stocks, stocks_relisted], ignore_index=True)
