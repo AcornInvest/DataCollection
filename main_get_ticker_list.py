@@ -28,3 +28,4 @@ logger.addHandler(file_handler_info)
 get_ticker = GetTicker(logger)
 #get_ticker.make_raw_ticker_list(datemanage) # original ticker list 받기
 get_ticker.process_tickerlist(datemanage) # original ticker list 데이터의 처리
+get_ticker.check_code_list(datemanage) # process 된 ticker list check
