@@ -125,6 +125,7 @@ class GetTicker:
         return stocks
         '''
 
+
     def find_latest_file(self, folder_path, keyword):
         latest_file = None
         latest_date = None
@@ -144,10 +145,37 @@ class GetTicker:
 
         return latest_file
 
+
+    def find_latest_ticker_list_file(self, folder_path, keyword, workday_str):
+        latest_file = None
+        latest_date = None
+
+        # 정규식을 통해 날짜 패턴과 파일 이름을 매칭
+        #date_pattern = re.compile(r".*" + re.escape(keyword) + r".*_(\d{4}-\d{2}-\d{2})\\.xlsx$")
+        #date_pattern = re.compile(r"^" + re.escape(keyword) + r".*_(\d{4}-\d{2}-\d{2})_modified\\.xlsx$")
+        #date_pattern = re.compile(re.escape(keyword) + r".*_(\d{4}-\d{2}-\d{2})_modified\\.xlsx$")
+        date_pattern = re.compile(re.escape(keyword) + r".*_(\d{4}-\d{2}-\d{2})_modified.xlsx$")
+
+        # 기준 날짜 변환
+        workday_date = datetime.strptime(workday_str, "%Y-%m-%d")
+
+        for file_name in os.listdir(folder_path):
+            match = date_pattern.match(file_name)
+            if match:
+                file_date_str = match.group(1)  # 날짜 추출
+                file_date = datetime.strptime(file_date_str, "%Y-%m-%d")
+
+                # workday_date 이전의 가장 최근 날짜 찾기
+                if file_date < workday_date and (latest_date is None or file_date > latest_date):
+                    latest_date = file_date
+                    latest_file = file_name
+
+        return latest_file
+
     def process_tickerlist(self, datemanage): # 1차 생성된 tickerlist 엑셀 파일을 받아와서 예외처리하여 엑셀로 저장함
-        category = ['Delisted'] # 상폐일이 시뮬레이션 시작일보다 늦고, 상장일이 시뮬레이션 마지막 날보다 빠른 것만 남기기
+        #category = ['Delisted'] # 상폐일이 시뮬레이션 시작일보다 늦고, 상장일이 시뮬레이션 마지막 날보다 빠른 것만 남기기
         #category = ['Listed']
-        #category = ['Listed', 'Delisted']
+        category = ['Listed', 'Delisted']
         for type_list in category:
             # original ticker list loading
             file_read_path = self.path_codeLists + f'\\{type_list}\\{type_list}_Ticker_{datemanage.workday_str}.xlsx'
@@ -368,8 +396,9 @@ class GetTicker:
             stocks.reset_index(drop=True, inplace=True)  # 인덱스 리셋
             file_save_path = self.path_codeLists + f'\\{type_list}\\{type_list}_Ticker_{date_str}_modified.xlsx'
             stocks.to_excel(file_save_path)
+            print(f'Ticker List 파일 저장: {type_list}_Ticker_{date_str}_modified.xlsx')
 
-    def check_code_list(self):
+    def check_code_list(self, datemanage):
         '''
         #예전에 상폐 후 현재는 재상장되어 listed 에 있는 경우를 찾아야 한다.
         #새롭게 상장된 것?
@@ -382,6 +411,99 @@ class GetTicker:
         # 새롭게 이전 상장 - Konex, kosdaq
         # 새롭게 상폐 후 재상장 되었다가 상폐
         '''
+
+        category = ['Listed', 'Delisted']
+
+        ticker_lists = {}
+        for type_list in category:
+            # recent ticker list loading
+            folder_read_path = self.path_codeLists + f'\\{type_list}'
+            keyword = f'{type_list}_Ticker'
+            file_name = self.find_latest_ticker_list_file(folder_read_path, keyword, datemanage.workday_str)
+            file_read_path = folder_read_path + '\\' + file_name
+
+            stocks = pd.read_excel(file_read_path, index_col=0)
+            stocks['ListingDate'] = pd.to_datetime(stocks['ListingDate']).apply(lambda x: x.date())
+            stocks['DelistingDate'] = pd.to_datetime(stocks['DelistingDate']).apply(lambda x: x.date())
+            stocks = stocks[
+                (stocks['DelistingDate'] >= datemanage.startday) & (stocks['ListingDate'] <= datemanage.workday)]
+            stocks['Code'] = stocks['Code'].astype(str)
+            stocks['Code'] = stocks['Code'].str.zfill(6)  # 코드가 6자리에 못 미치면 앞에 0 채워넣기
+            stocks['ListingDate'] = pd.to_datetime(stocks['ListingDate']).dt.strftime('%Y-%m-%d')  # ListingDate 열 type 변경
+            stocks['DelistingDate'] = pd.to_datetime(stocks['DelistingDate']).dt.strftime(
+                '%Y-%m-%d')  # LIstingDate 열 type 변경
+
+            key = f'{type_list}_old'
+            ticker_lists[key] = stocks
+
+            # workday list loading
+            file_name = f'{keyword}_{datemanage.workday_str}_modified.xlsx'
+            file_read_path = folder_read_path + '\\' + file_name
+
+            stocks = pd.read_excel(file_read_path, index_col=0)
+            stocks['ListingDate'] = pd.to_datetime(stocks['ListingDate']).apply(lambda x: x.date())
+            stocks['DelistingDate'] = pd.to_datetime(stocks['DelistingDate']).apply(lambda x: x.date())
+            stocks = stocks[
+                (stocks['DelistingDate'] >= datemanage.startday) & (stocks['ListingDate'] <= datemanage.workday)]
+            stocks['Code'] = stocks['Code'].astype(str)
+            stocks['Code'] = stocks['Code'].str.zfill(6)  # 코드가 6자리에 못 미치면 앞에 0 채워넣기
+            stocks['ListingDate'] = pd.to_datetime(stocks['ListingDate']).dt.strftime(
+                '%Y-%m-%d')  # ListingDate 열 type 변경
+            stocks['DelistingDate'] = pd.to_datetime(stocks['DelistingDate']).dt.strftime(
+                '%Y-%m-%d')  # LIstingDate 열 type 변경
+
+            key = f'{type_list}_workday'
+            ticker_lists[key] = stocks
+
+        ## 1. 기존 것과의 비교
+        # 1-1. 상폐 리스트의 같은 코드 중 Name/listingdate/delistingdate이 변한게 있는지 - 상폐후 재상장 후 다시 상폐, konex/kosdaq 에서 이전상장한 정보가 넘어오는 경우, spac 우회 상장 했던 게 상폐되는 경우
+        delisted_old = ticker_lists['Delisted_old']
+        delisted_workday = ticker_lists['Delisted_workday']
+
+        diff_delisted = delisted_old.merge(delisted_workday, on='Code', suffixes=('_old', '_workday'))
+        diff_delisted = diff_delisted[(diff_delisted['Name_old'] != diff_delisted['Name_workday']) |
+                                      (diff_delisted['ListingDate_old'] != diff_delisted['ListingDate_workday']) |
+                                      (diff_delisted['DelistingDate_old'] != diff_delisted['DelistingDate_workday'])]
+
+        if diff_delisted.empty:
+            print("Differences between Delisted_old and Delisted_workday: 특이사항 없음")
+        else:
+            print("Differences between Delisted_old and Delisted_workday:")
+            print(diff_delisted)
+
+        # 1-2. 상장 리스트의 같은 코드 중 listingdate/delistingdate이 변한게 있는지 - spac 우회 상장 가능성, kosdaq에서 이전 상장 검토 필요
+        listed_old = ticker_lists['Listed_old']
+        listed_workday = ticker_lists['Listed_workday']
+
+        diff_listed = listed_old.merge(listed_workday, on='Code', suffixes=('_old', '_workday'))
+        '''
+        diff_listed = diff_listed[(diff_listed['Name_old'] != diff_listed['Name_workday']) |
+                                  (diff_listed['ListingDate_old'] != diff_listed['ListingDate_workday']) |
+                                  (diff_listed['DelistingDate_old'] != diff_listed['DelistingDate_workday'])]
+        '''
+        diff_listed = diff_listed[(diff_listed['ListingDate_old'] != diff_listed['ListingDate_workday']) |
+                                  (diff_listed['DelistingDate_old'] != diff_listed['DelistingDate_workday'])]
+
+        if diff_listed.empty:
+            print("Differences between Listed_old and Listed_workday: 특이사항 없음")
+        else:
+            print("Differences between Listed_old and Listed_workday:")
+            print(diff_listed)
+
+        ## 2. 예전에 상폐 후 현재 재상장 중인 것이 있는지?
+        # workday의 상폐 리스트와 상장 리스트에 겹치는 코드가 있는지
+        listed_workday = ticker_lists['Listed_workday']
+        delisted_workday = ticker_lists['Delisted_workday']
+
+        common_codes = listed_workday.merge(delisted_workday, on='Code')
+
+        if common_codes.empty:
+            print("Common codes between Listed_workday and Delisted_workday: 특이사항 없음")
+        else:
+            print("Common codes between Listed_workday and Delisted_workday:")
+            print(common_codes)
+
+        ## 새로운 제외목록? 이건 ticker list에서 알기 어렵다. ohlcv 에서 verify 해야 한다.
 
     def make_txt_from_ticker(self, datemanage):
         category = ['Listed', 'Delisted']
