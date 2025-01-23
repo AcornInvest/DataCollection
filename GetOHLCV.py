@@ -1,8 +1,8 @@
 import os
 import configparser
 import FinanceDataReader as fdr
-from pykrx import stock
-# import pandas_datareader.data as pdr
+#from pykrx import stock
+#import pandas_datareader.data as pdr
 #import yfinance as yf
 import pandas as pd
 import numpy as np
