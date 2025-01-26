@@ -33,8 +33,15 @@ file_handler_info.setFormatter(formatter)
 logger.addHandler(file_handler_info)
 
 get_ref_date = GetDateRef(logger, i)
-get_ref_date.intel.chrome_on(logger, get_ref_date.page, get_ref_date.name)
-get_ref_date.run_backtest(datemanage)
-#get_OHLCV_Intelliquant.run_backtest_rep(datemanage, 0, 99)
-#get_OHLCV_Intelliquant.run_backtest_process(datemanage) # 인텔리퀀트로 얻은 백테스트 raw 데이터 처리
+date_prefix = 'bussiness_day_ref'
+#get_ref_date.intel.chrome_on(logger, get_ref_date.page, get_ref_date.name)
+#path_backtest_result = get_ref_date.run_backtest(datemanage)
+path_backtest_result = 'F:\WorkDotori\StockDataset\date_reference\From_Intelliquant' + '\\' + 'backtest_result_' + datemanage.workday_str + '.txt'
+df_date_ref_new = get_ref_date.process_backtest_result(path_backtest_result)
+df_date_ref_combined = get_ref_date.merge_date_ref(datemanage, df_date_ref_new, date_prefix)
+
+date_prefix = 'financial_day_ref'
+df_financial_date_new = get_ref_date.make_financial_date_ref(df_date_ref_new)
+df_financial_date_ref_combined = get_ref_date.merge_financial_date_ref(datemanage, df_financial_date_new, date_prefix)
+get_ref_date.count_num_days_financial_date(datemanage, df_financial_date_ref_combined, df_date_ref_combined, date_prefix)
 
