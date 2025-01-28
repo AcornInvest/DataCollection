@@ -34,9 +34,9 @@ logger.addHandler(file_handler_info)
 
 get_ref_date = GetDateRef(logger, i)
 date_prefix = 'bussiness_day_ref'
-#get_ref_date.intel.chrome_on(logger, get_ref_date.page, get_ref_date.name)
-#path_backtest_result = get_ref_date.run_backtest(datemanage)
-path_backtest_result = 'F:\WorkDotori\StockDataset\date_reference\From_Intelliquant' + '\\' + 'backtest_result_' + datemanage.workday_str + '.txt'
+get_ref_date.intel.chrome_on(logger, get_ref_date.page, get_ref_date.name)
+path_backtest_result = get_ref_date.run_backtest(datemanage)
+#path_backtest_result = 'F:\WorkDotori\StockDataset\date_reference\From_Intelliquant' + '\\' + 'backtest_result_' + datemanage.workday_str + '.txt'
 df_date_ref_new = get_ref_date.process_backtest_result(path_backtest_result)
 df_date_ref_combined = get_ref_date.merge_date_ref(datemanage, df_date_ref_new, date_prefix)
 
