@@ -15,7 +15,7 @@ class GetCompensationData(UseIntelliquant):
         # 인텔리퀀트 시뮬레이션 종목수 조회시 한번에 돌리는 종목 수.
         #self.max_batchsize = 20 # Delisted
         #self.max_batchsize = 10 # Listed
-        self.max_unit_year = 480  # 한 종목, 1년을 시뮬레이션할 때가 1 유닛. 20종목*24년 = 480 유닛만큼 끊어서 시뮬레이션 하겠다는 의미
+        #self.max_unit_year = 480  # 한 종목, 1년을 시뮬레이션할 때가 1 유닛. 20종목*24년 = 480 유닛만큼 끊어서 시뮬레이션 하겠다는 의미
         self.max_unit_year = 4800 # 480*10
         self.path_base_code = self.cur_dir + '\\' + 'GetNoOfShares_base.js'
         self.suffix = 'compensation'  # 파일 이름 저장시 사용하는 접미사

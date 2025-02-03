@@ -61,8 +61,8 @@ function initialize() {
                 load_failure_list.push(removeA(code[list_index])); //상장일, 상폐일이 기준에 들어오는데 종목 조회 실패
             }            
 		}
-        else {
-			DelistingDate_Error_list.push(removeA(code[list_index])); //상장일, 상폐일이 기준 안 맞음
+		else {
+			DelistingDate_Error_list.push(removeA(code[list_index])); //상장일, 상폐일이 기준 안 맞는 것. spac 확인 필요
         }
         list_index++;        
     }    
@@ -94,7 +94,7 @@ function onDayClose(now){
             }            
 		}
         else {
-			DelistingDate_Error_list.push(removeA(code[list_index])); //상장일, 상폐일이 기준에 안 맞음
+			DelistingDate_Error_list.push(removeA(code[list_index])); //상장일, 상폐일이 기준에 안 맞음. spac 확인 필요
         }
         list_index++;        
     }     

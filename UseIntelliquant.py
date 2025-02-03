@@ -134,7 +134,7 @@ class UseIntelliquant:
                 raise ValueError("파일 무리의 개수가 서로 다릅니다.")
 
             if all_files == True:
-                file_range = range(1, max_file_index + 1)
+                file_range = range(0, max_file_index)
             else:
                 file_range = range(first_index, final_index + 1)
 
@@ -321,6 +321,10 @@ class UseIntelliquant:
             stocks['Code'] = stocks['Code'].str.zfill(6)  # 코드가 6자리에 못 미치면 앞에 0 채워넣기
             stocks['ListingDate'] = pd.to_datetime(stocks['ListingDate']).dt.date
             stocks['DelistingDate'] = pd.to_datetime(stocks['DelistingDate']).dt.date
+
+            # 상폐일이 startday 보다 빠르거나 상장일이 workday 보다 늦은 행은 제외
+            stocks = stocks[(stocks['DelistingDate'] >= datemanage.startday) & (stocks['ListingDate'] <= datemanage.workday)]
+
             # Intelliquant 를 위한 칼럼
             stocks['A_Code'] = "'A" + stocks['Code'] + "'"  # Code 열의 각 값에 "A"를 붙인 열 생성
             stocks['A_ListingDate'] = "new Date('" + stocks['ListingDate'].apply(lambda x: x.strftime('%Y-%m-%d')) + "')"

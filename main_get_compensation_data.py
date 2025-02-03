@@ -14,8 +14,10 @@ formatter = logging.Formatter("%(asctime)s - %(levelname)s - [%(funcName)s:%(lin
 i = 0
 
 filename = f'{os.path.splitext(os.path.basename(__file__))[0]}_Proc_{i}'  # 실행하고 있는 스크립트 파일 이름 가져오기
-startday = date(2000, 1, 4)
-workday = date(2024, 3, 29)
+#startday = date(2000, 1, 4)
+#workday = date(2024, 3, 29)
+startday = date(2024, 3, 29)
+workday = date(2025, 1, 14)
 datemanage = DateManage(filename)
 datemanage.SetStartday(startday)
 datemanage.SetWorkday(workday)
@@ -27,7 +29,8 @@ logger.addHandler(file_handler_info)
 
 get_compensation_data = GetCompensationData(logger, i)
 #get_compensation_data.make_txt_from_ticker(datemanage)
-#get_compensation_data.intel.chrome_on(logger, get_compensation_data.page, get_compensation_data.name)
+get_compensation_data.intel.chrome_on(logger, get_compensation_data.page, get_compensation_data.name)
 #get_compensation_data.run_backtest_rep(datemanage, 0, 1)
-get_compensation_data.run_backtest_process(datemanage) # 인텔리퀀트로 얻은 백테스트 raw 데이터 처리
+get_compensation_data.run_backtest_rep(datemanage, all_files=True)
+#get_compensation_data.run_backtest_process(datemanage) # 인텔리퀀트로 얻은 백테스트 raw 데이터 처리
 
