@@ -8,6 +8,7 @@ import configparser
 from UseIntelliquant import UseIntelliquant
 import pandas as pd
 import re
+import sqlite3
 
 class GetCompensationData(UseIntelliquant):
     def __init__(self, logger, num_process):
@@ -79,93 +80,87 @@ class GetCompensationData(UseIntelliquant):
         # 각 코드별로 DataFrame 객체 생성
         dataframes = {}
         for code, data in data_by_code.items():
-            df = pd.DataFrame(data, columns=['Date', 'OldNoShare', 'NewNoShare'])
+            df = pd.DataFrame(data, columns=['date', 'old_share', 'new_share'])
             # 날짜순으로 정렬
-            df['Date'] = pd.to_datetime(df['Date']).dt.strftime('%Y-%m-%d')
-            df.sort_values('Date', inplace=True)
+            df['date'] = pd.to_datetime(df['date']).dt.strftime('%Y-%m-%d')
+            df.sort_values('date', inplace=True)
             # Reset index
             df.reset_index(drop=True, inplace=True)
             dataframes[code] = df
 
         return dataframes
 
-    # 2024.6.11 기준 예전 코드
-    '''
-    def process_backtest_result(self, path_file): #backtest result 를 처리하여 df로 반환
-        # 각 코드별 데이터를 저장할 딕셔너리
-        data_by_code = {}
+    def make_sql(self, datemanage):
+        # 처리 결과(sql) 저장할 폴더
+        process_result_folder = f'{self.path_backtest_save}\\{datemanage.workday_str}\\'
 
-        with open(path_file, 'r') as file:
-            for line in file:
-                if 'list_index:' in line:
-                    num_codes = int(line.split('list_index:')[1].strip())
-                elif 'NumOfStocks:' in line:
-                    num_stocks = int(line.split('NumOfStocks:')[1].strip())
-                elif 'load_failure_list:' in line:
-                    extracted_data = line.split("load_failure_list: [")[1].split("]")[0].split(",")
-                    load_failure_stocks = [x.strip() for x in extracted_data if x.strip()]  # 비어있지 않은 요소만 추가
-                    num_load_failure_stocks = len(load_failure_stocks)
-                elif 'DelistingDate_Error_list:' in line:
-                    extracted_data = line.split("DelistingDate_Error_list: [")[1].split("]")[0].split(",")
-                    delisting_data_error_stocks = [x.strip() for x in extracted_data if x.strip()]
-                    num_delisting_data_error_stocks = len(delisting_data_error_stocks)
-                else:
-                    # 일반 데이터 처리
-                    parts = line.split(',')
-                    date2 = parts[0].split("] ")[1]  # '날짜2' 추출
-                    code = parts[1].strip()
-                    old_no_share = int(parts[2].split(':')[1].strip())  # old_no_share 추출
-                    new_no_share = int(parts[3].split(':')[1].strip())  # new_no_share 추출
+        # 처리 결과 폴더가 존재하지 않으면 생성
+        if not os.path.exists(process_result_folder):
+            os.makedirs(process_result_folder)
 
-                    # 코드에 따라 데이터 묶기
-                    if code not in data_by_code:
-                        data_by_code[code] = []
-                    data_by_code[code].append((date2, old_no_share, new_no_share))
-
-        if num_codes != (num_stocks + num_load_failure_stocks + num_delisting_data_error_stocks):
-            print('backtest 결과 이상. num_code != num_stock + num_load_failure_stocks + num_delisting_data_error_stocks')
-            self.logger.info("Backtest 결과 이상: %s, num_code = %d, num_stocks = %d, num_load_failure_stocks = %d, num_delisting_data_error_stocks = %d" % (path_file,num_codes,num_stocks,num_load_failure_stocks,num_delisting_data_error_stocks ))
-
-        # 각 코드별로 DataFrame 객체 생성
-        dataframes = {}
-        # 각 코드의 df 에서 old, new 맞나 체크하는 루틴
-        # 문제가 없으면 각각 new 데이터만 남긴다
-        for code, data in data_by_code.items():
-            df = pd.DataFrame(data, columns=['Date', 'OldNoShare', 'NewNoShare'])
-
-            # OldNoShare를 한 칸 위로 shift한 후 NewNoShare와 비교. 마지막 행은 제외하고. backtest 시 누락된 데이터가 없는지 확인하는 용도
-            df['ShiftedOldNoShare'] = df['OldNoShare'].shift(-1)
-            comparison_result_without_last = (df['ShiftedOldNoShare'][:-1] == df['NewNoShare'][:-1])
-
-            # 모든 결과가 True인지 확인하고, 아니라면 해당 행의 날짜를 str 변수에 저장
-            if not comparison_result_without_last.all():
-                # 불일치하는 행의 날짜 찾기
-                mismatched_dates = df.loc[~comparison_result_without_last, 'Date']
-                err_date = ', '.join(mismatched_dates)
-                self.logger.info(f"주식수 데이터 에러. Code: {code}, date:{err_date}")
-
-            del df['ShiftedOldNoShare']
-
-            # 시뮬레이션 마지막 해에 load한 데이터로 인해 중복되는 데이터 처리
-            df['Date'] = pd.to_datetime(df['Date']).dt.strftime('%Y-%m-%d')
-            df.sort_values('Date', inplace=True)
-
-            # Drop duplicates keeping the last occurrence
-            df.drop_duplicates(subset=['Date'], keep='last', inplace=True)
-
-            # Use forward fill to create a column of the correct OldNoShare values
-            df['CorrectOldNoShare'] = df['NewNoShare'].shift(1).ffill()
-
-            # Filter out rows where the OldNoShare doesn't match the CorrectOldNoShare, except for the first occurrence
-            # The first occurrence does not have a previous NewNoShare value, so it's considered correct
-            df = df[(df['OldNoShare'] == df['CorrectOldNoShare']) | (df['Date'] == df['Date'].min())]
-
-            # Drop the CorrectOldNoShare column as it is no longer needed
-            df.drop(columns=['CorrectOldNoShare'], inplace=True)
-
-            # Reset index
-            df.reset_index(drop=True, inplace=True)
-
-            dataframes[code] = df
-        return dataframes
+        # 테이블 생성 쿼리
+        create_table_query = '''
+        CREATE TABLE IF NOT EXISTS compensation (
+            stock_code TEXT,
+            date TEXT,
+            old_share REAL,
+            new_share REAL           
+        );
         '''
+
+        # SQLite 데이터베이스 파일 연결 (없으면 새로 생성)
+        #filename_db = f'{self.suffix}_{listed_status}_{datemanage.workday}.db'
+        filename_db = f'{self.suffix}_{datemanage.workday}.db'
+        file_path_db = process_result_folder + filename_db
+        conn = sqlite3.connect(file_path_db)
+        conn.execute(create_table_query)  # 테이블 생성
+        conn.commit()
+
+        # 인덱스 생성 (쿼리 성능 향상)
+        conn.execute('CREATE INDEX IF NOT EXISTS idx_stock_code ON compensation (stock_code);')
+        conn.execute('CREATE INDEX IF NOT EXISTS idx_date ON compensation (date);')
+        conn.commit()
+        # 데이터베이스 연결 종료
+        conn.close()
+
+    def add_data_to_sql(self, datemanage, df_processed_stock_data):
+        #  불러올 데이터 db 경로
+        folder_data = f'{self.path_backtest_save}\\{datemanage.workday_str}\\'
+        file_data = f'{self.suffix}_{datemanage.workday}.db'
+        path_data = folder_data + file_data
+        conn_data = sqlite3.connect(path_data)
+        table_name = 'compensation'
+
+        for key, df in df_processed_stock_data.items():
+            # processed_data 를 db에 넣기
+            df['stock_code'] = key  # 종목코드 열 추가
+            df.to_sql('stock_data', conn_data, if_exists='append', index=False)
+
+       # 데이터베이스 연결 종료
+        conn_data.close()
+
+    def load_df_codes(self, datamanage):
+        #  불러올 데이터 db 경로
+        folder_data = f'{self.path_backtest_save}\\{datemanage.workday_str}\\'
+        file_data = f'{self.suffix}_{datemanage.workday}.db'
+        path_data = folder_data + file_data
+        conn = sqlite3.connect(path_data)
+        table_name = 'compensation'
+
+        # 종목 코드 목록 가져오기
+        query = 'SELECT DISTINCT stock_code FROM compensation'
+        stock_codes = pd.read_sql(query, conn)['stock_code'].tolist()
+
+        return stock_codes
+
+    def load_df(self, datamanage):
+        #  불러올 데이터 db 경로
+        folder_data = f'{self.path_backtest_save}\\{datemanage.workday_str}\\'
+        file_data = f'{self.suffix}_{datemanage.workday}.db'
+        path_data = folder_data + file_data
+        conn = sqlite3.connect(path_data)
+        table_name = 'compensation'
+
+        # 종목 코드 목록 가져오기
+        query = 'SELECT DISTINCT stock_code FROM compensation'
+        stock_codes = pd.read_sql(query, conn)['stock_code'].tolist()
