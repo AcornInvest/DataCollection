@@ -139,7 +139,7 @@ class GetCompensationData(UseIntelliquant):
        # 데이터베이스 연결 종료
         conn_data.close()
 
-    def load_df_codes(self, datamanage):
+    def load_df_codes(self, datemanage):
         #  불러올 데이터 db 경로
         folder_data = f'{self.path_backtest_save}\\{datemanage.workday_str}\\'
         file_data = f'{self.suffix}_{datemanage.workday}.db'
@@ -153,7 +153,7 @@ class GetCompensationData(UseIntelliquant):
 
         return stock_codes
 
-    def load_df(self, datamanage):
+    def load_df(self, datemanage):
         #  불러올 데이터 db 경로
         folder_data = f'{self.path_backtest_save}\\{datemanage.workday_str}\\'
         file_data = f'{self.suffix}_{datemanage.workday}.db'

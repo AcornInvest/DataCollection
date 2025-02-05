@@ -106,9 +106,9 @@ class UseIntelliquant:
         # 데이터를 하나씩 추출해서 인텔리퀀트의 코드 수정해가면서 백테스트 수행.
         #chrome_on()은 되어 있는 상태에서 호출
 
-        #category = ['Delisted', 'Listed']
+        category = ['Delisted', 'Listed']
         #category = ['Delisted']
-        category = ['Listed']
+        #category = ['Listed']
         for listed_status in category:
             self.path_for_intelliquant_dir = self.path_backtest_save + '\\' + listed_status + '\\For_Intelliquant\\' + datemanage.workday_str + '\\'
             # max_file_index(폴더 내 데이터 파일 수) 계산
@@ -331,18 +331,16 @@ class UseIntelliquant:
                 df_processed_stock_data = self.process_backtest_result(path_backtest_result_file)
                 self.add_data_to_sql(df_processed_stock_data)
 
-            # 처리한 엑셀 파일들이 Codelist에 있는 모든 종목들을 다 커버하는지 확인
-            df_processed_data = self.load_df_codes(datemanage)
+        ## 처리한 엑셀 파일들이 Codelist에 있는 모든 종목들을 다 커버하는지 확인
+        stock_codes = self.load_df_codes(datemanage) # 해당일 db로 저장한 데이터의 코드명 읽어오기
+        stock_codes_set = set()
+        stock_codes_set.update(stock_codes)
 
+        ticker_codes_set = set()
+        num_ticker_codes = 0
 
-
-
-            # 처리한 엑셀 파일들이 Codelist에 있는 모든 종목들을 다 커버하는지 확인
-            processed_file_names = utils.find_files_with_keyword(process_result_folder,
-                                                                 self.suffix)  # 데이터 처리 결과 파일 목록. 특정 suffix가 포함된 파일만 골라냄
-            file_prefixes = set([name[:6] for name in processed_file_names])  # 각 파일명의 처음 6글자 추출
-            # 파일 처음 6글자가 숫자로 시작하는 것만으로 제한할 것
-
+        # ticker list 에서 전체 코드면 읽어오기
+        for listed_status in category:
             codelist_path = self.path_codeLists + '\\' + listed_status + '\\' + listed_status + '_Ticker_' + datemanage.workday_str + '_modified.xlsx'
             codelist = pd.read_excel(codelist_path, index_col=0)
             codelist['ListingDate'] = pd.to_datetime(codelist['ListingDate']).apply(lambda x: x.date())
@@ -354,29 +352,34 @@ class UseIntelliquant:
             # 상폐일이 시뮬레이션 시작일보다 늦고, 상장일이 시뮬레이션 마지막 날보다 빠른 것만 남기기
             codelist_filtered = codelist[
                 (codelist['DelistingDate'] >= datemanage.startday) & (codelist['ListingDate'] <= datemanage.workday)]
-            codes = set(codelist_filtered['Code'])  # Ticker 파일에서 가져온 Code column
+            num_ticker_codes += len(codelist_filtered)
+            ticker_codes_set.update(codelist_filtered['Code'])
+            #codes = set(codelist_filtered['Code'])  # Ticker 파일에서 가져온 Code column
 
-            if file_prefixes != codes or len(codelist_filtered) != len(file_prefixes):
-                # DataFrame의 칼럼에는 있는데 파일 이름에 없는 값 목록
-                missing_in_files = codes - file_prefixes
+        #if stock_codes_set != ticker_codes_set or len(codelist_filtered) != len(stock_codes_set):
+        if stock_codes_set != ticker_codes_set or num_ticker_codes != len(stock_codes_set):
+            # DataFrame의 칼럼에는 있는데 파일 이름에 없는 값 목록
+            missing_in_files = ticker_codes_set - stock_codes_set
 
-                # 파일 이름에는 있는데 DataFrame의 칼럼에 없는 값 목록
-                extra_in_files = file_prefixes - codes
+            # 파일 이름에는 있는데 DataFrame의 칼럼에 없는 값 목록
+            extra_in_files = stock_codes_set - ticker_codes_set
 
-                # 결과를 텍스트 파일로 저장
-                missing_in_files_path = process_result_folder + 'missing_in_files_' + datemanage.workday_str + '.txt'
-                with open(missing_in_files_path, 'w') as f:
-                    for item in missing_in_files:
-                        f.write("%s\n" % item)
+            process_result_folder = f'{self.path_backtest_save}\\{datemanage.workday_str}\\'
 
-                extra_in_files_path = process_result_folder + 'extra_in_files_' + datemanage.workday_str + '.txt'
-                with open(extra_in_files_path, 'w') as f:
-                    for item in extra_in_files:
-                        f.write("%s\n" % item)
+            # 결과를 텍스트 파일로 저장
+            missing_in_files_path = process_result_folder + 'missing_in_files_' + datemanage.workday_str + '.txt'
+            with open(missing_in_files_path, 'w') as f:
+                for item in missing_in_files:
+                    f.write("%s\n" % item)
 
-                print("결과가 'missing_in_files.txt'와 'extra_in_files.txt'에 저장되었습니다.")
-            else:
-                print("모든 DataFrame의 칼럼 값이 파일 이름에 있습니다.")
+            extra_in_files_path = process_result_folder + 'extra_in_files_' + datemanage.workday_str + '.txt'
+            with open(extra_in_files_path, 'w') as f:
+                for item in extra_in_files:
+                    f.write("%s\n" % item)
+
+            print("결과가 'missing_in_files.txt'와 'extra_in_files.txt'에 저장되었습니다.")
+        else:
+            print("모든 DataFrame의 칼럼 값이 파일 이름에 있습니다.")
 
     def make_txt_from_ticker(self, datemanage):
         category = ['Listed', 'Delisted']

@@ -47,10 +47,9 @@ combined_ohlcv_dataframes, _ = pre_process_data.load_combined_data(datemanage2, 
 
 get_compensation_data = GetCompensationData(logger, i)
 #get_compensation_data.make_txt_from_ticker(datemanage)
-get_compensation_data.intel.chrome_on(logger, get_compensation_data.page, get_compensation_data.name)
-#get_compensation_data.run_backtest_rep(datemanage, 0, 1)
-get_compensation_data.run_backtest_rep(datemanage, all_files=True)
-#get_compensation_data.run_backtest_process(datemanage) # 인텔리퀀트로 얻은 백테스트 raw 데이터 처리
+#get_compensation_data.intel.chrome_on(logger, get_compensation_data.page, get_compensation_data.name)
+#get_compensation_data.run_backtest_rep(datemanage, all_files=True)
+get_compensation_data.run_backtest_process(datemanage) # 인텔리퀀트로 얻은 백테스트 raw 데이터 처리
 
 
 
