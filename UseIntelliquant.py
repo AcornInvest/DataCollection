@@ -329,7 +329,7 @@ class UseIntelliquant:
             for backtest_result_file in file_names:
                 path_backtest_result_file = backtest_result_folder + backtest_result_file
                 df_processed_stock_data = self.process_backtest_result(path_backtest_result_file)
-                self.add_data_to_sql(df_processed_stock_data)
+                self.add_data_to_sql(datemanage, df_processed_stock_data)
 
         ## 처리한 엑셀 파일들이 Codelist에 있는 모든 종목들을 다 커버하는지 확인
         stock_codes = self.load_df_codes(datemanage) # 해당일 db로 저장한 데이터의 코드명 읽어오기
@@ -358,10 +358,10 @@ class UseIntelliquant:
 
         #if stock_codes_set != ticker_codes_set or len(codelist_filtered) != len(stock_codes_set):
         if stock_codes_set != ticker_codes_set or num_ticker_codes != len(stock_codes_set):
-            # DataFrame의 칼럼에는 있는데 파일 이름에 없는 값 목록
+            # ticker_list에 있는데 칼럼에는 있는데 db파일에 없는 코드 목록
             missing_in_files = ticker_codes_set - stock_codes_set
 
-            # 파일 이름에는 있는데 DataFrame의 칼럼에 없는 값 목록
+            # db파일에 있는데 칼럼에는 있는데 ticker_list에 없는 코드 목록
             extra_in_files = stock_codes_set - ticker_codes_set
 
             process_result_folder = f'{self.path_backtest_save}\\{datemanage.workday_str}\\'

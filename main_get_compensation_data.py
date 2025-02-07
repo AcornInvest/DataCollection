@@ -9,7 +9,7 @@ from GetOHLCV import GetOHLCV
 from GetOHLCV_Intelliquant import GetOHLCV_Intelliquant
 
 import sys
-sys.path.append("D:\Work_Dotori\Screener_Desktop2")
+sys.path.append("F:\WorkDotori\Screener_Desktop")
 
 from PreProcessData import PreProcessData
 

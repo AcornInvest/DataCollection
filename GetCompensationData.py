@@ -134,7 +134,7 @@ class GetCompensationData(UseIntelliquant):
         for key, df in df_processed_stock_data.items():
             # processed_data 를 db에 넣기
             df['stock_code'] = key  # 종목코드 열 추가
-            df.to_sql('stock_data', conn_data, if_exists='append', index=False)
+            df.to_sql('compensation', conn_data, if_exists='append', index=False)
 
        # 데이터베이스 연결 종료
         conn_data.close()
