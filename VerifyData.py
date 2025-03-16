@@ -47,15 +47,23 @@ class VerifyData:
             # df_business_days에서 listing_date와 delisting_date 사이의 날짜 추출
             # df_b_day_ref = df_business_days[(df_business_days['Date'] >= listing_date) & (df_business_days['Date'] <= delisting_date)]
             df_b_day_ref = df_business_days[
-                (df_business_days['Date'] >= listing_date) & (df_business_days['Date'] <= delisting_date)].copy()
+                (df_business_days['date'] >= listing_date) & (df_business_days['date'] <= delisting_date)].copy()
 
             # 시작일과 종료일 조정
-            df_b_day_ref['Date'] = df_b_day_ref['Date'].apply(lambda x: max(x, datemanage.startday))
-            df_b_day_ref['Date'] = df_b_day_ref['Date'].apply(lambda x: min(x, datemanage.workday))
+            df_b_day_ref['date'] = df_b_day_ref['date'].apply(lambda x: max(x, datemanage.startday))
+            df_b_day_ref['date'] = df_b_day_ref['date'].apply(lambda x: min(x, datemanage.workday))
 
             # 코드에 해당하는 데이터 불러와서 무결성 검사
             code = row['Code']
-            path_file = f"{self.path_data}\\{listed_status}\\{datemanage.workday_str}\\{code}_{self.suffix}_{datemanage.workday_str}.xlsx"
+
+            # db에서 파일 읽어오기
+            여기 짜야 함
+
+
+
+
+
+            #path_file = f"{self.path_data}\\{listed_status}\\{datemanage.workday_str}\\{code}_{self.suffix}_{datemanage.workday_str}.xlsx"
             #path_file = f"{self.path_data}\\{listed_status}\\{datemanage.workday_str}_merged\\{code}_{self.suffix}_{datemanage.workday_str}_merged.xlsx" # 임시
 
             # 데이터 완전성 검사 - 모든 code 에 해당하는 데이터가 다 있는지
@@ -64,12 +72,13 @@ class VerifyData:
                 df_data = pd.read_excel(path_file, index_col=0)
                 no_error = self.check_integrity(code, df_b_day_ref, df_data, datemanage, listed_status)  # 무결성 검사. 자식클래스에서 선언할 것
             else:
-                path = f"{self.path_data}\\{listed_status}\\{datemanage.workday_str}\\{self.suffix}_not_existed_list.txt"
+                path = f"{self.path_data}\\{datemanage.workday_str}\\{self.suffix}_not_existed_list.txt" #2025.3.16 수정
+                #path = f"{self.path_data}\\{listed_status}\\{datemanage.workday_str}\\{self.suffix}_not_existed_list.txt"
                 #path = f"{self.path_data}\\{listed_status}\\{datemanage.workday_str}_merged\\{self.suffix}_not_existed_list.txt" # 임시
                 data_not_existed = [code]
                 utils.save_list_to_file_append(data_not_existed, path)  # 텍스트 파일에 오류 부분 저장
-                print(f"{self.suffix}, {code} 파일이 없음")
-                self.logger.info(f"{self.suffix}, {code} 파일이 없음")
+                print(f"{self.suffix}, {code} 데이터가 없음")
+                self.logger.info(f"{self.suffix}, {code} 데이터가 없음")
 
             if no_error == False:
                 flag_no_error = False

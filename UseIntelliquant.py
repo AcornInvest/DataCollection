@@ -311,7 +311,7 @@ class UseIntelliquant:
     '''
 
     ## 20250205 이후. 모든 코드 데이터를 모아서 날짜별 db로 저장
-    def run_backtest_process(self, datemanage):  # Backtest 결과를 가지고 xlsx 파일로 처리
+    def run_backtest_process(self, datemanage):  ## 20250205 이후. 모든 코드 데이터를 모아서 날짜별 db로 저장
         category = ['Delisted', 'Listed']
         # category = ['Delisted']
         # category = ['Listed']
@@ -339,7 +339,7 @@ class UseIntelliquant:
         ticker_codes_set = set()
         num_ticker_codes = 0
 
-        # ticker list 에서 전체 코드면 읽어오기
+        # ticker list 에서 전체 코드명 읽어오기
         for listed_status in category:
             codelist_path = self.path_codeLists + '\\' + listed_status + '\\' + listed_status + '_Ticker_' + datemanage.workday_str + '_modified.xlsx'
             codelist = pd.read_excel(codelist_path, index_col=0)
@@ -378,8 +378,10 @@ class UseIntelliquant:
                     f.write("%s\n" % item)
 
             print("결과가 'missing_in_files.txt'와 'extra_in_files.txt'에 저장되었습니다.")
+            return False
         else:
             print("모든 DataFrame의 칼럼 값이 파일 이름에 있습니다.")
+            return True
 
     def make_txt_from_ticker(self, datemanage):
         category = ['Listed', 'Delisted']
