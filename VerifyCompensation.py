@@ -28,7 +28,8 @@ class VerifyCompensation(VerifyData):
         self.path_data = config['path']['path_data']  # 데이터 경로
         self.path_date_ref = config['path']['path_date_ref'] # 날짜 기준 정보 경로
 
-    def check_integrity(self, code, df_b_day_ref, df_data, datemanage, listed_status):
+    #def check_integrity(self, code, df_b_day_ref, df_data, datemanage, listed_status):
+    def check_integrity(self, code, df_b_day_ref, df_data, datemanage):
         df_data.reset_index(inplace=True)
         df_data['Date'] = pd.to_datetime(df_data['Date']).dt.date
         no_error = True
@@ -39,7 +40,7 @@ class VerifyCompensation(VerifyData):
             NaN_exists = df_data[rows_with_nan]['Date'].apply(lambda d: d.strftime('%Y-%m-%d')).tolist()
             NaN_exists_list = [f"{code}, NaN 값이 있는 날짜: {NaN_exists}"]
             self.logger.info(NaN_exists_list)
-            path = f"{self.path_data}\\{listed_status}\\{datemanage.workday_str}\\NaN_exists_list.txt"
+            path = f"{self.path_data}\\{datemanage.workday_str}\\NaN_exists_list.txt"
             #path = f"{self.path_data}\\{listed_status}\\{datemanage.workday_str}_merged\\NaN_exists_list.txt"  # 임시
             utils.save_list_to_file_append(NaN_exists_list, path)  # 텍스트 파일에 오류 부분 저장
             no_error = False
@@ -65,7 +66,7 @@ class VerifyCompensation(VerifyData):
                 #df_b_day_ref = df_b_day_ref.append({'Date': next_date}, ignore_index=True)
                 df_b_day_ref = pd.concat([df_b_day_ref, pd.DataFrame({'Date': [next_date]})], ignore_index=True)
 
-        path = f"{self.path_data}\\{listed_status}\\{datemanage.workday_str}\\time_unconsistency_list.txt"
+        path = f"{self.path_data}\\{datemanage.workday_str}\\time_unconsistency_list.txt"
         #path = f"{self.path_data}\\{listed_status}\\{datemanage.workday_str}_merged\\time_unconsistency_list.txt"
         ## ref 와 지금 받아온 df_data의 date 비교
         # ref와 df_data의 첫번째 날짜가 같은지 확인
@@ -92,15 +93,15 @@ class VerifyCompensation(VerifyData):
 
         # 무결성 검사 4. outlier 검출 - 음수이거나 중간값이 0인지 확인
         #outliers = df_data[(df_data["OldNoShare"] < 0) | (df_data["NewNoShare"] < 0)]
-        condition_negative = (df_data["OldNoShare"] < 0) | (df_data["NewNoShare"] < 0)
-        condition_zero = ((df_data["OldNoShare"] == 0) | (df_data["NewNoShare"] == 0)) & (df_data.index != 0) & (df_data.index != len(df_data) - 1)
+        condition_negative = (df_data["old_share"] < 0) | (df_data["new_share"] < 0)
+        condition_zero = ((df_data["old_share"] == 0) | (df_data["new_share"] == 0)) & (df_data.index != 0) & (df_data.index != len(df_data) - 1)
         outliers = df_data[condition_negative | condition_zero]
 
         if not outliers.empty:
-            outliers = outliers['Date'].apply(lambda d: d.strftime('%Y-%m-%d')).tolist()
+            outliers = outliers['date'].apply(lambda d: d.strftime('%Y-%m-%d')).tolist()
             outliers_list = [f'{code}, 음수 혹은 중간값 0: {outliers}']
             self.logger.info(outliers_list)
-            path = f"{self.path_data}\\{listed_status}\\{datemanage.workday_str}\\outliers_list.txt"  # 임시
+            path = f"{self.path_data}\\{datemanage.workday_str}\\outliers_list.txt"  # 임시
             #path = f"{self.path_data}\\{listed_status}\\{datemanage.workday_str}_merged\\outliers_list.txt"  # 임시
             utils.save_list_to_file_append(outliers_list, path)  # 텍스트 파일에 오류 부분 저장
             no_error = False
@@ -108,7 +109,7 @@ class VerifyCompensation(VerifyData):
         # 무결성 검사 5. # 연속적으로 같은 값을 가지는지 여부를 판별
         # 값이 두번 연속 같은 경우 검출 - 모든 항목에 대해서.
         consecutive_rows = []
-        columns = ["OldNoShare", "NewNoShare"]
+        columns = ["old_share", "new_share"]
 
         for col in columns:
             for i in range(1, len(df_data)):
@@ -121,7 +122,7 @@ class VerifyCompensation(VerifyData):
                 lambda d: d.strftime('%Y-%m-%d')).tolist()
             consecutive_same_values_list = [f'{code}, 값이 연속으로 같은 경우: {consecutive_same_values}']
             self.logger.info(consecutive_same_values_list)
-            path = f"{self.path_data}\\{listed_status}\\{datemanage.workday_str}\\consecutive_same_values_list.txt"  # 임시
+            path = f"{self.path_data}\\{datemanage.workday_str}\\consecutive_same_values_list.txt"  # 임시
             #path = f"{self.path_data}\\{listed_status}\\{datemanage.workday_str}_merged\\consecutive_same_values_list.txt"  # 임시
             utils.save_list_to_file_append(consecutive_same_values_list, path)  # 텍스트 파일에 오류 부분 저장
             no_error = False

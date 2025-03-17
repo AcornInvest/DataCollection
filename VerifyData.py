@@ -3,6 +3,7 @@ from DateManage import DateManage
 import configparser
 import pandas as pd
 import utils
+import sqlite3
 
 class VerifyData:
     '''
@@ -26,21 +27,72 @@ class VerifyData:
         #self.path_data = config['path']['path_data'] # 이건 자식 클래스에서 정의할 것
         self.path_codeLists = config['path']['path_codelists']
 
-    def check_data(self, datemanage, listed_status):
+    #def check_data(self, datemanage, listed_status):
+    def check_data(self, datemanage): #2025.3.17 listed_status 구분 없이 합쳐서 db에 저장함
         # 거래일 목록 ref 읽어오기
         path_date_ref = f'{self.path_date_ref}\\{self.date_prefix}_{datemanage.workday_str}.xlsx'
         df_business_days = pd.read_excel(path_date_ref)
-        df_business_days['Date'] = pd.to_datetime(df_business_days['Date']).dt.date
+        df_business_days['date'] = pd.to_datetime(df_business_days['date']).dt.date
+
+        flag_no_error = True  # 에러가 없다고 플래그 초기값 설정
 
         # 코드리스트 읽어오기
-        codelist_path = f'{self.path_codeLists}\\{listed_status}\\{listed_status}_Ticker_{datemanage.workday_str}_modified.xlsx'
-        df_codelist = pd.read_excel(codelist_path, index_col=0)
-        df_codelist['Code'] = df_codelist['Code'].astype(str)
-        df_codelist['Code'] = df_codelist['Code'].str.zfill(6)  # 코드가 6자리에 못 미치면 앞에 0 채워넣기
-        df_codelist['ListingDate'] = pd.to_datetime(df_codelist['ListingDate']).dt.date
-        df_codelist['DelistingDate'] = pd.to_datetime(df_codelist['DelistingDate']).dt.date
+        codelist_path = f'{self.path_codeLists}\\Listed\\Listed_Ticker_{datemanage.workday_str}_modified.xlsx'
+        df_codelist_listed = pd.read_excel(codelist_path, index_col=0)
+        df_codelist_listed['Code'] = df_codelist_listed['Code'].astype(str)
+        df_codelist_listed['Code'] = df_codelist_listed['Code'].str.zfill(6)  # 코드가 6자리에 못 미치면 앞에 0 채워넣기
+        df_codelist_listed['ListingDate'] = pd.to_datetime(df_codelist_listed['ListingDate']).dt.date
+        df_codelist_listed['DelistingDate'] = pd.to_datetime(df_codelist_listed['DelistingDate']).dt.date
 
-        flag_no_error = True # 에러가 없다고 플래그 초기값 설정
+        codelist_path = f'{self.path_codeLists}\\Delisted\\Delisted_Ticker_{datemanage.workday_str}_modified.xlsx'
+        df_codelist_delisted = pd.read_excel(codelist_path, index_col=0)
+        df_codelist_delisted['Code'] = df_codelist_delisted['Code'].astype(str)
+        df_codelist_delisted['Code'] = df_codelist_delisted['Code'].str.zfill(6)  # 코드가 6자리에 못 미치면 앞에 0 채워넣기
+        df_codelist_delisted['ListingDate'] = pd.to_datetime(df_codelist_delisted['ListingDate']).dt.date
+        df_codelist_delisted['DelistingDate'] = pd.to_datetime(df_codelist_delisted['DelistingDate']).dt.date
+
+        df_codelist = pd.concat([df_codelist_listed, df_codelist_delisted], ignore_index=True)
+        df_codelist = df_codelist[
+            (df_codelist['ListingDate'] <= datemanage.startday) &
+            (df_codelist['DelistingDate'] >= datemanage.workday)
+            ]
+
+        codes = set(df_codelist['Code'])  # Ticker 파일에서 가져온 Code column
+
+        ## db에서 파일 읽어오기
+        #  불러올 데이터 db 경로
+        folder_data = f'{self.path_data}\\{datemanage.workday_str}\\'
+        file_data = f'{self.suffix}_{datemanage.workday_str}.db'
+        path_data = folder_data + file_data
+        conn_data = sqlite3.connect(path_data)
+        table_name = 'compensation'
+
+        # 종목 코드 목록 가져오기
+        query = f'SELECT DISTINCT stock_code FROM {table_name}'
+        stock_codes = pd.read_sql(query, conn_data)['stock_code'].tolist()
+        stock_codes = set(stock_codes)
+
+        # 두 set이 다를 경우에만 각 set에만 존재하는 값 계산 후 파일에 저장
+        if codes != stock_codes:
+            only_in_codes = codes - stock_codes
+            only_in_stock_codes = stock_codes - codes
+
+            path = folder_data + f"unique_values.txt"
+            with open(path, "w", encoding="utf-8") as file:
+                file.write("ticker list에만 있는 값:\n")
+                for value in only_in_codes:
+                    file.write(str(value) + "\n")
+
+                file.write("\ncompensation db에만 있는 값:\n")
+                for value in only_in_stock_codes:
+                    file.write(str(value) + "\n")
+
+            print(f"{path} 파일에 결과가 저장되었습니다.")
+            flag_no_error = False
+            return flag_no_error
+
+        column_load_from_data = ['date', 'old_share', 'new_share'] # compensation db 에서 읽어올 컬럼
+
         for index, row in df_codelist.iterrows():
             listing_date = row['ListingDate']
             delisting_date = row['DelistingDate']
@@ -57,28 +109,12 @@ class VerifyData:
             code = row['Code']
 
             # db에서 파일 읽어오기
-            여기 짜야 함
+            query = f"SELECT {', '.join(column_load_from_data)} FROM '{table_name}' WHERE date >= '{datemanage.startday}' AND \
+                                    date <= '{datemanage.workday}' AND stock_code = '{code}'"
+            df_data = pd.read_sql(query, conn_data)
 
-
-
-
-
-            #path_file = f"{self.path_data}\\{listed_status}\\{datemanage.workday_str}\\{code}_{self.suffix}_{datemanage.workday_str}.xlsx"
-            #path_file = f"{self.path_data}\\{listed_status}\\{datemanage.workday_str}_merged\\{code}_{self.suffix}_{datemanage.workday_str}_merged.xlsx" # 임시
-
-            # 데이터 완전성 검사 - 모든 code 에 해당하는 데이터가 다 있는지
-            no_error = True
-            if os.path.exists(path_file):
-                df_data = pd.read_excel(path_file, index_col=0)
-                no_error = self.check_integrity(code, df_b_day_ref, df_data, datemanage, listed_status)  # 무결성 검사. 자식클래스에서 선언할 것
-            else:
-                path = f"{self.path_data}\\{datemanage.workday_str}\\{self.suffix}_not_existed_list.txt" #2025.3.16 수정
-                #path = f"{self.path_data}\\{listed_status}\\{datemanage.workday_str}\\{self.suffix}_not_existed_list.txt"
-                #path = f"{self.path_data}\\{listed_status}\\{datemanage.workday_str}_merged\\{self.suffix}_not_existed_list.txt" # 임시
-                data_not_existed = [code]
-                utils.save_list_to_file_append(data_not_existed, path)  # 텍스트 파일에 오류 부분 저장
-                print(f"{self.suffix}, {code} 데이터가 없음")
-                self.logger.info(f"{self.suffix}, {code} 데이터가 없음")
+            #no_error = self.check_integrity(code, df_b_day_ref, df_data, datemanage, listed_status)  # 무결성 검사. 자식클래스에서 선언할 것
+            no_error = self.check_integrity(code, df_b_day_ref, df_data, datemanage)  # 무결성 검사. 자식클래스에서 선언할 것
 
             if no_error == False:
                 flag_no_error = False

@@ -3,6 +3,7 @@ import logging
 from datetime import date
 from DateManage import DateManage
 from GetCompensationData import GetCompensationData
+from VerifyCompensation import VerifyCompensation
 from GetFinancialData import GetFinancialData
 from GetTicker import GetTicker
 from GetOHLCV import GetOHLCV
@@ -42,14 +43,17 @@ workday2 = date(2024, 3, 29)
 datemanage2.SetStartday(startday2)
 datemanage2.SetWorkday(workday2)
 
-pre_process_data = PreProcessData(logger)
-combined_ohlcv_dataframes, _ = pre_process_data.load_combined_data(datemanage2, datemanage2.startday, datemanage2.workday) # Stockdataset의 combined data 를 loading
+#pre_process_data = PreProcessData(logger)
+#combined_ohlcv_dataframes, _ = pre_process_data.load_combined_data(datemanage2, datemanage2.startday, datemanage2.workday) # Stockdataset의 combined data 를 loading
 
-get_compensation_data = GetCompensationData(logger, i)
+#get_compensation_data = GetCompensationData(logger, i)
 #get_compensation_data.make_txt_from_ticker(datemanage)
 #get_compensation_data.intel.chrome_on(logger, get_compensation_data.page, get_compensation_data.name)
 #get_compensation_data.run_backtest_rep(datemanage, all_files=True)
-No_error = get_compensation_data.run_backtest_process(datemanage) # 인텔리퀀트로 얻은 백테스트 raw 데이터 처리
+#No_error = get_compensation_data.run_backtest_process(datemanage) # 인텔리퀀트로 얻은 백테스트 raw 데이터 처리
+
+verify_compensation = VerifyCompensation(logger)
+verify_compensation.check_data(datemanage)
 
 
 
