@@ -52,10 +52,7 @@ class VerifyData:
         df_codelist_delisted['DelistingDate'] = pd.to_datetime(df_codelist_delisted['DelistingDate']).dt.date
 
         df_codelist = pd.concat([df_codelist_listed, df_codelist_delisted], ignore_index=True)
-        df_codelist = df_codelist[
-            (df_codelist['ListingDate'] <= datemanage.startday) &
-            (df_codelist['DelistingDate'] >= datemanage.workday)
-            ]
+        df_codelist = df_codelist[(df_codelist['DelistingDate'] >= datemanage.startday)] # 상폐가 startdat 보다 빠른것 제외
 
         codes = set(df_codelist['Code'])  # Ticker 파일에서 가져온 Code column
 
@@ -87,7 +84,7 @@ class VerifyData:
                 for value in only_in_stock_codes:
                     file.write(str(value) + "\n")
 
-            print(f"{path} 파일에 결과가 저장되었습니다.")
+            print(f"tickerlist와 db의 코드목록이 다름. {path} 파일에 결과가 저장되었습니다.")
             flag_no_error = False
             return flag_no_error
 
@@ -101,7 +98,7 @@ class VerifyData:
             df_b_day_ref = df_business_days[
                 (df_business_days['date'] >= listing_date) & (df_business_days['date'] <= delisting_date)].copy()
 
-            # 시작일과 종료일 조정
+            # 시작일과 종료일 조정 --> 변경 필요
             df_b_day_ref['date'] = df_b_day_ref['date'].apply(lambda x: max(x, datemanage.startday))
             df_b_day_ref['date'] = df_b_day_ref['date'].apply(lambda x: min(x, datemanage.workday))
 
