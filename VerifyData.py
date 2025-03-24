@@ -33,6 +33,7 @@ class VerifyData:
         path_date_ref = f'{self.path_date_ref}\\{self.date_prefix}_{datemanage.workday_str}.xlsx'
         df_business_days = pd.read_excel(path_date_ref)
         df_business_days['date'] = pd.to_datetime(df_business_days['date']).dt.date
+        df_business_days = df_business_days[(df_business_days['date'] >= datemanage.startday) & (df_business_days['date'] <= datemanage.workday)]
 
         flag_no_error = True  # 에러가 없다고 플래그 초기값 설정
 
@@ -93,14 +94,18 @@ class VerifyData:
         for index, row in df_codelist.iterrows():
             listing_date = row['ListingDate']
             delisting_date = row['DelistingDate']
-            # df_business_days에서 listing_date와 delisting_date 사이의 날짜 추출
+            # df_business_days에서 listing_date, startday 중 나중 날짜와 delisting_date 사이의 날짜 추출
             # df_b_day_ref = df_business_days[(df_business_days['Date'] >= listing_date) & (df_business_days['Date'] <= delisting_date)]
-            df_b_day_ref = df_business_days[
-                (df_business_days['date'] >= listing_date) & (df_business_days['date'] <= delisting_date)].copy()
+            df_b_day_ref = df_business_days[  (df_business_days['date'] >= listing_date) & (df_business_days['date'] <= delisting_date)].copy()
 
+            if isinstance(df_b_day_ref['date'].iloc[-1], float):
+                print('type 다름')
+
+            ''' # 2025.3.24 위의 줄에서 startday ~ workday 이내로 한정시키니까 이 부분은 필요없어 보인다.
             # 시작일과 종료일 조정 --> 변경 필요
             df_b_day_ref['date'] = df_b_day_ref['date'].apply(lambda x: max(x, datemanage.startday))
             df_b_day_ref['date'] = df_b_day_ref['date'].apply(lambda x: min(x, datemanage.workday))
+            '''
 
             # 코드에 해당하는 데이터 불러와서 무결성 검사
             code = row['Code']

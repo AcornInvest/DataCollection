@@ -46,7 +46,11 @@ class VerifyCompensation(VerifyData):
             no_error = False
 
         # 무결성 검사 3. 시간적 일관성 확인
-        # 거래일 목록 ref 읽어오기
+        # 거래일 목록 ref 읽어오기 --> 2025.3.24 이거 수정하자. df_b_day_ref를 쓰면 된다.
+        # 애초에 이게 왜 있지? 주석처리하자.(2025.3.23)
+        # df_data의 날짜가 df_b_day_ref를보다 하루씩 더 늦은 값이 나올수가 있나? intelliquant에서?
+        # 근데 그건 update할 때는 상관없지 않을까?
+        '''
         path_date_ref = f'{self.path_date_ref}\\{self.date_prefix}_{datemanage.workday_str}.xlsx'
         df_business_days = pd.read_excel(path_date_ref)
         df_business_days['date'] = pd.to_datetime(df_business_days['date']).dt.date
@@ -64,26 +68,28 @@ class VerifyCompensation(VerifyData):
                 next_date = df_business_days['date'].iloc[next_index]
                 # Adding the next date to df_b_day_ref
                 #df_b_day_ref = df_b_day_ref.append({'Date': next_date}, ignore_index=True)
-                df_b_day_ref = pd.concat([df_b_day_ref, pd.DataFrame({'Date': [next_date]})], ignore_index=True)
-
+                df_b_day_ref = pd.concat([df_b_day_ref, pd.DataFrame({'date': [next_date]})], ignore_index=True)
+        '''
         path = f"{self.path_data}\\{datemanage.workday_str}\\time_unconsistency_list.txt"
         #path = f"{self.path_data}\\{listed_status}\\{datemanage.workday_str}_merged\\time_unconsistency_list.txt"
-        ## ref 와 지금 받아온 df_data의 date 비교
+        ## date ref 와 지금 받아온 df_data의 date 비교
         # ref와 df_data의 첫번째 날짜가 같은지 확인
         if df_b_day_ref['date'].iloc[0] != df_data['date'].iloc[0]:
             different_start_date_list = [f'{code}, 시작 날짜가 ref_date와 다름']
             self.logger.info(different_start_date_list)
             utils.save_list_to_file_append(different_start_date_list, path)  # 텍스트 파일에 오류 부분 저장
             no_error = False
-        # df_data의 마지막 날짜가 df_b_day_ref의 마지막 날짜보다 더 늦는 경우
-        if type(df_b_day_ref['date'].iloc[-1]) != type(df_data['date'].iloc[-1]):
+
+        if type(df_b_day_ref['date'].iloc[-1]) != type(df_data['date'].iloc[-1]): # type error debugging 용
             print('type 다름')
 
+        # df_data의 마지막 날짜가 df_b_day_ref의 마지막 날짜보다 더 늦는 경우
         if df_b_day_ref['date'].iloc[-1] < df_data['date'].iloc[-1]:
             end_date_error_list = [f'{code}, 마지막 날짜가 ref_date의 마지막보다 늦음']
             self.logger.info(end_date_error_list)
             utils.save_list_to_file_append(end_date_error_list, path)  # 텍스트 파일에 오류 부분 저장
             no_error = False
+
         # 시간 순으로 정렬되지 않은 행 찾기. 같은 날짜가 또 있는 것도 포함
         df_data['Out_of_Order'] = df_data['date'] <= df_data['date'].shift(1)
         out_of_order_rows = df_data[df_data['Out_of_Order']]
@@ -129,5 +135,8 @@ class VerifyCompensation(VerifyData):
             #path = f"{self.path_data}\\{listed_status}\\{datemanage.workday_str}_merged\\consecutive_same_values_list.txt"  # 임시
             utils.save_list_to_file_append(consecutive_same_values_list, path)  # 텍스트 파일에 오류 부분 저장
             no_error = False
+
+        # 2025.3.24
+        #주식수가 변경된 것을 따로 파일로 저장해야 한다. ohlcv 가져올 때 참고하도록
 
         return no_error
