@@ -98,9 +98,6 @@ class VerifyData:
             # df_b_day_ref = df_business_days[(df_business_days['Date'] >= listing_date) & (df_business_days['Date'] <= delisting_date)]
             df_b_day_ref = df_business_days[  (df_business_days['date'] >= listing_date) & (df_business_days['date'] <= delisting_date)].copy()
 
-            if isinstance(df_b_day_ref['date'].iloc[-1], float):
-                print('type 다름')
-
             ''' # 2025.3.24 위의 줄에서 startday ~ workday 이내로 한정시키니까 이 부분은 필요없어 보인다.
             # 시작일과 종료일 조정 --> 변경 필요
             df_b_day_ref['date'] = df_b_day_ref['date'].apply(lambda x: max(x, datemanage.startday))
