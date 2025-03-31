@@ -6,6 +6,7 @@ import pandas as pd
 import utils
 from pandas import Timedelta
 import re
+import sqlite3
 
 class UseIntelliquant:
     '''
@@ -465,3 +466,55 @@ class UseIntelliquant:
             indices.append((start_index, len(unit_year_list) - 1))
 
         return indices
+
+    def make_sql(self, datemanage):
+        # 처리 결과(sql) 저장할 폴더
+        process_result_folder = f'{self.path_backtest_save}\\{datemanage.workday_str}\\'
+
+        # 처리 결과 폴더가 존재하지 않으면 생성
+        if not os.path.exists(process_result_folder):
+            os.makedirs(process_result_folder)
+
+        # SQLite 데이터베이스 파일 연결 (없으면 새로 생성)
+        #filename_db = f'{self.suffix}_{listed_status}_{datemanage.workday}.db'
+        filename_db = f'{self.suffix}_{datemanage.workday}.db'
+        file_path_db = process_result_folder + filename_db
+        conn = sqlite3.connect(file_path_db)
+        conn.execute(self.create_table_query)  # 테이블 생성
+        conn.commit()
+
+        # 인덱스 생성 (쿼리 성능 향상)
+        conn.execute(f'CREATE INDEX IF NOT EXISTS idx_stock_code ON {self.suffix} (stock_code);')
+        conn.execute(f'CREATE INDEX IF NOT EXISTS idx_date ON {self.suffix} (date);')
+        conn.commit()
+        # 데이터베이스 연결 종료
+        conn.close()
+
+    def add_data_to_sql(self, datemanage, df_processed_stock_data):
+        #  불러올 데이터 db 경로
+        folder_data = f'{self.path_backtest_save}\\{datemanage.workday_str}\\'
+        file_data = f'{self.suffix}_{datemanage.workday}.db'
+        path_data = folder_data + file_data
+        conn_data = sqlite3.connect(path_data)
+        #table_name = 'compensation'
+
+        for key, df in df_processed_stock_data.items():
+            # processed_data 를 db에 넣기
+            df['stock_code'] = key  # 종목코드 열 추가
+            df.to_sql(self.suffix, conn_data, if_exists='append', index=False)
+
+       # 데이터베이스 연결 종료
+        conn_data.close()
+
+    def load_df_codes(self, datemanage):
+        #  불러올 데이터 db 경로
+        folder_data = f'{self.path_backtest_save}\\{datemanage.workday_str}\\'
+        file_data = f'{self.suffix}_{datemanage.workday}.db'
+        path_data = folder_data + file_data
+        conn = sqlite3.connect(path_data)
+
+        # 종목 코드 목록 가져오기
+        query = f'SELECT DISTINCT stock_code FROM {self.suffix}'
+        stock_codes = pd.read_sql(query, conn)['stock_code'].tolist()
+
+        return stock_codes

@@ -20,6 +20,17 @@ class GetVolume(UseIntelliquant): # 인텔리퀀트에서 거래량 구하기
         self.max_unit_year = 33
         self.path_base_code = self.cur_dir + '\\' + 'GetVolume_Intelliquant_base.js'
         self.suffix = 'volume'  # 파일 이름 저장시 사용하는 접미사
+        # 테이블 생성 쿼리
+        self.create_table_query = f'''
+        CREATE TABLE IF NOT EXISTS {self.suffix} (
+            stock_code TEXT,
+            date TEXT,
+            volume REAL,
+            vf REAL,
+            vi REAL,
+            vr REAL           
+        );
+        '''
 
     def load_config(self):
         super().load_config()
@@ -87,10 +98,10 @@ class GetVolume(UseIntelliquant): # 인텔리퀀트에서 거래량 구하기
         # 각 코드별로 DataFrame 객체 생성
         dataframes = {}
         for code, data in data_by_code.items():
-            df = pd.DataFrame(data, columns=['Date', 'Volume', 'VF', 'VI', 'VR'])
+            df = pd.DataFrame(data, columns=['date', 'volume', 'vf', 'vi', 'vr'])
             # 날짜순으로 정렬
-            df['Date'] = pd.to_datetime(df['Date']).dt.strftime('%Y-%m-%d')
-            df.sort_values('Date', inplace=True)
+            df['date'] = pd.to_datetime(df['date']).dt.strftime('%Y-%m-%d')
+            df.sort_values('date', inplace=True)
             # Reset index
             df.reset_index(drop=True, inplace=True)
             dataframes[code] = df

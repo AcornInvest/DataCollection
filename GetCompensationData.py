@@ -20,6 +20,17 @@ class GetCompensationData(UseIntelliquant):
         self.max_unit_year = 4800 # 480*10
         self.path_base_code = self.cur_dir + '\\' + 'GetNoOfShares_base.js'
         self.suffix = 'compensation'  # 파일 이름 저장시 사용하는 접미사
+        # 테이블 생성 쿼리
+        self.create_table_query = f'''
+        CREATE TABLE IF NOT EXISTS {self.suffix} (
+            stock_code TEXT,
+            date TEXT,
+            volume REAL,
+            vf REAL,
+            vi REAL,
+            vr REAL           
+        );
+        '''
 
     def load_config(self):
         super().load_config()
@@ -90,6 +101,7 @@ class GetCompensationData(UseIntelliquant):
 
         return dataframes
 
+    '''
     def make_sql(self, datemanage):
         # 처리 결과(sql) 저장할 폴더
         process_result_folder = f'{self.path_backtest_save}\\{datemanage.workday_str}\\'
@@ -100,14 +112,14 @@ class GetCompensationData(UseIntelliquant):
 
         # 테이블 생성 쿼리
         create_table_query = '''
-        CREATE TABLE IF NOT EXISTS compensation (
-            stock_code TEXT,
-            date TEXT,
-            old_share REAL,
-            new_share REAL           
-        );
-        '''
-
+#        CREATE TABLE IF NOT EXISTS compensation (
+#            stock_code TEXT,
+#           date TEXT,
+#            old_share REAL,
+#            new_share REAL
+#        );
+    '''
+    
         # SQLite 데이터베이스 파일 연결 (없으면 새로 생성)
         #filename_db = f'{self.suffix}_{listed_status}_{datemanage.workday}.db'
         filename_db = f'{self.suffix}_{datemanage.workday}.db'
@@ -122,37 +134,42 @@ class GetCompensationData(UseIntelliquant):
         conn.commit()
         # 데이터베이스 연결 종료
         conn.close()
+    '''
 
+    '''
     def add_data_to_sql(self, datemanage, df_processed_stock_data):
         #  불러올 데이터 db 경로
         folder_data = f'{self.path_backtest_save}\\{datemanage.workday_str}\\'
         file_data = f'{self.suffix}_{datemanage.workday}.db'
         path_data = folder_data + file_data
         conn_data = sqlite3.connect(path_data)
-        table_name = 'compensation'
+        #table_name = 'compensation'
 
         for key, df in df_processed_stock_data.items():
             # processed_data 를 db에 넣기
             df['stock_code'] = key  # 종목코드 열 추가
-            df.to_sql('compensation', conn_data, if_exists='append', index=False)
+            df.to_sql(self.suffix, conn_data, if_exists='append', index=False)
 
        # 데이터베이스 연결 종료
         conn_data.close()
+    '''
 
+    '''
     def load_df_codes(self, datemanage):
         #  불러올 데이터 db 경로
         folder_data = f'{self.path_backtest_save}\\{datemanage.workday_str}\\'
         file_data = f'{self.suffix}_{datemanage.workday}.db'
         path_data = folder_data + file_data
-        conn = sqlite3.connect(path_data)
-        table_name = 'compensation'
+        conn = sqlite3.connect(path_data)        
 
         # 종목 코드 목록 가져오기
-        query = 'SELECT DISTINCT stock_code FROM compensation'
+        query = f'SELECT DISTINCT stock_code FROM {self.suffix}'
         stock_codes = pd.read_sql(query, conn)['stock_code'].tolist()
 
         return stock_codes
+    '''
 
+    ''' # 2025.3.31 이건 뭐였지? 아무데도 안 쓰는거 같은데 왜 만들다 만거처럼 있지?
     def load_df(self, datemanage):
         #  불러올 데이터 db 경로
         folder_data = f'{self.path_backtest_save}\\{datemanage.workday_str}\\'
@@ -164,3 +181,4 @@ class GetCompensationData(UseIntelliquant):
         # 종목 코드 목록 가져오기
         query = 'SELECT DISTINCT stock_code FROM compensation'
         stock_codes = pd.read_sql(query, conn)['stock_code'].tolist()
+    '''

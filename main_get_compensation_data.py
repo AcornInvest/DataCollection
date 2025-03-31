@@ -36,13 +36,6 @@ workday = date(2025, 1, 14)
 datemanage.SetStartday(startday)
 datemanage.SetWorkday(workday)
 
-# old date 읽어오기 위함
-datemanage2 = DateManage(filename)
-startday2 = date(2024, 3, 28)
-workday2 = date(2024, 3, 29)
-datemanage2.SetStartday(startday2)
-datemanage2.SetWorkday(workday2)
-
 #pre_process_data = PreProcessData(logger)
 #combined_ohlcv_dataframes, _ = pre_process_data.load_combined_data(datemanage2, datemanage2.startday, datemanage2.workday) # Stockdataset의 combined data 를 loading
 
