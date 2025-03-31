@@ -134,25 +134,18 @@ class VerifyCompensation(VerifyData):
             no_error = False
 
         # 2025.3.24
-        #주식수가 변경된 것을 따로 파일로 저장해야 한다. ohlcv 가져올 때 참고하도록
+        #주식수가 변경된 것을 따로 파일로 저장해야 한다. ohlcv 가져올 때 참고하도록 한다.
+        flag_share_modified = False
         if no_error:
-            if len(df_data) > 1: # share 가 달라지지 않으면 startday 값 1줄 뿐이다. 이런 경우는 merge 할 때도 추가할 필요가 없다.
+            if len(df_data) > 1: # share 가 달라지지 않으면 해당 종목은 startday 값 1줄 뿐이다. 이런 경우는 merge 할 때도 추가할 필요가 없다.
                 # 상폐되는 경우는 마지막 값이 0이다.
                 # ohlcv 가져올 때 갱신해야 하는 조건:
                 # (1) 기존 share 값에서 변화가 있어야 함.
                 # (2) 상폐되는 경우는 상폐 되기 전에 기존값과 다른 값이 1번 이상 있어야 함
-                if df_data['date'].iloc[-1] == 0:# 상폐되는 경우
+                if df_data['new_share'].iloc[-1] == 0:# 상폐되는 경우. (2)에 해당
                     if len(df_data)>2: # 상폐되기 전 중간 변화값이 1회 이상 있는지 확인
+                        flag_share_modified = True
+                elif df_data['new_share'].iloc[-2] != df_data['new_share'].iloc[-1]: #상폐되지 않는 경우. (1)에 해당. 마지막 값과 직전값에 차이가 있는지 확인
+                    flag_share_modified = True
 
-
-                    pass
-                else:
-                    pass
-
-
-                    if df_data['date'].iloc[0] != df_data['date'].iloc[-1]:
-        이 함수로 넘어온 datafarme에 한줄 추가한다. 그러면 리턴할 필요는 없나?
-        그리고 나서 verifyData에서 해당 dataframe이 null이 아니라면, 혹은 기타 verifycompensation 의 init 에서 정의한 어떤 조건이 있다면 excel로 저장한다.
-
-
-        return no_error
+        return no_error, flag_share_modified

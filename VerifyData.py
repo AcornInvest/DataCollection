@@ -91,6 +91,7 @@ class VerifyData:
 
         column_load_from_data = ['date', 'old_share', 'new_share'] # compensation db 에서 읽어올 컬럼
 
+        df_modified_codes = pd.DataFrame(columns=['stock_code'])
         for index, row in df_codelist.iterrows():
             listing_date = row['ListingDate']
             delisting_date = row['DelistingDate']
@@ -113,10 +114,20 @@ class VerifyData:
             df_data = pd.read_sql(query, conn_data)
 
             #no_error = self.check_integrity(code, df_b_day_ref, df_data, datemanage, listed_status)  # 무결성 검사. 자식클래스에서 선언할 것
-            no_error = self.check_integrity(code, df_b_day_ref, df_data, datemanage)  # 무결성 검사. 자식클래스에서 선언할 것
+            no_error, flag_modified = self.check_integrity(code, df_b_day_ref, df_data, datemanage)  # 무결성 검사. 자식클래스에서 선언할 것
+
+            if flag_modified:
+                df_modified_codes.loc[len(df_modified_codes)] = code
 
             if no_error == False:
                 flag_no_error = False
 
         if flag_no_error:
-            print("에러 없음")
+            print(f"{self.suffix} Verificaion No Error")
+        else:
+            print(f"{self.suffix} Verificaion Error")
+
+        if len(df_modified_codes) > 0:
+            path = folder_data + f"share_modified_codes_{datemanage.workday_str}.xlsx"
+            df_modified_codes.to_excel(path, index=False)
+            print(f"주식수 변동 종목들 저장됨: {path}")
