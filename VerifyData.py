@@ -63,7 +63,7 @@ class VerifyData:
         file_data = f'{self.suffix}_{datemanage.workday_str}.db'
         path_data = folder_data + file_data
         conn_data = sqlite3.connect(path_data)
-        table_name = 'compensation'
+        table_name = self.suffix
 
         # 종목 코드 목록 가져오기
         query = f'SELECT DISTINCT stock_code FROM {table_name}'
@@ -89,7 +89,7 @@ class VerifyData:
             flag_no_error = False
             return flag_no_error
 
-        column_load_from_data = ['date', 'old_share', 'new_share'] # compensation db 에서 읽어올 컬럼
+        column_load_from_data = self.db_columns #db 에서 읽어올 컬럼
 
         df_modified_codes = pd.DataFrame(columns=['stock_code'])
         for index, row in df_codelist.iterrows():

@@ -15,6 +15,7 @@ class VerifyCompensation(VerifyData):
         super().__init__(logger)
         self.suffix = 'compensation'  # 파일 이름 저장시 사용하는 접미사
         self.date_prefix = 'bussiness_day_ref' # date reference 파일의 접미사
+        self.db_columns = ['date', 'old_share', 'new_share']
 
     def load_config(self):
         super().load_config()

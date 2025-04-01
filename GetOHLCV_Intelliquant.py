@@ -23,6 +23,18 @@ class GetOHLCV_Intelliquant(UseIntelliquant): # 인텔리퀀트에서 모든 종
         #self.max_unit_year = 300  # 한 종목, 1년을 시뮬레이션할 때가 1 유닛. 24년 * 12종목 =  288 단위 + 마진 12 = 300으로 시뮬레이션 하도록 함
         self.path_base_code = self.cur_dir + '\\' + 'GetOHLCV_Intelliquant_base.js'
         self.suffix = 'OHLCV_intelliquant'  # 파일 이름 저장시 사용하는 접미사
+        # 테이블 생성 쿼리. volume 은 저장하지 않음. volume 데이터가 따로 있으니까
+        self.create_table_query = f'''
+        CREATE TABLE IF NOT EXISTS {self.suffix} (
+            stock_code TEXT,
+            date TEXT,
+            open REAL,
+            high REAL,
+            low REAL,
+            close REAL,            
+            cap REAL           
+        );
+        '''
 
     def load_config(self):
         super().load_config()
@@ -95,10 +107,10 @@ class GetOHLCV_Intelliquant(UseIntelliquant): # 인텔리퀀트에서 모든 종
         # 각 코드별로 DataFrame 객체 생성
         dataframes = {}
         for code, data in data_by_code.items():
-            df = pd.DataFrame(data, columns=['Date', 'Open', 'High', 'Low', 'Close', 'Volume', 'Cap'])
+            df = pd.DataFrame(data, columns=['date', 'open', 'high', 'low', 'close', 'volume', 'cap'])
             # 날짜순으로 정렬
-            df['Date'] = pd.to_datetime(df['Date']).dt.strftime('%Y-%m-%d')
-            df.sort_values('Date', inplace=True)
+            df['date'] = pd.to_datetime(df['date']).dt.strftime('%Y-%m-%d')
+            df.sort_values('date', inplace=True)
             # Reset index
             df.reset_index(drop=True, inplace=True)
             dataframes[code] = df

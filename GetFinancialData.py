@@ -22,6 +22,25 @@ class GetFinancialData(UseIntelliquant):
         self.max_unit_year = 500 # 특성 12가지일 때.
         self.path_base_code = self.cur_dir + '\\' + 'get_financials_base.js'
         self.suffix = 'financial'  # 파일 이름 저장시 사용하는 접미사
+        # 테이블 생성 쿼리.
+        self.create_table_query = f'''
+        CREATE TABLE IF NOT EXISTS {self.suffix} (
+            stock_code TEXT,
+            date TEXT,
+            rv REAL,
+            gp REAL,
+            oi REAL,
+            np REAL,            
+            ev_evitda REAL,
+            per REAL,
+            pbr REAL,            
+            psr REAL,
+            pcr REAL,
+            gpa REAL,
+            roa REAL,
+            roe REAL                   
+        );
+        '''
 
     def load_config(self):
         super().load_config()
@@ -110,6 +129,7 @@ class GetFinancialData(UseIntelliquant):
 
         return dataframes
 
+    ''' # 2024.3.31 과거에 사용하던 코드. 이제는 UseIntelliquant 로 통합함
     def make_sql(self, datemanage):
         # 처리된 excel 데이터를 모아서 SQL로 만듦.
         # 2024.7.24 일회성 작업에 필요. 앞으로는 intelliquant backtest results를 바로 sql로 저장함
@@ -117,23 +137,23 @@ class GetFinancialData(UseIntelliquant):
 
         # 테이블 생성 쿼리
         create_table_query = '''
-        CREATE TABLE IF NOT EXISTS financial (
-            stock_code TEXT,
-            date TEXT,
-            rv REAL,
-            gp REAL,
-            oi REAL,
-            np REAL,            
-            ev_evitda REAL,
-            per REAL,
-            pbr REAL,            
-            psr REAL,
-            pcr REAL,
-            gpa REAL,
-            roa REAL,
-            roe REAL           
-        );
-        '''
+#        CREATE TABLE IF NOT EXISTS financial (
+#            stock_code TEXT,
+#            date TEXT,
+#            rv REAL,
+#            gp REAL,
+#            oi REAL,
+#            np REAL,
+#            ev_evitda REAL,
+#            per REAL,
+#            pbr REAL,
+#            psr REAL,
+#            pcr REAL,
+#            gpa REAL,
+#            roa REAL,
+#            roe REAL
+#        );
+'''
 
         # sql 데이터 저장할 폴더가 존재하지 않으면 생성
         #savedata_folder = f'{self.path_savedata}\\{listed_status}\\{datemanage.workday_str}\\'
@@ -189,15 +209,6 @@ class GetFinancialData(UseIntelliquant):
             for code in codes:
                 file_path_financial = f'{folder_financial}\\{code}_{suffix_financial}_{datemanage.workday_str}.xlsx'
                 df_financial = pd.read_excel(file_path_financial, index_col=None)
-
-                '''
-                # 사용할 열들
-                col_financial = ['rv', 'gp', 'oi', 'np', 'ev_evitda', 'per', 'pbr', 'psr', 'pcr', 'gpa', 'roa', 'roe']
-
-                # 필요한 열만 선택
-                df_financial_filtered = df_financial[col_financial]
-                '''
-
                 df_financial['stock_code'] = code  # 종목코드 열 추가
                 df_financial.to_sql('financial', conn, if_exists='append', index=False)
 
@@ -207,3 +218,4 @@ class GetFinancialData(UseIntelliquant):
         conn.commit()
         # 데이터베이스 연결 종료
         conn.close()
+        '''
