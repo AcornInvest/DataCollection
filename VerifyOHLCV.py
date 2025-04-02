@@ -11,13 +11,24 @@ class VerifyOHLCV(VerifyData):
     '''
     OHLCV data의 무결성 검증용 child class
     '''
-    def __init__(self, logger):
+    def __init__(self, logger, datemanage, flag_mod=False):
         super().__init__(logger)
-        self.suffix = 'OHLCV_intelliquant'  # 파일 이름 저장시 사용하는 접미사
+
+        self.flag_mod = flag_mod
+        if self.flag_mod:
+            self.suffix = 'OHLCV_intelliquant_mod'  # 수정주가가 발생된 경우
+        else:
+            self.suffix = 'OHLCV_intelliquant'  # 파일 이름 저장시 사용하는 접미사
+
         self.limit_change_day = date(2015, 6, 15)  # 가격제한폭이 30%로 확대된 날
         self.clearance_days = 17 # 정리매매 기간 최대 15일 + 상폐직전 마진 2일
         self.date_prefix = 'bussiness_day_ref'  # date reference 파일의 접미사
         self.db_columns = ['date', 'open', 'high', 'low', 'close', 'volume', 'cap']
+
+        codelist_path = f'{self.path_codeLists}\\Delisted\\Delisted_Ticker_{datemanage.workday_str}_modified.xlsx'
+        self.df_codelist_delisted = pd.read_excel(codelist_path, index_col=0)
+        self.df_codelist_delisted['Code'] = self.df_codelist_delisted['Code'].astype(str)
+        self.df_codelist_delisted['Code'] = self.df_codelist_delisted['Code'].str.zfill(6)  # 코드가 6자리에 못 미치면 앞에 0 채워넣기
 
     def load_config(self):
         super().load_config()
@@ -30,6 +41,11 @@ class VerifyOHLCV(VerifyData):
 
         self.path_data = config['path']['path_data']  # 데이터 경로
         self.path_date_ref = config['path']['path_date_ref'] # 날짜 기준 정보 경로
+
+        if self.flag_mod:
+            self.path_data = config['path']['path_data_mod']  # 수정주가가 발생된 경우
+        else:
+            self.path_data = config['path']['path_data']  # 데이터 경로
 
     def check_integrity(self, code, df_b_day_ref, df_data, datemanage):
         df_data.reset_index(inplace=True)
@@ -86,10 +102,19 @@ class VerifyOHLCV(VerifyData):
         last_index = len(df_data) - 1
         clearance_start_index = max(0, last_index - self.clearance_days)
 
-        clearance_condition = (
-                (listed_status != 'Delisted') |
+        if code not in set(self.df_codelist_delisted['Code']):
+            # code가 delisted 리스트에 없다면: 모든 row가 True
+            clearance_condition = pd.Series([True] * len(df_data), index=df_data.index) # 정리 매매가 아닌 시점일 때 clearance_condition True
+        else:
+            # 아니라면 index 조건으로 필터링
+            clearance_condition = df_data.index <= clearance_start_index
+
+        '''
+        clearance_condition = ( # 정리 매매가 아닌 시점일 때 True
+                (listed_status != 'Delisted') |                
                 (df_data.index <= clearance_start_index)
         )
+        '''
 
         # 기준일에 따른 조건 설정
         conditions_before = (df_data['date'] < self.limit_change_day) & (

@@ -104,7 +104,7 @@ class UseIntelliquant:
             length_delistingdate_list = len(items)
         # print(delistingdate_content)
 
-        if (length_code_list == length_listingdate_list == length_delistingdate_list):
+        if length_code_list == length_listingdate_list == length_delistingdate_list:
             print("length_code_list: ", length_code_list)
         else:
             raise ValueError(datemanage.workday_str, "_", file_index, "의 파일간 데이터 리스트 수가 다름")
@@ -119,7 +119,9 @@ class UseIntelliquant:
         #category = ['Delisted']
         #category = ['Listed']
         for listed_status in category:
-            self.path_for_intelliquant_dir = self.path_backtest_save + '\\' + listed_status + '\\For_Intelliquant\\' + datemanage.workday_str + '\\'
+            #self.path_for_intelliquant_dir = self.path_backtest_save + '\\' + listed_status + '\\For_Intelliquant\\' + datemanage.workday_str + '\\'
+            self.path_for_intelliquant_dir = self.path_backtest_save + '\\' + datemanage.workday_str + '\\' + listed_status + '\\For_Intelliquant\\'
+
             # max_file_index(폴더 내 데이터 파일 수) 계산
             # 파일 무리별 카운터 초기화
             count_code = 0
@@ -142,7 +144,7 @@ class UseIntelliquant:
             else:
                 raise ValueError("파일 무리의 개수가 서로 다릅니다.")
 
-            if all_files == True:
+            if all_files:
                 file_range = range(0, max_file_index)
             else:
                 file_range = range(first_index, final_index + 1)
@@ -180,7 +182,8 @@ class UseIntelliquant:
 
     def save_backtest_result(self, path_backtest_save, backtest_list, listed_status, datemanage, file_index):
         #path_compensation 변수 파라미터로 받아오자
-        self.path_backtest_result = path_backtest_save + '\\' + listed_status + '\\From_Intelliquant\\' + datemanage.workday_str + '\\' + 'backtest_result_' + datemanage.workday_str + '_' + str(file_index) + '.txt'
+        #self.path_backtest_result = path_backtest_save + '\\' + listed_status + '\\From_Intelliquant\\' + datemanage.workday_str + '\\' + 'backtest_result_' + datemanage.workday_str + '_' + str(file_index) + '.txt'
+        self.path_backtest_result = path_backtest_save + '\\' + datemanage.workday_str + '\\' + listed_status + '\\From_Intelliquant\\' + 'backtest_result_' + datemanage.workday_str + '_' + str(file_index) + '.txt'
         folder = os.path.dirname(self.path_backtest_result)
         # 폴더가 존재하지 않으면 생성
         if not os.path.exists(folder):
@@ -330,7 +333,8 @@ class UseIntelliquant:
 
         for listed_status in category:
             # 폴더에서 backtest 파일 이름 목록 찾기 --> file_names
-            backtest_result_folder = self.path_backtest_save + '\\' + listed_status + '\\From_Intelliquant\\' + datemanage.workday_str + '\\'
+            #backtest_result_folder = self.path_backtest_save + '\\' + listed_status + '\\From_Intelliquant\\' + datemanage.workday_str + '\\'
+            backtest_result_folder = self.path_backtest_save + '\\' + datemanage.workday_str + '\\' + listed_status + '\\From_Intelliquant\\'
             start_string = 'backtest_result_' + datemanage.workday_str
             file_names = self.get_files_starting_with(backtest_result_folder, start_string)
 

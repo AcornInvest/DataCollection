@@ -9,6 +9,9 @@ import numpy as np
 from datetime import date, datetime, timedelta
 import utils
 
+# FinanceDataReader 를 이용하여 OHLCV 얻음
+# 2025.4.2 현재는 사용하지 않음. 데이터 부정확함
+
 class GetOHLCV:
     '''
     종목 코드를 받아서 OHLCV dataframe 반환
