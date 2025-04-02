@@ -53,7 +53,11 @@ class VerifyData:
         df_codelist_delisted['DelistingDate'] = pd.to_datetime(df_codelist_delisted['DelistingDate']).dt.date
 
         df_codelist = pd.concat([df_codelist_listed, df_codelist_delisted], ignore_index=True)
-        df_codelist = df_codelist[(df_codelist['DelistingDate'] >= datemanage.startday)] # 상폐가 startdat 보다 빠른것 제외
+        df_codelist = df_codelist[
+            (df_codelist['DelistingDate'] >= datemanage.startday) & # 상폐가 startday 이후
+            (df_codelist['ListingDate'] <= datemanage.workday) &  # 상장이 workday 이전
+            (df_codelist['ListingDate'] <= df_business_days['date'].iloc[-1])  # 상장이 마지막 business day 이전
+        ]
 
         codes = set(df_codelist['Code'])  # Ticker 파일에서 가져온 Code column
 

@@ -4,6 +4,7 @@ from LogStringHandler import LogStringHandler
 from Intelliquant import Intelliquant
 from DateManage import DateManage
 from datetime import date
+from datetime import datetime
 import configparser
 from UseIntelliquant import UseIntelliquant
 import json
@@ -15,13 +16,21 @@ import utils
 import sys
 
 class GetFinancialData(UseIntelliquant):
-    def __init__(self, logger, num_process):
-        super().__init__(logger, num_process)
+    def __init__(self, logger, num_process, datemanage):
+        super().__init__(logger, num_process, datemanage)
         # 인텔리퀀트 시뮬레이션 종목수 조회시 한번에 돌리는 종목 수.
         #self.max_unit_year = 1500  # 한 종목, 1년을 시뮬레이션할 때가 1 유닛. 100유닛만큼 끊어서 시뮬레이션 하겠다는 의미. 특성 4가지 할 때의 값
         self.max_unit_year = 500 # 특성 12가지일 때.
         self.path_base_code = self.cur_dir + '\\' + 'get_financials_base.js'
         self.suffix = 'financial'  # 파일 이름 저장시 사용하는 접미사
+        self.date_prefix = 'financial_day_ref'  # date reference 파일의 접미사
+
+        # financial date용 거래일 목록 ref 읽어오기
+        path_date_ref = f'{self.path_date_ref}\\{self.date_prefix}_{datemanage.workday_str}.xlsx'
+        self.df_business_days = pd.read_excel(path_date_ref)
+        self.df_business_days['date'] = pd.to_datetime(self.df_business_days['date']).dt.date
+        self.df_business_days = self.df_business_days[(self.df_business_days['date'] >= datemanage.startday) & (self.df_business_days['date'] <= datemanage.workday)]
+
         # 테이블 생성 쿼리.
         self.create_table_query = f'''
         CREATE TABLE IF NOT EXISTS {self.suffix} (
@@ -55,6 +64,7 @@ class GetFinancialData(UseIntelliquant):
         self.path_data = config['path']['path_data']
         self.path_backtest_save = config['path']['path_backtest_save']
         self.path_savedata = config['path']['path_savedata']  # sql 결과물 저장할 폴더
+
 
     def process_backtest_result(self, path_file): #backtest result 를 처리하여 df로 반환
         # 각 코드별 데이터를 저장할 딕셔너리
@@ -120,6 +130,15 @@ class GetFinancialData(UseIntelliquant):
         dataframes = {}
         for code, data in data_by_code.items():
             df = pd.DataFrame(data, columns=['date', 'rv', 'gp', 'oi', 'np', 'ev_evitda', 'per', 'pbr', 'psr', 'pcr', 'gpa', 'roa', 'roe'])
+
+            # 재무 정보가 1개도 없는 종목 골라내기
+            # 상장일이 마지막 financial data update 날보다 뒤인 경우
+            # 해당 코드의 financial data 가 1행 밖에 없으며 그 날짜가 financial ref date가 아닌 경우를 찾음
+            if len(df) == 1:
+                date_obj = datetime.strptime(df['date'].iloc[0], "%Y-%m-%d").date()
+                if date_obj not in set(self.df_business_days['date']):
+                    continue
+
             # 날짜순으로 정렬
             df['date'] = pd.to_datetime(df['date']).dt.strftime('%Y-%m-%d')
             df.sort_values('date', inplace=True)

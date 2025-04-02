@@ -13,7 +13,7 @@ class UseIntelliquant:
    인텔리퀀트에서 데이터 가져오는 기능
    '''
 
-    def __init__(self, logger, num_process):
+    def __init__(self, logger, num_process, datemanage):
         self.num_process = num_process  # 멀티 프로세스 번호
         self.intel = Intelliquant(self.num_process)
         self.logger = logger
@@ -21,6 +21,13 @@ class UseIntelliquant:
         # 설정 로드
         self.load_config()
         self.suffix = 'data' # 파일 이름 저장시 사용하는 접미사
+        self.date_prefix = 'bussiness_day_ref'  # date reference 파일의 접미사
+
+        # 거래일 목록 ref 읽어오기. 기본. 전체 영업일.
+        path_date_ref = f'{self.path_date_ref}\\{self.date_prefix}_{datemanage.workday_str}.xlsx'
+        self.df_business_days = pd.read_excel(path_date_ref)
+        self.df_business_days['date'] = pd.to_datetime(self.df_business_days['date']).dt.date
+        self.df_business_days = self.df_business_days[(self.df_business_days['date'] >= datemanage.startday) & (self.df_business_days['date'] <= datemanage.workday)]
 
     def load_config(self):
         self.cur_dir = os.getcwd()
@@ -33,6 +40,7 @@ class UseIntelliquant:
         # 설정값 읽기
         self.path_data = config['path']['path_data']
         self.path_codeLists = config['path']['path_codelists']
+        self.path_date_ref = config['path']['path_date_ref']  # 날짜 기준 정보 경로
 
     def load_base_code(self, path_base_code):
         with open(path_base_code, 'r', encoding='utf-8') as file:
@@ -352,7 +360,10 @@ class UseIntelliquant:
             # codelist_filtered = codelist[codelist['DelistingDate'] >= datemanage.startday] # 상폐일이 시뮬레이션 시작일보다 앞선 것은 제외시키기
             # 상폐일이 시뮬레이션 시작일보다 늦고, 상장일이 시뮬레이션 마지막 날보다 빠른 것만 남기기
             codelist_filtered = codelist[
-                (codelist['DelistingDate'] >= datemanage.startday) & (codelist['ListingDate'] <= datemanage.workday)]
+                (codelist['DelistingDate'] >= datemanage.startday) &  #상폐가 startday 이후
+                (codelist['ListingDate'] <= datemanage.workday) & # 상장이 workday 이전
+                (codelist['ListingDate'] <= self.df_business_days['date'].iloc[-1]) #상장이 마지막 business day 이전
+            ]
             num_ticker_codes += len(codelist_filtered)
             ticker_codes_set.update(codelist_filtered['Code'])
             #codes = set(codelist_filtered['Code'])  # Ticker 파일에서 가져온 Code column

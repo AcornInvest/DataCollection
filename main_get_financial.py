@@ -28,7 +28,7 @@ logger.addHandler(file_handler_info)
 
 i = 0
 
-#GetFinancData = GetFinancialData(logger, i)
+GetFinancData = GetFinancialData(logger, i, datemanage)
 #GetFinancData.make_txt_from_ticker(datemanage)
 #GetFinancData.intel.chrome_on(logger, GetFinancData.page, GetFinancData.name)
 ##GetFinancData.run_backtest_rep(datemanage, 0, 73) # 인텔리퀀트로 백테스트 돌려서 크롤링

@@ -20,6 +20,7 @@ class GetCompensationData(UseIntelliquant):
         self.max_unit_year = 4800 # 480*10
         self.path_base_code = self.cur_dir + '\\' + 'GetNoOfShares_base.js'
         self.suffix = 'compensation'  # 파일 이름 저장시 사용하는 접미사
+
         # 테이블 생성 쿼리
         self.create_table_query = f'''
         CREATE TABLE IF NOT EXISTS {self.suffix} (
