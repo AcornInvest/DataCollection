@@ -14,8 +14,8 @@ import re
 
 class GetOHLCV_Intelliquant(UseIntelliquant): # 인텔리퀀트에서 모든 종목 OHLCV 3일씩
     def __init__(self, logger, num_process, datemanage, flag_mod=False):
-        self.flag_mod = flag_mod
-        super().__init__(logger, num_process, datemanage)
+        super().__init__(logger, num_process, datemanage, flag_mod)
+
         # 인텔리퀀트 시뮬레이션 종목수 조회시 한번에 돌리는 종목 수.
         #self.max_batchsize = 60 # For_Intelliquant 파일 내의 code 숫자
         self.max_unit_year = 35
@@ -58,6 +58,7 @@ class GetOHLCV_Intelliquant(UseIntelliquant): # 인텔리퀀트에서 모든 종
 
         if self.flag_mod:
             self.path_backtest_save = config['path']['path_backtest_save_mod']  # 수정주가가 발생된 경우
+            self.path_compensation_data = config['path']['path_compensation_data']
         else:
             self.path_backtest_save = config['path']['path_backtest_save']
 

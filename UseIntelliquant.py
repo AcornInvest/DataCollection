@@ -13,10 +13,11 @@ class UseIntelliquant:
    인텔리퀀트에서 데이터 가져오는 기능
    '''
 
-    def __init__(self, logger, num_process, datemanage):
+    def __init__(self, logger, num_process, datemanage, flag_mod=False):
         self.num_process = num_process  # 멀티 프로세스 번호
         self.intel = Intelliquant(self.num_process)
         self.logger = logger
+        self.flag_mod = flag_mod
 
         # 설정 로드
         self.load_config()
@@ -404,6 +405,12 @@ class UseIntelliquant:
         #category = ['Listed']
         #category = ['Delisted']
 
+        if self.flag_mod:
+            path = self.path_compensation_data + f'\\{datemanage.workday_str}\\share_modified_codes_{datemanage.workday_str}.xlsx'
+            stocks_mod = pd.read_excel(path, index_col=None)
+            stocks_mod['stock_code'] = stocks_mod['stock_code'].astype(str)
+            stocks_mod['stock_code'] = stocks_mod['stock_code'].str.zfill(6)  # 코드가 6자리에 못 미치면 앞에 0 채워넣기
+
         for type_list in category:
             # 엑셀 파일 불러올 경로
             file_path = self.path_codeLists + f'\\{type_list}\\{type_list}_Ticker_{datemanage.workday_str}_modified.xlsx'
@@ -411,6 +418,10 @@ class UseIntelliquant:
 
             stocks['Code'] = stocks['Code'].astype(str)
             stocks['Code'] = stocks['Code'].str.zfill(6)  # 코드가 6자리에 못 미치면 앞에 0 채워넣기
+
+            if self.flag_mod:
+                stocks = stocks[stocks['Code'].isin(stocks_mod['stock_code'])]
+
             stocks['ListingDate'] = pd.to_datetime(stocks['ListingDate']).dt.date
             stocks['DelistingDate'] = pd.to_datetime(stocks['DelistingDate']).dt.date
 
