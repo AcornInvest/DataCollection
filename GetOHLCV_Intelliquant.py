@@ -13,17 +13,17 @@ from pandas import Timedelta
 import re
 
 class GetOHLCV_Intelliquant(UseIntelliquant): # 인텔리퀀트에서 모든 종목 OHLCV 3일씩
-    def __init__(self, logger, num_process, flag_mod=False):
-        super().__init__(logger, num_process)
+    def __init__(self, logger, num_process, datemanage, flag_mod=False):
+        self.flag_mod = flag_mod
+        super().__init__(logger, num_process, datemanage)
         # 인텔리퀀트 시뮬레이션 종목수 조회시 한번에 돌리는 종목 수.
         #self.max_batchsize = 60 # For_Intelliquant 파일 내의 code 숫자
-        self.max_unit_year = 33
+        self.max_unit_year = 35
         #self.max_unit_year = 104  # 한 종목, 1년을 시뮬레이션할 때가 1 유닛. 24.5년 * 4종목 =  98 단위 + 마진 = 102으로 시뮬레이션 하도록 함
         #self.max_unit_year = 125  # 한 종목, 1년을 시뮬레이션할 때가 1 유닛. 24.5년 * 5종목 =  122.5 단위 + 마진 = 125으로 시뮬레이션 하도록 함
         #self.max_unit_year = 300  # 한 종목, 1년을 시뮬레이션할 때가 1 유닛. 24년 * 12종목 =  288 단위 + 마진 12 = 300으로 시뮬레이션 하도록 함
         self.path_base_code = self.cur_dir + '\\' + 'GetOHLCV_Intelliquant_base.js'
 
-        self.flag_mod = flag_mod
         if self.flag_mod:
             self.suffix = 'OHLCV_intelliquant_mod' # 수정주가가 발생된 경우
         else:
@@ -37,10 +37,11 @@ class GetOHLCV_Intelliquant(UseIntelliquant): # 인텔리퀀트에서 모든 종
             open REAL,
             high REAL,
             low REAL,
-            close REAL,            
+            close REAL,                      
             cap REAL           
         );
         '''
+        # 2025.4.3 volume 은 get volume 에서 구하니까 삭제함
 
     def load_config(self):
         super().load_config()
@@ -54,7 +55,6 @@ class GetOHLCV_Intelliquant(UseIntelliquant): # 인텔리퀀트에서 모든 종
         self.name_list = [config['intelliquant']['name_0'], config['intelliquant']['name_1'], config['intelliquant']['name_2'], config['intelliquant']['name_3']]
         self.page = self.page_list[self.num_process]
         self.name = self.name_list[self.num_process]
-        self.path_date_ref = config['path']['path_date_ref']
 
         if self.flag_mod:
             self.path_backtest_save = config['path']['path_backtest_save_mod']  # 수정주가가 발생된 경우
@@ -73,7 +73,7 @@ class GetOHLCV_Intelliquant(UseIntelliquant): # 인텔리퀀트에서 모든 종
         high_pattern = r'H: (\d+(\.\d+)?),'
         low_pattern = r'L: (\d+(\.\d+)?),'
         close_pattern = r'C: (\d+(\.\d+)?),'
-        volume_pattern = r'V: (\d+),'
+        #volume_pattern = r'V: (\d+),'
         cap_pattern = r'cap: (\d+)'
         num_codes = 0
         num_stocks = 0
@@ -88,13 +88,15 @@ class GetOHLCV_Intelliquant(UseIntelliquant): # 인텔리퀀트에서 모든 종
                     high = re.search(high_pattern, line).group(1)
                     low = re.search(low_pattern, line).group(1)
                     close = re.search(close_pattern, line).group(1)
-                    volume = re.search(volume_pattern, line).group(1)
+                    #volume = re.search(volume_pattern, line).group(1)
                     cap = re.search(cap_pattern, line).group(1)
 
                     # 코드에 따라 데이터 묶기
                     if code not in data_by_code:
                         data_by_code[code] = []
-                    data_by_code[code].append((date, Open, high, low, close, volume, cap))
+                    #data_by_code[code].append((date, Open, high, low, close, volume, cap))
+                    # 2025.4.3 volume 은 get volume 에서 구하니까 삭제함
+                    data_by_code[code].append((date, Open, high, low, close, cap))
                 elif 'list_index:' in line:
                     num_codes = int(line.split('list_index:')[1].strip())
                 elif 'NumOfStocks:' in line:
@@ -117,7 +119,9 @@ class GetOHLCV_Intelliquant(UseIntelliquant): # 인텔리퀀트에서 모든 종
         # 각 코드별로 DataFrame 객체 생성
         dataframes = {}
         for code, data in data_by_code.items():
-            df = pd.DataFrame(data, columns=['date', 'open', 'high', 'low', 'close', 'volume', 'cap'])
+            #df = pd.DataFrame(data, columns=['date', 'open', 'high', 'low', 'close', 'volume', 'cap'])
+            # 2025.4.3 volume 은 get volume 에서 구하니까 삭제함
+            df = pd.DataFrame(data, columns=['date', 'open', 'high', 'low', 'close', 'cap'])
             # 날짜순으로 정렬
             df['date'] = pd.to_datetime(df['date']).dt.strftime('%Y-%m-%d')
             df.sort_values('date', inplace=True)
@@ -127,3 +131,9 @@ class GetOHLCV_Intelliquant(UseIntelliquant): # 인텔리퀀트에서 모든 종
 
         return dataframes
 
+    '''
+    def make_txt_from_ticker(self, datemanage):
+        pass
+        if self.flag_mod:
+            overrided 하도록 함. 
+    '''

@@ -426,7 +426,7 @@ class UseIntelliquant:
             stocks.reset_index(drop=True, inplace=True)  # 인덱스 리셋
 
             # txt 파일 저장할 경로
-            base_path = f'{self.path_backtest_save}\\{type_list}\\For_Intelliquant\\{datemanage.workday_str}\\'
+            base_path = f'{self.path_backtest_save}\\{datemanage.workday_str}\\{type_list}\\For_Intelliquant\\'
             #base_path = f'{self.path_backtest_save}\\{type_list}\\For_Intelliquant\\{datemanage.workday_str}_temp\\'
             if not os.path.exists(base_path):
                 os.makedirs(base_path)

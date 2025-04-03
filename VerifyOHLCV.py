@@ -12,9 +12,8 @@ class VerifyOHLCV(VerifyData):
     OHLCV data의 무결성 검증용 child class
     '''
     def __init__(self, logger, datemanage, flag_mod=False):
-        super().__init__(logger)
-
         self.flag_mod = flag_mod
+        super().__init__(logger)
         if self.flag_mod:
             self.suffix = 'OHLCV_intelliquant_mod'  # 수정주가가 발생된 경우
         else:

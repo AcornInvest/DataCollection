@@ -13,8 +13,8 @@ from pandas import Timedelta
 import re
 
 class GetVolume(UseIntelliquant): # 인텔리퀀트에서 거래량 구하기
-    def __init__(self, logger, num_process):
-        super().__init__(logger, num_process)
+    def __init__(self, logger, num_process, datemanage):
+        super().__init__(logger, num_process, datemanage)
         # 인텔리퀀트 시뮬레이션 종목수 조회시 한번에 돌리는 종목 수.
         #self.max_batchsize = 60 # For_Intelliquant 파일 내의 code 숫자
         self.max_unit_year = 33
