@@ -9,8 +9,9 @@ class VerifyData:
     '''
    OHLCV, Financial data의 무결성 검증용 parent class
    '''
-    def __init__(self, logger):
+    def __init__(self, logger, flag_mod=False):
         self.logger = logger
+        self.flag_mod = flag_mod  # ohlcv share 변경된 데이터 대상 확인 용도
         # 설정 로드
         self.load_config()
         #self.suffix = 'data' # 파일 이름 저장시 사용하는 접미사. 자식 클래스에서 정의할 것
@@ -37,6 +38,13 @@ class VerifyData:
 
         flag_no_error = True  # 에러가 없다고 플래그 초기값 설정
 
+        # ohlcv share 변경된 부분 처리여부에 따른 과정
+        if self.flag_mod:
+            path = self.path_compensation_data + f'\\{datemanage.workday_str}\\share_modified_codes_{datemanage.workday_str}.xlsx'
+            stocks_mod = pd.read_excel(path, index_col=None)
+            stocks_mod['stock_code'] = stocks_mod['stock_code'].astype(str)
+            stocks_mod['stock_code'] = stocks_mod['stock_code'].str.zfill(6)  # 코드가 6자리에 못 미치면 앞에 0 채워넣기
+
         # 코드리스트 읽어오기
         codelist_path = f'{self.path_codeLists}\\Listed\\Listed_Ticker_{datemanage.workday_str}_modified.xlsx'
         df_codelist_listed = pd.read_excel(codelist_path, index_col=0)
@@ -53,6 +61,11 @@ class VerifyData:
         df_codelist_delisted['DelistingDate'] = pd.to_datetime(df_codelist_delisted['DelistingDate']).dt.date
 
         df_codelist = pd.concat([df_codelist_listed, df_codelist_delisted], ignore_index=True)
+
+        # ohlcv share 변경된 부분 처리여부에 따른 과정
+        if self.flag_mod:
+            df_codelist = df_codelist[df_codelist['Code'].isin(stocks_mod['stock_code'])]
+
         df_codelist = df_codelist[
             (df_codelist['DelistingDate'] >= datemanage.startday) & # 상폐가 startday 이후
             (df_codelist['ListingDate'] <= datemanage.workday) &  # 상장이 workday 이전

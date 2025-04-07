@@ -115,11 +115,9 @@ function onDayClose(now){
             high[i] =roundToDecimal(target_stock[i].getAdjHigh(),1);
             low[i] = roundToDecimal(target_stock[i].getAdjLow(),1);
             close[i] = roundToDecimal(target_stock[i].getAdjClose(),1);
-            //volume[i] = target_stock[i].getTradingVolume();
+            volume[i] = target_stock[i].getTradingVolume();
             capital[i] = target_stock[i].getMarketCapital();
-            //logger.info(removeA(target_stock_code[i]) + ', O: ' + open[i] + ', H: ' + high[i] + ', L: ' + low[i] + ', C: ' + close[i] + ', V: ' + volume[i] + ', cap: ' + capital[i]);
-            // 2025.4.3 volume 은 get volume 에서 구하니까 삭제함
-            logger.info(removeA(target_stock_code[i]) + ', O: ' + open[i] + ', H: ' + high[i] + ', L: ' + low[i] + ', C: ' + close[i] + ', cap: ' + capital[i]);
+            logger.info(removeA(target_stock_code[i]) + ', O: ' + open[i] + ', H: ' + high[i] + ', L: ' + low[i] + ', C: ' + close[i] + ', V: ' + volume[i] + ', cap: ' + capital[i]);
         }
     }   
 

@@ -12,8 +12,7 @@ class VerifyOHLCV(VerifyData):
     OHLCV data의 무결성 검증용 child class
     '''
     def __init__(self, logger, datemanage, flag_mod=False):
-        self.flag_mod = flag_mod
-        super().__init__(logger)
+        super().__init__(logger, flag_mod)
         if self.flag_mod:
             self.suffix = 'OHLCV_intelliquant_mod'  # 수정주가가 발생된 경우
         else:
@@ -43,8 +42,9 @@ class VerifyOHLCV(VerifyData):
 
         if self.flag_mod:
             self.path_data = config['path']['path_data_mod']  # 수정주가가 발생된 경우
+            self.path_compensation_data = config['path']['path_compensation_data']
         else:
-            self.path_data = config['path']['path_data']  # 데이터 경로
+            self.path_data = config['path']['path_data']
 
     def check_integrity(self, code, df_b_day_ref, df_data, datemanage):
         df_data.reset_index(inplace=True)
@@ -103,7 +103,7 @@ class VerifyOHLCV(VerifyData):
 
         if code not in set(self.df_codelist_delisted['Code']):
             # code가 delisted 리스트에 없다면: 모든 row가 True
-            clearance_condition = pd.Series([True] * len(df_data), index=df_data.index) # 정리 매매가 아닌 시점일 때 clearance_condition True
+            clearance_condition = pd.Series([True] * len(df_data), index=df_data.index) # 정리 매매가 아닌 시점일 때 clearance_condition = True
         else:
             # 아니라면 index 조건으로 필터링
             clearance_condition = df_data.index <= clearance_start_index
@@ -190,7 +190,10 @@ class VerifyOHLCV(VerifyData):
             path = f"{self.path_data}\\{datemanage.workday_str}_merged\\consecutive_same_values_list.txt" # 임시
             utils.save_list_to_file_append(consecutive_same_values_list, path)  # 텍스트 파일에 오류 부분 저장
         '''
-        return no_error
+
+        flag_modified = False # VerifyCompensation 과 형식을 맞추기 위함
+
+        return no_error, flag_modified
 
     # n일간 연속적으로 같은 값을 가지는지 판별하는 함수
     def check_continuous_same_value(self, df, n, compare_columns):

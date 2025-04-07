@@ -17,7 +17,7 @@ class UseIntelliquant:
         self.num_process = num_process  # 멀티 프로세스 번호
         self.intel = Intelliquant(self.num_process)
         self.logger = logger
-        self.flag_mod = flag_mod
+        self.flag_mod = flag_mod # ohlcv share 변경된 데이터 대상 확인 용도
 
         # 설정 로드
         self.load_config()
