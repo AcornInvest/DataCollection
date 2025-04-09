@@ -4,13 +4,36 @@ import configparser
 import pandas as pd
 import shutil
 
+# 이걸 parent 로 하고, ohlcv, financial, processed, technical 로 자식 class 를 만든다.
+# listed_stock_data, chancelist 는 1년/6개월에 한번만 추가하면 된다.
+
+
 class MergeData:
     '''
    지난 데이터와 현재 데이터를 합치는 기능의 parent class
    '''
 
-    def __init__(self, logger):
+    def __init__(self, logger, datemanage, flag_mod=False):
         self.logger = logger
+        self.flag_mod = flag_mod  # ohlcv share 변경된 데이터 대상 확인 용도
+        # 설정 로드
+        self.load_config() # 자식클래스에서 정의할 것
+        # self.suffix = 'data' # 파일 이름 저장시 사용하는 접미사. 자식 클래스에서 정의할 것
+
+    def check_continuity(self):
+        folder1 = f'{self.path_data}\\'
+        file1 = f'{self.suffix}_merged.db'
+        path1 = folder1 + file1
+        folder2 = f'{self.path_data}\\{self.datemanage.workday_str}\\'
+        file2 = f'{self.suffix}_{self.datemanage.workday_str}.db'
+        path2 = folder2 + file2
+
+
+
+    def merge_dbs(self):
+
+
+
 
     def merge_files(self, listed_status, date_before, date_recent, path_data, suffix):
         folder_data_before = f'{path_data}\\{listed_status}\\{date_before}_merged'

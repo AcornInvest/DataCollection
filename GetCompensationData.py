@@ -26,10 +26,8 @@ class GetCompensationData(UseIntelliquant):
         CREATE TABLE IF NOT EXISTS {self.suffix} (
             stock_code TEXT,
             date TEXT,
-            volume REAL,
-            vf REAL,
-            vi REAL,
-            vr REAL           
+            old_share REAL,
+            new_share REAL                      
         );
         '''
 

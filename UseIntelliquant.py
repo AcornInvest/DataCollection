@@ -157,7 +157,7 @@ class UseIntelliquant:
 
                 listingdate_list = re.findall(r"new Date\('(\d{4}-\d{2}-\d{2})'\)", listingdate_content)
                 delistingdate_list = re.findall(r"new Date\('(\d{4}-\d{2}-\d{2})'\)", delistingdate_content)
-                # 각 종목별로 시뮬레이션 결과가 출력되는 기간의 날짜 계산(상장일, 상폐일을 startdat, workday와 비교)
+                # 각 종목별로 시뮬레이션 결과가 출력되는 기간의 날짜 계산(상장일, 상폐일을 startday, workday와 비교)
                 listingdate_list_datetime = pd.to_datetime(listingdate_list)
                 delistingdate_list_datetime = pd.to_datetime(delistingdate_list)
                 listingdate_list_date = [dt.date() for dt in listingdate_list_datetime]
