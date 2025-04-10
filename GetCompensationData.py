@@ -11,8 +11,8 @@ import re
 import sqlite3
 
 class GetCompensationData(UseIntelliquant):
-    def __init__(self, logger, num_process):
-        super().__init__(logger, num_process)
+    def __init__(self, logger, num_process, datemanage):
+        super().__init__(logger, num_process, datemanage)
         # 인텔리퀀트 시뮬레이션 종목수 조회시 한번에 돌리는 종목 수.
         #self.max_batchsize = 20 # Delisted
         #self.max_batchsize = 10 # Listed

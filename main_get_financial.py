@@ -30,10 +30,10 @@ i = 0
 
 GetFinancData = GetFinancialData(logger, i, datemanage)
 #GetFinancData.make_txt_from_ticker(datemanage)
-#GetFinancData.intel.chrome_on(logger, GetFinancData.page, GetFinancData.name)
-##GetFinancData.run_backtest_rep(datemanage, 0, 73) # 인텔리퀀트로 백테스트 돌려서 크롤링
+GetFinancData.intel.chrome_on(logger, GetFinancData.page, GetFinancData.name)
+GetFinancData.run_backtest_rep(datemanage,  all_files=False, first_index=1, final_index=1) # 인텔리퀀트로 백테스트 돌려서 크롤링
 #GetFinancData.run_backtest_rep(datemanage, all_files=True) # 인텔리퀀트로 백테스트 돌려서 크롤링
 #GetFinancData.run_backtest_process(datemanage) # 인텔리퀀트로 얻은 백테스트 raw 데이터 처리, db 파일로 만듦
 
-verify_finance = VerifyFinance(logger)
-verify_finance.check_data(datemanage)
+#verify_finance = VerifyFinance(logger)
+#verify_finance.check_data(datemanage)

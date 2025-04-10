@@ -12,9 +12,6 @@ from GetOHLCV_Intelliquant import GetOHLCV_Intelliquant
 import sys
 sys.path.append("C:\\Work_Dotori\\Screener_Desktop")
 
-from PreProcessData import PreProcessData
-
-
 # 3 formatter 지정하여 log head를 구성해줍니다.
 formatter = logging.Formatter("%(asctime)s - %(levelname)s - [%(funcName)s:%(lineno)d] - %(message)s")
 
@@ -36,17 +33,15 @@ workday = date(2025, 1, 14)
 datemanage.SetStartday(startday)
 datemanage.SetWorkday(workday)
 
-#pre_process_data = PreProcessData(logger)
-#combined_ohlcv_dataframes, _ = pre_process_data.load_combined_data(datemanage2, datemanage2.startday, datemanage2.workday) # Stockdataset의 combined data 를 loading
-
-#get_compensation_data = GetCompensationData(logger, i)
+get_compensation_data = GetCompensationData(logger, i, datemanage)
 #get_compensation_data.make_txt_from_ticker(datemanage)
-#get_compensation_data.intel.chrome_on(logger, get_compensation_data.page, get_compensation_data.name)
+get_compensation_data.intel.chrome_on(logger, get_compensation_data.page, get_compensation_data.name)
+get_compensation_data.run_backtest_rep(datemanage, all_files=False, first_index=1, final_index=1)
 #get_compensation_data.run_backtest_rep(datemanage, all_files=True)
 #No_error = get_compensation_data.run_backtest_process(datemanage) # 인텔리퀀트로 얻은 백테스트 raw 데이터 처리
 
-verify_compensation = VerifyCompensation(logger)
-verify_compensation.check_data(datemanage)
+#verify_compensation = VerifyCompensation(logger)
+#verify_compensation.check_data(datemanage)
 
 
 
