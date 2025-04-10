@@ -8,7 +8,8 @@ from GetTicker import GetTicker
 
 filename = os.path.splitext(os.path.basename(__file__))[0]  # 실행하고 있는 스크립트 파일 이름 가져오기
 startday = date(2000, 1, 4)
-workday = date(2025, 1, 14)
+#workday = date(2025, 1, 14)
+workday = date(2025, 4, 10)
 datemanage = DateManage(filename)
 datemanage.SetStartday(startday)
 datemanage.SetWorkday(workday)
@@ -26,6 +27,6 @@ file_handler_info.setFormatter(formatter)
 logger.addHandler(file_handler_info)
 
 get_ticker = GetTicker(logger)
-#get_ticker.make_raw_ticker_list(datemanage) # original ticker list 받기
+get_ticker.make_raw_ticker_list(datemanage) # original ticker list 받기
 get_ticker.process_tickerlist(datemanage) # original ticker list 데이터의 처리
 get_ticker.check_code_list(datemanage) # process 된 ticker list check

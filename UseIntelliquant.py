@@ -194,18 +194,7 @@ class UseIntelliquant:
         self.path_delisting_date_error_list = folder + '\\' + 'delisting_date_error_list_' + datemanage.workday_str + '.txt'
 
         # 각 백테스트 결과 파일 txt로 저장
-        '''
-        f = open(self.path_backtest_result, 'w', encoding='utf-8')
-        f.writelines(backtest_list)
-        f.close()
-        '''
-
-        # 파일에 저장
         with open(self.path_backtest_result, 'w', encoding='utf-8') as file:
-            '''
-            for text in backtest_list:
-                file.write(text + '\n')
-            '''
             file.write('\n'.join(backtest_list) + '\n')
         self.logger.info("Backtest 결과 저장 완료: %s" % self.path_backtest_result)
 
@@ -232,14 +221,6 @@ class UseIntelliquant:
 
         return load_failure_list, delisting_date_error_list
 
-    '''
-    # txt 파일에 데이터를 추가하는 함수
-    def save_list_to_file_append(self, data_list, filename):
-        with open(filename, 'a') as file:  # 'a' 모드는 파일에 내용을 추가합니다
-            for item in data_list:
-                file.write(f"{item}\n")
-    '''
-
     # 특정 폴더 내에서 특정 문자열로 시작하는 파일들의 이름을 리스트로 반환하는 함수
     def get_files_starting_with(self, folder_path, start_string):
         files_starting_with = []
@@ -247,81 +228,6 @@ class UseIntelliquant:
             if filename.startswith(start_string):
                 files_starting_with.append(filename)
         return files_starting_with
-
-    '''
-    def save_dfs_to_excel(self, dfs_dict, custom_string, folder):
-        for code, df in dfs_dict.items():
-            filename = f"{code}{custom_string}.xlsx"
-            path_file = folder + filename
-            df.to_excel(path_file, index=False)
-    '''
-
-    ## 20250205 이전. 코드별로 xlsx 파일로 정리
-    '''
-    def run_backtest_process(self, datemanage): # Backtest 결과를 가지고 xlsx 파일로 처리
-        category = ['Delisted', 'Listed']
-        #category = ['Delisted']
-        #category = ['Listed']
-        for listed_status in category:
-            # 폴더에서 backtest 파일 이름 목록 찾기 --> file_names
-            backtest_result_folder = self.path_backtest_save + '\\' + listed_status + '\\From_Intelliquant\\' + datemanage.workday_str + '\\'
-            start_string = 'backtest_result_' + datemanage.workday_str
-            #start_string = 'backtest_result_' + datemanage.workday_str + '_90'
-            #start_string = 'backtest_result_' + datemanage.workday_str + '_482'
-            file_names = self.get_files_starting_with(backtest_result_folder, start_string)
-
-            # 처리 결과 저장할 폴더
-            process_result_folder = self.path_backtest_save + '\\' + listed_status + '\\' + datemanage.workday_str + '\\'
-            #process_result_folder = self.path_backtest_save + '\\' + listed_status + '\\' + datemanage.workday_str + '_temp\\'
-
-            # 폴더가 존재하지 않으면 생성
-            if not os.path.exists(process_result_folder):
-                os.makedirs(process_result_folder)
-
-            for backtest_result_file in file_names:
-                path_backtest_result_file = backtest_result_folder + backtest_result_file
-                df_processed_stock_data = self.process_backtest_result(path_backtest_result_file)
-                utils.save_dfs_to_excel(df_processed_stock_data, ('_' + self.suffix + '_' + datemanage.workday_str), process_result_folder)
-
-            #처리한 엑셀 파일들이 Codelist에 있는 모든 종목들을 다 커버하는지 확인
-            processed_file_names = utils.find_files_with_keyword(process_result_folder, self.suffix)  # 데이터 처리 결과 파일 목록. 특정 suffix가 포함된 파일만 골라냄
-            file_prefixes = set([name[:6] for name in processed_file_names]) # 각 파일명의 처음 6글자 추출
-            # 파일 처음 6글자가 숫자로 시작하는 것만으로 제한할 것
-
-            codelist_path = self.path_codeLists + '\\' + listed_status + '\\' + listed_status + '_Ticker_' + datemanage.workday_str + '_modified.xlsx'
-            codelist = pd.read_excel(codelist_path, index_col=0)
-            codelist['ListingDate'] = pd.to_datetime(codelist['ListingDate']).apply(lambda x: x.date())
-            codelist['DelistingDate'] = pd.to_datetime(codelist['DelistingDate']).apply(lambda x: x.date())
-            codelist['Code'] = codelist['Code'].astype(str)
-            codelist['Code'] = codelist['Code'].str.zfill(6)  # 코드가 6자리에 못 미치면 앞에 0 채워넣기
-            #codelist.loc[:, 'Code'] = codelist['Code'].apply(lambda x: f"{x:06d}")  # Code 열 str, 6글자로 맞추기
-            #codelist_filtered = codelist[codelist['DelistingDate'] >= datemanage.startday] # 상폐일이 시뮬레이션 시작일보다 앞선 것은 제외시키기
-            # 상폐일이 시뮬레이션 시작일보다 늦고, 상장일이 시뮬레이션 마지막 날보다 빠른 것만 남기기
-            codelist_filtered = codelist[(codelist['DelistingDate'] >= datemanage.startday) & (codelist['ListingDate'] <= datemanage.workday)]
-            codes = set(codelist_filtered['Code']) # Ticker 파일에서 가져온 Code column
-
-            if file_prefixes != codes or len(codelist_filtered) != len(file_prefixes):
-                # DataFrame의 칼럼에는 있는데 파일 이름에 없는 값 목록
-                missing_in_files = codes - file_prefixes
-
-                # 파일 이름에는 있는데 DataFrame의 칼럼에 없는 값 목록
-                extra_in_files = file_prefixes - codes
-
-                # 결과를 텍스트 파일로 저장
-                missing_in_files_path = process_result_folder + 'missing_in_files_' + datemanage.workday_str + '.txt'
-                with open(missing_in_files_path, 'w') as f:
-                    for item in missing_in_files:
-                        f.write("%s\n" % item)
-
-                extra_in_files_path = process_result_folder + 'extra_in_files_' + datemanage.workday_str + '.txt'
-                with open(extra_in_files_path, 'w') as f:
-                    for item in extra_in_files:
-                        f.write("%s\n" % item)
-
-                print("결과가 'missing_in_files.txt'와 'extra_in_files.txt'에 저장되었습니다.")
-            else:
-                print("모든 DataFrame의 칼럼 값이 파일 이름에 있습니다.")
-    '''
 
     ## 20250205 이후. 모든 코드 데이터를 모아서 날짜별 db로 저장
     def run_backtest_process(self, datemanage):  ## 20250205 이후. 모든 코드 데이터를 모아서 날짜별 db로 저장
