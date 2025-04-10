@@ -1,6 +1,7 @@
 import os
 from DateManage import DateManage
 import configparser
+import numpy as np
 import pandas as pd
 import shutil
 import sqlite3
@@ -8,6 +9,10 @@ import sqlite3
 # 이걸 parent 로 하고, ohlcv_combined, financial, processed, technical 로 자식 class 를 만든다.
 # listed_stock_data, chancelist 는 1년/6개월에 한번만 추가하면 된다.
 
+
+# verify compensation 에서 주식수 변동있는 종목들을 xlsx 로 만드는 것 필요없다.
+# 여기서만 판단한다. ohlc 외에 값이 다르면 error 로 판단하고,
+# ohlc 만 다르면 목록을 저장하여 ohlcv_mod로 새로 backtest 하도록 한다.
 
 class MergeData:
     '''
@@ -86,10 +91,25 @@ class MergeData:
 
         # diff 컬럼 확인
         def diff_cols(row):
-            return [
-                col for col in compare_columns
-                if row[f"{col}_1"] != row[f"{col}_2"]
-            ]
+            diffs = []
+            for col in compare_columns:
+                val1 = row[f"{col}_1"]
+                val2 = row[f"{col}_2"]
+
+                # 둘 다 NaN이면 같다고 판단
+                if pd.isna(val1) and pd.isna(val2):
+                    continue
+
+                # 숫자형인 경우 np.isclose()로 비교
+                elif pd.api.types.is_numeric_dtype(type(val1)) and pd.api.types.is_numeric_dtype(type(val2)):
+                    if not np.isclose(val1, val2, equal_nan=True):
+                        diffs.append(col)
+
+                # 그 외 타입은 일반 비교
+                else:
+                    if val1 != val2:
+                        diffs.append(col)
+            return diffs
 
         merged['diff_cols'] = merged.apply(diff_cols, axis=1)
 
