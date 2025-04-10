@@ -35,13 +35,13 @@ datemanage.SetWorkday(workday)
 
 get_compensation_data = GetCompensationData(logger, i, datemanage)
 #get_compensation_data.make_txt_from_ticker(datemanage)
-get_compensation_data.intel.chrome_on(logger, get_compensation_data.page, get_compensation_data.name)
-get_compensation_data.run_backtest_rep(datemanage, all_files=False, first_index=1, final_index=1)
+#get_compensation_data.intel.chrome_on(logger, get_compensation_data.page, get_compensation_data.name)
+#get_compensation_data.run_backtest_rep(datemanage, all_files=False, first_index=1, final_index=1)
 #get_compensation_data.run_backtest_rep(datemanage, all_files=True)
-#No_error = get_compensation_data.run_backtest_process(datemanage) # 인텔리퀀트로 얻은 백테스트 raw 데이터 처리
+No_error = get_compensation_data.run_backtest_process(datemanage) # 인텔리퀀트로 얻은 백테스트 raw 데이터 처리
 
-#verify_compensation = VerifyCompensation(logger)
-#verify_compensation.check_data(datemanage)
+verify_compensation = VerifyCompensation(logger)
+verify_compensation.check_data(datemanage)
 
 
 

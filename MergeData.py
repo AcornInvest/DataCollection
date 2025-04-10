@@ -148,6 +148,8 @@ class MergeData:
     def merge_dbs(self):
         pass
 
+    # 2025.4.10 예전에 엑셀 합치던 함수
+    '''
     def merge_files(self, listed_status, date_before, date_recent, path_data, suffix):
         folder_data_before = f'{path_data}\\{listed_status}\\{date_before}_merged'
         folder_data_recent = f'{path_data}\\{listed_status}\\{date_recent}'
@@ -204,3 +206,4 @@ class MergeData:
 
         print(f'{folder_data_before}, {folder_data_recent} 파일 merge 완료')
         self.logger.info(f'{folder_data_before}, {folder_data_recent} 파일 merge 완료')
+    '''
