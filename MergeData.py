@@ -21,7 +21,7 @@ class MergeData:
 
     def __init__(self, logger, flag_mod=False):
         self.logger = logger
-        self.flag_mod = flag_mod  # ohlcv share 변경된 데이터 대상 확인 용도
+        self.flag_mod = flag_mod  # ohlcv share 변경된 데이터 다시 받은 거 합칠 때 사용
 
         # 설정 로드
         self.load_config() # 자식클래스에서 정의할 것
