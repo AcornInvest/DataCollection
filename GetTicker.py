@@ -402,8 +402,20 @@ class GetTicker:
                     print(duplicate_codes[['Code', 'Name']])
                     print('\n\n')
 
-                ## 누락된 코드 추가하기
-                #2025.4.10 코드 추가 필요
+            ## 누락된 코드 추가하기
+            keyword = f'{type_list}_Ticker_코드누락'
+            file_name = self.find_latest_file(folder_read_path, keyword)
+
+            if file_name:
+                file_read_path = folder_read_path + '\\' + file_name
+                stocks_omitted = pd.read_excel(file_read_path, index_col=0)
+                stocks_omitted['Code'] = stocks_omitted['Code'].astype(str)
+                stocks_omitted['Code'] = stocks_omitted['Code'].str.zfill(6)  # 코드가 6자리에 못 미치면 앞에 0 채워넣기
+                stocks_omitted['ListingDate'] = pd.to_datetime(stocks_omitted['ListingDate']).dt.strftime('%Y-%m-%d')
+                stocks_omitted['DelistingDate'] = pd.to_datetime(stocks_omitted['DelistingDate']).dt.strftime('%Y-%m-%d')
+
+                # stocks_omitted 데이터를 stocks에 추가
+                stocks = pd.concat([stocks, stocks_omitted], ignore_index=True)
 
             # 상장일 기준 정렬
             stocks = stocks.sort_values(by='ListingDate')  # 상장일 기준 오름차순 정렬
