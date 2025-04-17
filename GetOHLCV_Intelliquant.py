@@ -42,7 +42,8 @@ class GetOHLCV_Intelliquant(UseIntelliquant): # 인텔리퀀트에서 모든 종
             low REAL,
             close REAL,   
             volume REAL,                   
-            cap REAL           
+            cap REAL,
+            PRIMARY KEY (stock_code, date)        
         );
         '''
         # 2025.4.3 volume 은 get volume 에서 구하니까 삭제함

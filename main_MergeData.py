@@ -30,6 +30,6 @@ file_handler_info.setFormatter(formatter)
 logger.addHandler(file_handler_info)
 
 paths = LoadConfig()
-merge_ohlcv = MergeOHLCV(logger, paths, flag_mod=True)
+merge_ohlcv = MergeOHLCV(logger, paths, datemanage, flag_mod=True)
 flag_error, flag_mod_stocks = merge_ohlcv.check_continuity(datemanage)
 print(f'flag_error: {flag_error}, flag_mode_stocks: {flag_mod_stocks}')

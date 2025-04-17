@@ -27,20 +27,13 @@ class MergeData:
         # self.suffix = 'data' # 파일 이름 저장시 사용하는 접미사. 자식 클래스에서 정의할 것
 
     def check_continuity(self, datemanage):
-        folder1 = f'{self.path_data}\\'
-        file1 = f'{self.suffix}_merged.db'
-        path1 = folder1 + file1
-        folder2 = f'{self.path_data}\\{datemanage.workday_str}\\'
-        file2 = f'{self.suffix}_{datemanage.workday_str}.db'
-        path2 = folder2 + file2
-
         # DB 연결
-        conn1 = sqlite3.connect(path1)
-        conn2 = sqlite3.connect(path2)
+        conn1 = sqlite3.connect(self.path_merged)
+        conn2 = sqlite3.connect(self.path_new)
 
         # 쿼리문
         query = f"""
-            SELECT * FROM {self.table_name}
+            SELECT * FROM {self.table_merged}
             WHERE date = ?
         """
 
@@ -108,11 +101,11 @@ class MergeData:
         diff_merged = merged[merged['diff_cols'].apply(lambda x: len(x) > 0)]
 
         if diff_merged.empty:
-            print(f"[{file2}] 모든 데이터가 일치합니다.")
+            print(f"[{self.file_new}] 모든 데이터가 일치합니다.")
             return flag_error, flag_mod_stocks
 
         # 데이터에 차이가 있는 경우
-        print(f"[{file2}] 차이 발생!")
+        print(f"[{self.file_new}] 차이 발생!")
 
         check_columns = ['open', 'high', 'low', 'close']
         # share 차이가 생긴 종목들 중 수정종가 변경이 생긴 종목들 찾는 조건
@@ -130,7 +123,7 @@ class MergeData:
 
             if mod_stock_codes:
                 output_df = pd.DataFrame({'stock_code': sorted(mod_stock_codes)})
-                path = folder2 + f"mod_stock_codes_{datemanage.workday_str}.xlsx"
+                path = self.folder_new + f"mod_stock_codes_{datemanage.workday_str}.xlsx"
                 output_df.to_excel(path, index=False)
                 print(f"\n종가 변경 stock_code를 Excel로 저장했습니다: mod_stock_codes_{datemanage.workday_str}.xlsx")
                 flag_mod_stocks = True
@@ -144,8 +137,92 @@ class MergeData:
 
         return flag_error, flag_mod_stocks
 
+    def validate_exact_date_match_per_stock(self):
+        """
+        new_table에 있는 모든 stock_code에 대해,
+        merged_table에서 해당 종목의 date 리스트가 정확히 일치하는지 확인
+        """
+        # 데이터 불러오기
+        conn_merged = sqlite3.connect(self.path_merged)
+        df_merged = pd.read_sql_query(f"SELECT stock_code, date FROM {self.table_merged}", conn_merged)
+        conn_merged.close()
+
+        conn_new = sqlite3.connect(self.path_new)
+        df_new = pd.read_sql_query(f"SELECT stock_code, date FROM {self.table_new}", conn_new)
+        conn_new.close()
+
+        # 결과 누적용 리스트
+        mismatch_list = []
+
+        # 비교 대상 stock_code만 추출
+        stock_codes = df_new['stock_code'].unique()
+
+        for code in stock_codes:
+            dates_in_new = set(df_new[df_new['stock_code'] == code]['date'])
+            dates_in_merged = set(df_merged[df_merged['stock_code'] == code]['date'])
+
+            if dates_in_new != dates_in_merged:
+                mismatch_list.append({
+                    'stock_code': code,
+                    'only_in_new': sorted(dates_in_new - dates_in_merged),
+                    'only_in_merged': sorted(dates_in_merged - dates_in_new)
+                })
+
+        if mismatch_list:
+            sample = mismatch_list[:3]  # 예시 3개만 출력
+            raise ValueError(
+                f"intelliquant_mod와 기존 merged_db 비교: stock_code별 date 불일치가 감지되었습니다 (총 {len(mismatch_list)}개 종목).\n"
+                f"예시:\n" +
+                '\n'.join([
+                    f"- {item['stock_code']}: new_only={item['only_in_new']}, merged_only={item['only_in_merged']}"
+                    for item in sample
+                ])
+            )
+        else:
+            print("intelliquant_mod와 기존 merged_db 비교: 모든 stock_code의 date 목록이 정확히 일치합니다.")
+
+
     def merge_dbs(self):
-        pass
+        # 기존 merged 파일 연결
+        conn = sqlite3.connect(self.path_merged)
+        cursor = conn.cursor()
+
+        # new file attach
+        cursor.execute(f"ATTACH DATABASE '{self.path_new}' AS new_db")
+
+        if self.flag_mod: #수정 주가들의 ohlc 를 통째로 교체하는 경우
+            check_columns = ['open', 'high', 'low', 'close']
+
+            # 이 부분 코드를 만들어줘
+            # new_db 에 있는 테이블 {self.table_new}의 열들 중  check_columns에 해당하는 열들의 데이터를,
+            # {self.path_merged}파일의 테이블 {self.table_merged}의 같은 열들에 넣어줘.
+            # new_db의 {self.table_new}열은 항상 {self.path_merged}파일의 테이블 {self.table_merged} 열과 같은 (stock_code, date) 쌍을 가진다고 전제해
+
+            set_clause = ', '.join([
+                f"{col} = new_values.{col}" for col in check_columns
+            ])
+
+            # FROM 절을 이용해 new_values 테이블과 직접 매칭
+            cursor.execute(f"""
+                   UPDATE {self.table_merged}
+                   SET {set_clause}
+                   FROM new_db.{self.table_new} AS new_values
+                   WHERE {self.table_merged}.stock_code = new_values.stock_code
+                     AND {self.table_merged}.date = new_values.date;
+               """)
+
+        else:
+            # INSERT OR IGNORE: 동일한 PRIMARY KEY/UNIQUE KEY가 있다면 무시됨
+            cursor.execute(f"""
+                INSERT OR IGNORE INTO {self.table_merged}
+                SELECT * FROM new_db.{self.table_new}
+            """)
+
+        # 마무리
+        conn.commit()
+        cursor.execute("DETACH DATABASE new_db")
+        conn.close()
+
 
     # 2025.4.10 예전에 엑셀 합치던 함수
     '''

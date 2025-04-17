@@ -30,7 +30,8 @@ class GetVolume(UseIntelliquant): # 인텔리퀀트에서 거래량 구하기
             volume REAL,
             vf REAL,
             vi REAL,
-            vr REAL           
+            vr REAL,
+            PRIMARY KEY (stock_code, date)    
         );
         '''
 

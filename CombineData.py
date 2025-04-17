@@ -64,7 +64,8 @@ class CombineData:
             vi INTEGER,
             vr INTEGER,
             cap INTEGER,
-            share INTEGER
+            share INTEGER,
+            PRIMARY KEY (stock_code, date)
         );
         '''
 

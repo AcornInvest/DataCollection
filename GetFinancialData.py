@@ -50,7 +50,8 @@ class GetFinancialData(UseIntelliquant):
             pcr REAL,
             gpa REAL,
             roa REAL,
-            roe REAL                   
+            roe REAL,
+            PRIMARY KEY (stock_code, date)                  
         );
         '''
 

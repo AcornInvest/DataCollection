@@ -19,8 +19,10 @@ class UseIntelliquant:
         self.logger = logger
         self.flag_mod = flag_mod # ohlcv share 변경된 데이터 대상 확인 용도
 
+        self.load_config()
+
         # 설정 로드
-        self.path_data = paths.StockDataset
+        self.path_data = paths.StockDataSet
         self.path_codeLists = paths.CodeLists
         self.path_date_ref = paths.date_ref
 
@@ -305,7 +307,7 @@ class UseIntelliquant:
         #category = ['Delisted']
 
         if self.flag_mod:
-            path = self.path_compensation_data + f'\\{datemanage.workday_str}\\share_modified_codes_{datemanage.workday_str}.xlsx'
+            path = self.path_ohlcv_combined_data + f'\\{datemanage.workday_str}\\mod_stock_codes_{datemanage.workday_str}.xlsx'
             stocks_mod = pd.read_excel(path, index_col=None)
             stocks_mod['stock_code'] = stocks_mod['stock_code'].astype(str)
             stocks_mod['stock_code'] = stocks_mod['stock_code'].str.zfill(6)  # 코드가 6자리에 못 미치면 앞에 0 채워넣기

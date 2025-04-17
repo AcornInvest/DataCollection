@@ -66,7 +66,8 @@ class GetIndex:
             low REAL,
             close REAL,
             volume REAL,
-            amount REAL      
+            amount REAL,
+            PRIMARY KEY (stock_code, date)
         );
         '''
 

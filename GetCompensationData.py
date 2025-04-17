@@ -28,7 +28,8 @@ class GetCompensationData(UseIntelliquant):
             stock_code TEXT,
             date TEXT,
             old_share REAL,
-            new_share REAL                      
+            new_share REAL,
+            PRIMARY KEY (stock_code, date)                
         );
         '''
 
