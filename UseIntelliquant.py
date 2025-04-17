@@ -13,14 +13,17 @@ class UseIntelliquant:
    인텔리퀀트에서 데이터 가져오는 기능
    '''
 
-    def __init__(self, logger, num_process, datemanage, flag_mod=False):
+    def __init__(self, logger, paths, num_process, datemanage, flag_mod=False):
         self.num_process = num_process  # 멀티 프로세스 번호
         self.intel = Intelliquant(self.num_process)
         self.logger = logger
         self.flag_mod = flag_mod # ohlcv share 변경된 데이터 대상 확인 용도
 
         # 설정 로드
-        self.load_config()
+        self.path_data = paths.StockDataset
+        self.path_codeLists = paths.CodeLists
+        self.path_date_ref = paths.date_ref
+
         self.suffix = 'data' # 파일 이름 저장시 사용하는 접미사
         self.date_prefix = 'bussiness_day_ref'  # date reference 파일의 접미사
 
@@ -32,16 +35,6 @@ class UseIntelliquant:
 
     def load_config(self):
         self.cur_dir = os.getcwd()
-        path = self.cur_dir + '\\' + 'config_UseIntelliquant.ini'
-
-        # 설정파일 읽기
-        config = configparser.ConfigParser()
-        config.read(path, encoding='utf-8')
-
-        # 설정값 읽기
-        self.path_data = config['path']['path_data']
-        self.path_codeLists = config['path']['path_codelists']
-        self.path_date_ref = config['path']['path_date_ref']  # 날짜 기준 정보 경로
 
     def load_base_code(self, path_base_code):
         with open(path_base_code, 'r', encoding='utf-8') as file:

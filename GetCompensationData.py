@@ -11,8 +11,8 @@ import re
 import sqlite3
 
 class GetCompensationData(UseIntelliquant):
-    def __init__(self, logger, num_process, datemanage):
-        super().__init__(logger, num_process, datemanage)
+    def __init__(self, logger, paths, num_process, datemanage):
+        super().__init__(logger, paths, num_process, datemanage)
         # 인텔리퀀트 시뮬레이션 종목수 조회시 한번에 돌리는 종목 수.
         #self.max_batchsize = 20 # Delisted
         #self.max_batchsize = 10 # Listed
@@ -20,6 +20,7 @@ class GetCompensationData(UseIntelliquant):
         self.max_unit_year = 4800 # 480*10
         self.path_base_code = self.cur_dir + '\\' + 'GetNoOfShares_base.js'
         self.suffix = 'compensation'  # 파일 이름 저장시 사용하는 접미사
+        self.path_backtest_save = paths.OHLCV_Compensation
 
         # 테이블 생성 쿼리
         self.create_table_query = f'''
@@ -41,7 +42,7 @@ class GetCompensationData(UseIntelliquant):
         config.read(path, encoding='utf-8')
         self.page = config['intelliquant']['page']
         self.name = config['intelliquant']['name']
-        self.path_backtest_save = config['path']['path_backtest_save']
+
 
     def process_backtest_result(self, path_file):  # backtest result 를 처리하여 df로 반환
         # 각 코드별 데이터를 저장할 딕셔너리

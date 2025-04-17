@@ -11,9 +11,10 @@ class VerifyVolume(VerifyData):
     '''
     OHLCV data의 무결성 검증용 child class
     '''
-    def __init__(self, logger):
-        super().__init__(logger)
+    def __init__(self, logger, paths):
+        super().__init__(logger, paths)
         self.suffix = 'volume'  # 파일 이름 저장시 사용하는 접미사
+        self.path_data = paths.OHLCV_volume
         #self.limit_change_day = date(2015, 6, 15)  # 가격제한폭이 30%로 확대된 날
         #self.clearance_days = 17 # 정리매매 기간 최대 15일 + 상폐직전 마진 2일
         self.date_prefix = 'bussiness_day_ref'  # date reference 파일의 접미사
@@ -27,9 +28,6 @@ class VerifyVolume(VerifyData):
         # 설정파일 읽기
         config = configparser.ConfigParser()
         config.read(path, encoding='utf-8')
-
-        self.path_data = config['path']['path_data']  # 데이터 경로
-        self.path_date_ref = config['path']['path_date_ref'] # 날짜 기준 정보 경로
 
     def check_integrity(self, code, df_b_day_ref, df_data, datemanage):
         df_data.reset_index(inplace=True)
@@ -143,9 +141,7 @@ class VerifyVolume(VerifyData):
             utils.save_list_to_file_append(consecutive_same_values_list, path)  # 텍스트 파일에 오류 부분 저장
             no_error = False
 
-        flag_modified = False # VerifyCompensation 과 형식을 맞추기 위함
-
-        return no_error, flag_modified
+        return no_error
 
     ''' # 2025.3.31 이거는 verifyOHLCV 에서 쓰는건 아닌가? 여기 왜 있지?
     # n일간 연속적으로 같은 값을 가지는지 판별하는 함수

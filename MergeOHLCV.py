@@ -6,6 +6,7 @@ import shutil
 import sqlite3
 from MergeData import MergeData
 
+# combined ohlcv (share, volume 포함) 를 merge
 class MergeOHLCV(MergeData):
     def __init__(self, logger, paths, flag_mod=False):
         #flag_mod == True 사용하는 경우

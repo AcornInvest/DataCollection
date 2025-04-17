@@ -9,24 +9,17 @@ class VerifyData:
     '''
    OHLCV, Financial data의 무결성 검증용 parent class
    '''
-    def __init__(self, logger, flag_mod=False):
+    def __init__(self, logger, paths, flag_mod=False):
         self.logger = logger
         self.flag_mod = flag_mod  # ohlcv share 변경된 데이터 대상 확인 용도
         # 설정 로드
         self.load_config()
         #self.suffix = 'data' # 파일 이름 저장시 사용하는 접미사. 자식 클래스에서 정의할 것
+        self.path_codeLists = paths.CodeLists
+        self.path_date_ref = paths.date_ref
 
     def load_config(self):
         self.cur_dir = os.getcwd()
-        path = self.cur_dir + '\\' + 'config_VerifyData.ini'
-
-        # 설정파일 읽기
-        config = configparser.ConfigParser()
-        config.read(path, encoding='utf-8')
-
-        # 설정값 읽기
-        #self.path_data = config['path']['path_data'] # 이건 자식 클래스에서 정의할 것
-        self.path_codeLists = config['path']['path_codelists']
 
     #def check_data(self, datemanage, listed_status):
     def check_data(self, datemanage): #2025.3.17 listed_status 구분 없이 합쳐서 db에 저장함
@@ -133,8 +126,10 @@ class VerifyData:
             #no_error = self.check_integrity(code, df_b_day_ref, df_data, datemanage, listed_status)  # 무결성 검사. 자식클래스에서 선언할 것
             no_error, flag_modified = self.check_integrity(code, df_b_day_ref, df_data, datemanage)  # 무결성 검사. 자식클래스에서 선언할 것
 
+            '''# 2024.4.17 이거 따로 체크하지 않는다. 어차피 combine할 때 ohlc 변동을 모든 종목에 대해 체크한다.
             if flag_modified:
                 df_modified_codes.loc[len(df_modified_codes)] = code
+            '''
 
             if no_error == False:
                 flag_no_error = False
@@ -144,7 +139,9 @@ class VerifyData:
         else:
             print(f"{self.suffix} Verificaion Error")
 
+        ''' # 2024.4.17 이거 따로 체크하지 않는다. 어차피 combine할 때 ohlc 변동을 모든 종목에 대해 체크한다.
         if len(df_modified_codes) > 0:
             path = folder_data + f"share_modified_codes_{datemanage.workday_str}.xlsx"
             df_modified_codes.to_excel(path, index=False)
             print(f"주식수 변동 종목들 저장됨: {path}")
+        '''

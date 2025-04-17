@@ -11,12 +11,15 @@ class VerifyOHLCV(VerifyData):
     '''
     OHLCV data의 무결성 검증용 child class
     '''
-    def __init__(self, logger, datemanage, flag_mod=False):
-        super().__init__(logger, flag_mod)
+    def __init__(self, logger, paths, datemanage, flag_mod=False):
+        super().__init__(logger, paths, flag_mod)
         if self.flag_mod:
             self.suffix = 'OHLCV_intelliquant_mod'  # 수정주가가 발생된 경우
+            self.path_data = paths.OHLCV_Intelliquant_mod
+            self.path_compensation_data = paths.OHLCV_Compensation
         else:
             self.suffix = 'OHLCV_intelliquant'  # 파일 이름 저장시 사용하는 접미사
+            self.path_data = paths.OHLCV_Intelliquant
 
         self.limit_change_day = date(2015, 6, 15)  # 가격제한폭이 30%로 확대된 날
         self.clearance_days = 17 # 정리매매 기간 최대 15일 + 상폐직전 마진 2일
@@ -30,21 +33,6 @@ class VerifyOHLCV(VerifyData):
 
     def load_config(self):
         super().load_config()
-
-        # self.cur_dir = os.getcwd() # 부모 클래스에서 선언됨
-        path = self.cur_dir + '\\' + 'config_VerifyOHLCV.ini'
-        # 설정파일 읽기
-        config = configparser.ConfigParser()
-        config.read(path, encoding='utf-8')
-
-        self.path_data = config['path']['path_data']  # 데이터 경로
-        self.path_date_ref = config['path']['path_date_ref'] # 날짜 기준 정보 경로
-
-        if self.flag_mod:
-            self.path_data = config['path']['path_data_mod']  # 수정주가가 발생된 경우
-            self.path_compensation_data = config['path']['path_compensation_data']
-        else:
-            self.path_data = config['path']['path_data']
 
     def check_integrity(self, code, df_b_day_ref, df_data, datemanage):
         df_data.reset_index(inplace=True)
@@ -191,9 +179,7 @@ class VerifyOHLCV(VerifyData):
             utils.save_list_to_file_append(consecutive_same_values_list, path)  # 텍스트 파일에 오류 부분 저장
         '''
 
-        flag_modified = False # VerifyCompensation 과 형식을 맞추기 위함
-
-        return no_error, flag_modified
+        return no_error
 
     # n일간 연속적으로 같은 값을 가지는지 판별하는 함수
     def check_continuous_same_value(self, df, n, compare_columns):

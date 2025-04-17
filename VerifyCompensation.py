@@ -11,23 +11,15 @@ class VerifyCompensation(VerifyData):
     '''
     NoOfShare data의 무결성 검증용 child class
     '''
-    def __init__(self, logger):
-        super().__init__(logger)
+    def __init__(self, logger, paths):
+        super().__init__(logger, paths)
         self.suffix = 'compensation'  # 파일 이름 저장시 사용하는 접미사
+        self.path_data = paths.OHLCV_Compensation
         self.date_prefix = 'bussiness_day_ref' # date reference 파일의 접미사
         self.db_columns = ['date', 'old_share', 'new_share']
 
     def load_config(self):
         super().load_config()
-
-        # self.cur_dir = os.getcwd() # 부모 클래스에서 선언됨
-        path = self.cur_dir + '\\' + 'config_VerifyCompensation.ini'
-        # 설정파일 읽기
-        config = configparser.ConfigParser()
-        config.read(path, encoding='utf-8')
-
-        self.path_data = config['path']['path_data']  # 데이터 경로
-        self.path_date_ref = config['path']['path_date_ref'] # 날짜 기준 정보 경로
 
     #def check_integrity(self, code, df_b_day_ref, df_data, datemanage, listed_status):
     def check_integrity(self, code, df_b_day_ref, df_data, datemanage):
@@ -134,6 +126,7 @@ class VerifyCompensation(VerifyData):
             utils.save_list_to_file_append(consecutive_same_values_list, path)  # 텍스트 파일에 오류 부분 저장
             no_error = False
 
+        ''' # 2024.4.17 이거 따로 체크하지 않는다. 어차피 combine할 때 ohlc 변동을 모든 종목에 대해 체크한다.
         # 2025.3.24
         #주식수가 변경된 것을 따로 파일로 저장해야 한다. ohlcv 가져올 때 참고하도록 한다.
         flag_share_modified = False
@@ -150,3 +143,6 @@ class VerifyCompensation(VerifyData):
                     flag_share_modified = True
 
         return no_error, flag_share_modified
+        '''
+
+        return no_error

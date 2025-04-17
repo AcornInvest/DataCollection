@@ -11,23 +11,16 @@ class VerifyFinance(VerifyData):
     '''
     Finance data의 무결성 검증용 child class
     '''
-    def __init__(self, logger):
-        super().__init__(logger)
+    def __init__(self, logger, paths):
+        super().__init__(logger, paths)
         self.suffix = 'financial'  # 파일 이름 저장시 사용하는 접미사
+        self.path_data = paths.Financial
+
         self.date_prefix = 'financial_day_ref' # date reference 파일의 접미사
         self.db_columns = ['date', 'rv', 'gp', 'oi', 'np', 'ev_evitda', 'per', 'pbr', 'psr', 'pcr', 'gpa', 'roa', 'roe']
 
     def load_config(self):
-        super().load_config()
-
-        # self.cur_dir = os.getcwd() # 부모 클래스에서 선언됨
-        path = self.cur_dir + '\\' + 'config_VerifyFinance.ini'
-        # 설정파일 읽기
-        config = configparser.ConfigParser()
-        config.read(path, encoding='utf-8')
-
-        self.path_data = config['path']['path_data']  # 데이터 경로
-        self.path_date_ref = config['path']['path_date_ref'] # 날짜 기준 정보 경로
+        super().oad_config()
 
     def check_integrity(self, code, df_b_day_ref, df_data, datemanage):
         df_data.reset_index(inplace=True)
@@ -109,6 +102,4 @@ class VerifyFinance(VerifyData):
             utils.save_list_to_file_append(consecutive_same_values_list, path)  # 텍스트 파일에 오류 부분 저장
             no_error = False
 
-        flag_modified = False # VerifyCompensation 과 형식을 맞추기 위함
-
-        return no_error, flag_modified
+        return no_error

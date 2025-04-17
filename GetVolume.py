@@ -13,13 +13,15 @@ from pandas import Timedelta
 import re
 
 class GetVolume(UseIntelliquant): # 인텔리퀀트에서 거래량 구하기
-    def __init__(self, logger, num_process, datemanage):
-        super().__init__(logger, num_process, datemanage)
+    def __init__(self, logger, paths, num_process, datemanage):
+        super().__init__(logger, paths, num_process, datemanage)
         # 인텔리퀀트 시뮬레이션 종목수 조회시 한번에 돌리는 종목 수.
         #self.max_batchsize = 60 # For_Intelliquant 파일 내의 code 숫자
         self.max_unit_year = 33
         self.path_base_code = self.cur_dir + '\\' + 'GetVolume_Intelliquant_base.js'
         self.suffix = 'volume'  # 파일 이름 저장시 사용하는 접미사
+        self.path_backtest_save = paths.OHLCV_volume
+
         # 테이블 생성 쿼리
         self.create_table_query = f'''
         CREATE TABLE IF NOT EXISTS {self.suffix} (
@@ -44,8 +46,6 @@ class GetVolume(UseIntelliquant): # 인텔리퀀트에서 거래량 구하기
         self.name_list = [config['intelliquant']['name_0'], config['intelliquant']['name_1'], config['intelliquant']['name_2'], config['intelliquant']['name_3']]
         self.page = self.page_list[self.num_process]
         self.name = self.name_list[self.num_process]
-        self.path_backtest_save = config['path']['path_backtest_save']
-        self.path_date_ref = config['path']['path_date_ref']
 
     def process_backtest_result(self, path_file):  # backtest result 를 처리하여 df로 반환
         # 각 코드별 데이터를 저장할 딕셔너리

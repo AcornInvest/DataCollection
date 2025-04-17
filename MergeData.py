@@ -9,7 +9,6 @@ import sqlite3
 # 이걸 parent 로 하고, ohlcv_combined, financial, processed, technical 로 자식 class 를 만든다.
 # listed_stock_data, chancelist 는 1년/6개월에 한번만 추가하면 된다.
 
-
 # verify compensation 에서 주식수 변동있는 종목들을 xlsx 로 만드는 것 필요없다.
 # 여기서만 판단한다. ohlc 외에 값이 다르면 error 로 판단하고,
 # ohlc 만 다르면 목록을 저장하여 ohlcv_mod로 새로 backtest 하도록 한다.
@@ -34,14 +33,6 @@ class MergeData:
         folder2 = f'{self.path_data}\\{datemanage.workday_str}\\'
         file2 = f'{self.suffix}_{datemanage.workday_str}.db'
         path2 = folder2 + file2
-
-        # share 변경된 종목 목록 가져오기
-        if self.flag_mod:
-            path = self.path_compensation_data + f'\\{datemanage.workday_str}\\share_modified_codes_{datemanage.workday_str}.xlsx'
-            stocks_mod = pd.read_excel(path, index_col=None)
-            stocks_mod['stock_code'] = stocks_mod['stock_code'].astype(str)
-            stocks_mod['stock_code'] = stocks_mod['stock_code'].str.zfill(6)  # 코드가 6자리에 못 미치면 앞에 0 채워넣기
-            check_columns = ['open', 'high', 'low', 'close']
 
         # DB 연결
         conn1 = sqlite3.connect(path1)
@@ -89,7 +80,7 @@ class MergeData:
         # 비교할 열 목록
         compare_columns = [col for col in df1.columns if col not in ['stock_code', 'date']]
 
-        # diff 컬럼 확인
+        # diff 컬럼 확인 함수
         def diff_cols(row):
             diffs = []
             for col in compare_columns:
@@ -120,19 +111,21 @@ class MergeData:
             print(f"[{file2}] 모든 데이터가 일치합니다.")
             return flag_error, flag_mod_stocks
 
-        # 차이가 있는 경우
+        # 데이터에 차이가 있는 경우
         print(f"[{file2}] 차이 발생!")
 
-        if self.flag_mod and stocks_mod is not None:
-            # share 차이가 생긴 종목들 중 수정종가 변경이 생긴 종목들 찾는 조건
-            # (1) 차이가 발생한 행의 stock_code 가 stocks_mod['stock_code'] 안에 있는지
-            # (2) 차이가 발생한 열이 check_columns = ['open', 'high', 'low', 'close'] 에 속하면서 다른 열들에서는 차이가 없는지
-            is_in_mod_stock = diff_merged['stock_code'].isin(stocks_mod['stock_code'])
-            is_only_check_cols = diff_merged['diff_cols'].apply(lambda cols: set(cols).issubset(check_columns))
+        check_columns = ['open', 'high', 'low', 'close']
+        # share 차이가 생긴 종목들 중 수정종가 변경이 생긴 종목들 찾는 조건
+        # 차이가 발생한 열이 check_columns = ['open', 'high', 'low', 'close'] 에 속하면서 다른 열들에서는 차이가 없는지
+        is_only_check_cols = diff_merged['diff_cols'].apply(lambda cols: set(cols).issubset(check_columns))
 
+        # 조건 만족하는 행
+        valid_rows = diff_merged[is_only_check_cols]
 
-            # 조건 만족하는 행
-            valid_rows = diff_merged[is_in_mod_stock & is_only_check_cols]
+        # 조건을 만족하지 않는 행
+        invalid_rows = diff_merged[~is_only_check_cols]
+
+        if not valid_rows.empty: # 수정종가에 차이가 있는 종목이 하나라도 있을 경우
             mod_stock_codes = set(valid_rows['stock_code'])
 
             if mod_stock_codes:
@@ -142,25 +135,11 @@ class MergeData:
                 print(f"\n종가 변경 stock_code를 Excel로 저장했습니다: mod_stock_codes_{datemanage.workday_str}.xlsx")
                 flag_mod_stocks = True
 
-            # 조건을 만족하지 않는 행
-            invalid_rows = diff_merged[~(is_in_mod_stock & is_only_check_cols)]
-
-            if not invalid_rows.empty:
-                print(f"\n조건을 만족하지 않는 차이 행:")
-                display_cols = ['stock_code', 'date', 'diff_cols'] + [f"{col}_{sfx}" for col in compare_columns for sfx
-                                                                      in ['1', '2']]
-                print(invalid_rows[display_cols])
-                flag_error = True
-        else:
-            # flag_mod False일 때 모든 차이 출력
-            for col in compare_columns:
-                col1 = f"{col}_1"
-                col2 = f"{col}_2"
-                diff_df = merged[merged[col1] != merged[col2]]
-                if not diff_df.empty:
-                    print(f"\n[열: {col}] 값이 다른 행:")
-                    print(diff_df[['stock_code', 'date', col1, col2]])
-
+        if not invalid_rows.empty: # 수정종가 외에 다른 열에 차이가 있는 종목이 하나라도 있는 경우
+            print(f"\n조건을 만족하지 않는 차이 행:")
+            display_cols = ['stock_code', 'date', 'diff_cols'] + [f"{col}_{sfx}" for col in compare_columns for sfx
+                                                                  in ['1', '2']]
+            print(invalid_rows[display_cols])
             flag_error = True
 
         return flag_error, flag_mod_stocks
