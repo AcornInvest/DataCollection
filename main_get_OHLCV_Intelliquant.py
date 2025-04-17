@@ -55,8 +55,12 @@ datemanage2 = DateManage(filename)
 datemanage2.SetStartday(startday)
 datemanage2.SetWorkday(workday)
 get_OHLCV_Intelliquant2 = GetOHLCV_Intelliquant(logger, paths, i, datemanage, flag_mod=True)
-get_OHLCV_Intelliquant2.make_txt_from_ticker(datemanage2)
-get_OHLCV_Intelliquant2.intel.chrome_on(logger, get_OHLCV_Intelliquant2.page, get_OHLCV_Intelliquant2.name)
-get_OHLCV_Intelliquant2.run_backtest_rep(datemanage2, all_files=True)
+#get_OHLCV_Intelliquant2.make_txt_from_ticker(datemanage2)
+#get_OHLCV_Intelliquant2.intel.chrome_on(logger, get_OHLCV_Intelliquant2.page, get_OHLCV_Intelliquant2.name)
+#get_OHLCV_Intelliquant2.run_backtest_rep(datemanage2, all_files=True)
+get_OHLCV_Intelliquant2.run_backtest_process(datemanage) # 인텔리퀀트로 얻은 백테스트 raw 데이터 처리
+
+#verify_ohlcv2 = VerifyOHLCV(logger, datemanage, flag_mod=True)
+#verify_ohlcv2.check_data(datemanage)
 
 
