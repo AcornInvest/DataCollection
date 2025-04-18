@@ -8,6 +8,7 @@ from GetFinancialData import GetFinancialData
 from GetTicker import GetTicker
 from GetOHLCV import GetOHLCV
 from GetOHLCV_Intelliquant import GetOHLCV_Intelliquant
+from LoadConfig import LoadConfig
 
 import sys
 sys.path.append("C:\\Work_Dotori\\Screener_Desktop")
@@ -25,6 +26,8 @@ file_handler_info = logging.FileHandler(filename=datemanage.path_log)
 file_handler_info.setFormatter(formatter)
 logger.addHandler(file_handler_info)
 
+paths = LoadConfig()
+
 # 새 데이터용
 #startday = date(2000, 1, 4)
 #workday = date(2024, 3, 29)
@@ -33,14 +36,14 @@ workday = date(2025, 1, 14)
 datemanage.SetStartday(startday)
 datemanage.SetWorkday(workday)
 
-get_compensation_data = GetCompensationData(logger, i, datemanage)
+get_compensation_data = GetCompensationData(logger, paths, i, datemanage)
 #get_compensation_data.make_txt_from_ticker(datemanage)
 #get_compensation_data.intel.chrome_on(logger, get_compensation_data.page, get_compensation_data.name)
 #get_compensation_data.run_backtest_rep(datemanage, all_files=False, first_index=1, final_index=1)
 #get_compensation_data.run_backtest_rep(datemanage, all_files=True)
 No_error = get_compensation_data.run_backtest_process(datemanage) # 인텔리퀀트로 얻은 백테스트 raw 데이터 처리
 
-verify_compensation = VerifyCompensation(logger)
+verify_compensation = VerifyCompensation(logger, paths)
 verify_compensation.check_data(datemanage)
 
 

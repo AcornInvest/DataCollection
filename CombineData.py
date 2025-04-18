@@ -16,8 +16,10 @@ class CombineData:
    2024.8.8 파일을 sql에 저장하도록 함
    '''
 
-    def __init__(self, logger, datemanage):
+    def __init__(self, logger, paths, datemanage):
         self.logger = logger
+        self.paths = paths
+
         # 설정 로드
         self.load_config()
 
@@ -31,21 +33,12 @@ class CombineData:
                     self.df_business_days['date'] <= datemanage.workday)]
 
     def load_config(self):
-        self.cur_dir = os.getcwd()
-        path = self.cur_dir + '\\' + 'config_CombineData.ini'
-
-        # 설정파일 읽기
-        config = configparser.ConfigParser()
-        config.read(path, encoding='utf-8')
-
-        # 설정값 읽기
-        self.path_data = config['path']['path_data']
-        self.path_codeLists = config['path']['path_codelists']
-        self.path_savedata = config['path']['path_savedata'] # combined 결과물 저장할 폴더
-        self.path_date_ref = config['path']['path_date_ref']  # 날짜 기준 정보 경로
+        # 설정
+        self.path_data = self.paths.StockDataSet
+        self.path_codeLists = self.paths.CodeLists
+        self.path_savedata = self.paths.Combined
+        self.path_date_ref = self.paths.ref
         self.suffix = 'combined_ohlcv'
-        #self.path_date_ref = config['path']['path_date_ref']
-        #self.date_prefix = 'bussiness_day_ref'  # date reference 파일의 접미사
 
     def combine_data(self, datemanage): # 각 폴더의 데이터가 codelist의 모든 목록을 포함하는지 확인
         category = ['Delisted', 'Listed']

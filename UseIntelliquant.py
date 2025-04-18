@@ -254,25 +254,33 @@ class UseIntelliquant:
         ticker_codes_set = set()
         num_ticker_codes = 0
 
-        # ticker list 에서 전체 코드명 읽어오기
-        for listed_status in category:
-            codelist_path = self.path_codeLists + '\\' + listed_status + '\\' + listed_status + '_Ticker_' + datemanage.workday_str + '_modified.xlsx'
-            codelist = pd.read_excel(codelist_path, index_col=0)
-            codelist['ListingDate'] = pd.to_datetime(codelist['ListingDate']).apply(lambda x: x.date())
-            codelist['DelistingDate'] = pd.to_datetime(codelist['DelistingDate']).apply(lambda x: x.date())
-            codelist['Code'] = codelist['Code'].astype(str)
-            codelist['Code'] = codelist['Code'].str.zfill(6)  # 코드가 6자리에 못 미치면 앞에 0 채워넣기
-            # codelist.loc[:, 'Code'] = codelist['Code'].apply(lambda x: f"{x:06d}")  # Code 열 str, 6글자로 맞추기
-            # codelist_filtered = codelist[codelist['DelistingDate'] >= datemanage.startday] # 상폐일이 시뮬레이션 시작일보다 앞선 것은 제외시키기
-            # 상폐일이 시뮬레이션 시작일보다 늦고, 상장일이 시뮬레이션 마지막 날보다 빠른 것만 남기기
-            codelist_filtered = codelist[
-                (codelist['DelistingDate'] >= datemanage.startday) &  #상폐가 startday 이후
-                (codelist['ListingDate'] <= datemanage.workday) & # 상장이 workday 이전
-                (codelist['ListingDate'] <= self.df_business_days['date'].iloc[-1]) #상장이 마지막 business day 이전
-            ]
-            num_ticker_codes += len(codelist_filtered)
-            ticker_codes_set.update(codelist_filtered['Code'])
-            #codes = set(codelist_filtered['Code'])  # Ticker 파일에서 가져온 Code column
+        if self.flag_mod: # 수정주가 변동이 있는 코드 리스트 읽어오기
+            path = self.path_ohlcv_combined_data + f'\\{datemanage.workday_str}\\mod_stock_codes_{datemanage.workday_str}.xlsx'
+            stocks_mod = pd.read_excel(path, index_col=None)
+            stocks_mod['stock_code'] = stocks_mod['stock_code'].astype(str)
+            stocks_mod['stock_code'] = stocks_mod['stock_code'].str.zfill(6)  # 코드가 6자리에 못 미치면 앞에 0 채워넣기
+            num_ticker_codes += len(stocks_mod)
+            ticker_codes_set.update(stocks_mod['stock_code'])
+
+        else:    # ticker list 에서 전체 코드명 읽어오기
+            for listed_status in category:
+                codelist_path = self.path_codeLists + '\\' + listed_status + '\\' + listed_status + '_Ticker_' + datemanage.workday_str + '_modified.xlsx'
+                codelist = pd.read_excel(codelist_path, index_col=0)
+                codelist['ListingDate'] = pd.to_datetime(codelist['ListingDate']).apply(lambda x: x.date())
+                codelist['DelistingDate'] = pd.to_datetime(codelist['DelistingDate']).apply(lambda x: x.date())
+                codelist['Code'] = codelist['Code'].astype(str)
+                codelist['Code'] = codelist['Code'].str.zfill(6)  # 코드가 6자리에 못 미치면 앞에 0 채워넣기
+                # codelist.loc[:, 'Code'] = codelist['Code'].apply(lambda x: f"{x:06d}")  # Code 열 str, 6글자로 맞추기
+                # codelist_filtered = codelist[codelist['DelistingDate'] >= datemanage.startday] # 상폐일이 시뮬레이션 시작일보다 앞선 것은 제외시키기
+                # 상폐일이 시뮬레이션 시작일보다 늦고, 상장일이 시뮬레이션 마지막 날보다 빠른 것만 남기기
+                codelist_filtered = codelist[
+                    (codelist['DelistingDate'] >= datemanage.startday) &  #상폐가 startday 이후
+                    (codelist['ListingDate'] <= datemanage.workday) & # 상장이 workday 이전
+                    (codelist['ListingDate'] <= self.df_business_days['date'].iloc[-1]) #상장이 마지막 business day 이전
+                ]
+                num_ticker_codes += len(codelist_filtered)
+                ticker_codes_set.update(codelist_filtered['Code'])
+                #codes = set(codelist_filtered['Code'])  # Ticker 파일에서 가져온 Code column
 
         #if stock_codes_set != ticker_codes_set or len(codelist_filtered) != len(stock_codes_set):
         if stock_codes_set != ticker_codes_set or num_ticker_codes != len(stock_codes_set):

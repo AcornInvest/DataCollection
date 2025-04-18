@@ -31,9 +31,9 @@ class VerifyData:
 
         flag_no_error = True  # 에러가 없다고 플래그 초기값 설정
 
-        # ohlcv share 변경된 부분 처리여부에 따른 과정
-        if self.flag_mod:
-            path = self.path_compensation_data + f'\\{datemanage.workday_str}\\share_modified_codes_{datemanage.workday_str}.xlsx'
+        # ohlcv mod 부분만 verify할 때
+        if self.flag_mod:  # 수정주가 변동이 있는 코드 리스트 읽어오기
+            path = self.path_ohlcv_combined_data + f'\\{datemanage.workday_str}\\mod_stock_codes_{datemanage.workday_str}.xlsx'
             stocks_mod = pd.read_excel(path, index_col=None)
             stocks_mod['stock_code'] = stocks_mod['stock_code'].astype(str)
             stocks_mod['stock_code'] = stocks_mod['stock_code'].str.zfill(6)  # 코드가 6자리에 못 미치면 앞에 0 채워넣기
@@ -124,7 +124,8 @@ class VerifyData:
             df_data = pd.read_sql(query, conn_data)
 
             #no_error = self.check_integrity(code, df_b_day_ref, df_data, datemanage, listed_status)  # 무결성 검사. 자식클래스에서 선언할 것
-            no_error, flag_modified = self.check_integrity(code, df_b_day_ref, df_data, datemanage)  # 무결성 검사. 자식클래스에서 선언할 것
+            #no_error, flag_modified = self.check_integrity(code, df_b_day_ref, df_data, datemanage)  # 무결성 검사. 자식클래스에서 선언할 것
+            no_error = self.check_integrity(code, df_b_day_ref, df_data, datemanage)  # 무결성 검사. 자식클래스에서 선언할 것
 
             '''# 2024.4.17 이거 따로 체크하지 않는다. 어차피 combine할 때 ohlc 변동을 모든 종목에 대해 체크한다.
             if flag_modified:

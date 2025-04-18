@@ -16,7 +16,7 @@ class VerifyOHLCV(VerifyData):
         if self.flag_mod:
             self.suffix = 'OHLCV_intelliquant_mod'  # 수정주가가 발생된 경우
             self.path_data = paths.OHLCV_Intelliquant_mod
-            self.path_compensation_data = paths.OHLCV_Compensation
+            self.path_ohlcv_combined_data = paths.OHLCV_Combined
         else:
             self.suffix = 'OHLCV_intelliquant'  # 파일 이름 저장시 사용하는 접미사
             self.path_data = paths.OHLCV_Intelliquant

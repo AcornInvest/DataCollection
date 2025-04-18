@@ -20,7 +20,7 @@ class VerifyFinance(VerifyData):
         self.db_columns = ['date', 'rv', 'gp', 'oi', 'np', 'ev_evitda', 'per', 'pbr', 'psr', 'pcr', 'gpa', 'roa', 'roe']
 
     def load_config(self):
-        super().oad_config()
+        super().load_config()
 
     def check_integrity(self, code, df_b_day_ref, df_data, datemanage):
         df_data.reset_index(inplace=True)

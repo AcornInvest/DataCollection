@@ -101,7 +101,7 @@ class MergeData:
         diff_merged = merged[merged['diff_cols'].apply(lambda x: len(x) > 0)]
 
         if diff_merged.empty:
-            print(f"[{self.file_new}] 모든 데이터가 일치합니다.")
+            print(f"[{self.file_new}] 공통된 stock codes 의 startday에서의 모든 데이터가 일치합니다.")
             return flag_error, flag_mod_stocks
 
         # 데이터에 차이가 있는 경우
@@ -211,7 +211,7 @@ class MergeData:
                      AND {self.table_merged}.date = new_values.date;
                """)
 
-        else:
+        else: # 원래 merge file에 new 파일을 update 하는 경우
             # INSERT OR IGNORE: 동일한 PRIMARY KEY/UNIQUE KEY가 있다면 무시됨
             cursor.execute(f"""
                 INSERT OR IGNORE INTO {self.table_merged}

@@ -1,6 +1,7 @@
 import os
 #from MergeData import MergeData
 from MergeOHLCV import MergeOHLCV
+from MergeFinancial import MergeFinancial
 from DateManage import DateManage
 from datetime import date
 import logging
@@ -30,6 +31,22 @@ file_handler_info.setFormatter(formatter)
 logger.addHandler(file_handler_info)
 
 paths = LoadConfig()
+
+'''
 merge_ohlcv = MergeOHLCV(logger, paths, datemanage, flag_mod=True)
 flag_error, flag_mod_stocks = merge_ohlcv.check_continuity(datemanage)
 print(f'flag_error: {flag_error}, flag_mode_stocks: {flag_mod_stocks}')
+'''
+
+
+# Financial
+startday = date(2023, 12, 1) # 직전 financial 결과가 나오는 날부터로 함
+workday = date(2025, 1, 14)
+datemanage_3 = DateManage(filename)
+datemanage_3.SetStartday(startday)
+datemanage_3.SetWorkday(workday)
+
+merge_financial = MergeFinancial(logger, paths, datemanage_3)
+flag_error, flag_mod_stocks = merge_financial.check_continuity(datemanage_3)
+print(f' \nFinancial merge continuity check')
+print(f'flag_error: {flag_error}, flag_mode_stocks: {flag_mod_stocks}\n')

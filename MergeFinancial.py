@@ -1,25 +1,14 @@
 import os
-from DateManage import DateManage
-import configparser
-import pandas as pd
-import shutil
-import sqlite3
 from MergeData import MergeData
 
-# combined ohlcv (share, volume 포함) 를 merge
-class MergeOHLCV(MergeData):
+# financial merge
+class MergeFinancial(MergeData):
     def __init__(self, logger, paths, datemanage, flag_mod=False):
-        #flag_mod == True 사용하는 경우: #merge_dbs()시 ohlcv_mod를 붙일 때
-        #check_continuity() 시는 flag_mode False 로 한다.
-
-        self.suffix = 'combined_ohlcv'  # 파일 이름 저장시 사용하는 접미사
-        if self.flag_mod:
-            self.suffix_mod = 'OHLCV_intelliquant_mod'
-
+        #financial 에서는 flag_mod 는 항상 False.  super()로 넘기지 않는다.
+        self.path_data = paths.Financial
+        self.suffix = 'financial'  # 파일 이름 저장시 사용하는 접미사
         self.datemanage = datemanage
-        self.path_data = paths.OHLCV_Combined
-        self.path_ohlcv_mod = paths.OHLCV_Intelliquant_mod
-        self.table_name = 'combined_ohlcv'
+        self.table_name = 'financial'
 
         super().__init__(logger, flag_mod)
 
