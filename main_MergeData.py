@@ -50,3 +50,8 @@ merge_financial = MergeFinancial(logger, paths, datemanage_3)
 flag_error, flag_mod_stocks = merge_financial.check_continuity(datemanage_3)
 print(f' \nFinancial merge continuity check')
 print(f'flag_error: {flag_error}, flag_mode_stocks: {flag_mod_stocks}\n')
+merge_financial.merge_dbs()
+
+# financial 용 함수 작성 필요
+workday, date_ref 를 제외한 날짜 데이터 삭제
+005790, 2024-03-04 은 뭐지?
