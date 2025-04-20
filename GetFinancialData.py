@@ -148,6 +148,34 @@ class GetFinancialData(UseIntelliquant):
 
         return dataframes
 
+
+    '''
+    수정 필요
+    날짜가 self.df_business_days 에 속하지 않는 경우 처리하기
+
+    값이 모두 0인 경우: 없애기...아닌가?
+
+    1) 상장일이 특정 self.df_business_days 보다 뒤인데 값이 있는 경우가 있다. 상장 하자마자 financial data가 있다. 왜 그렇지?
+    어쨋든 이 경우는 해당 값을 직전 df_business_days 로 옮겨야 하나?
+    그렇게 하자. 그리고 나중에 데이터 로딩할 때 listing date, delisting date 고려해서 읽으면 된다.
+
+    2) 상장일이 마지막 self.df_business_days 보다 뒤. workday 에 값이 모두 0 이다.
+    데이터 삭제할 것
+
+    3) 상폐일이 첫 df_business_days 이전인 경우
+    데이터 삭제할 것
+
+     근데 기존의 verify 에 왜 2024.3.29 는 체크가 안되지? --> verifyData 에서 df_codelist_filtered 작업할 때 상장이 마지막 business day 이전인
+     코드만 가져온다.
+     음...애초에 그런 값들은 저장을 안한다? 그렇게 하자
+    '''
+
+
+
+
+
+
+
     ''' # 2024.3.31 과거에 사용하던 코드. 이제는 UseIntelliquant 로 통합함
     def make_sql(self, datemanage):
         # 처리된 excel 데이터를 모아서 SQL로 만듦.

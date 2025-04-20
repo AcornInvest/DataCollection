@@ -43,9 +43,9 @@ class VerifyFinance(VerifyData):
         #path = f"{self.path_data}\\{listed_status}\\{datemanage.workday_str}_merged\\time_unconsistency_list.txt" # 임시
         # ref 와 지금 받아온 finance의 date 비교
         unique_to_ref = df_b_day_ref[
-            ~df_b_day_ref['date'].isin(df_data['date'])]  # df_date_reference에만 있고 df_OHLCV에 없는 날짜.
+            ~df_b_day_ref['date'].isin(df_data['date'])]  # df_date_reference에만 있고 df에 없는 날짜.
         unique_to_df_data = df_data[
-            ~df_data['date'].isin(df_b_day_ref['date'])]  # df_OHLCV에 있고 df_date_reference에만 없는 날짜.
+            ~df_data['date'].isin(df_b_day_ref['date'])]  # df에 있고 df_date_reference에만 없는 날짜.
         if not unique_to_ref.empty:
             unique_to_ref = unique_to_ref['date'].apply(lambda d: d.strftime('%Y-%m-%d')).tolist()
             unique_to_ref_list = [f'{code}, df_data에 없는 날짜: {unique_to_ref}']

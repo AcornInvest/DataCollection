@@ -59,13 +59,13 @@ class VerifyData:
         if self.flag_mod:
             df_codelist = df_codelist[df_codelist['Code'].isin(stocks_mod['stock_code'])]
 
-        df_codelist = df_codelist[
+        df_codelist_filtered = df_codelist[
             (df_codelist['DelistingDate'] >= datemanage.startday) & # 상폐가 startday 이후
             (df_codelist['ListingDate'] <= datemanage.workday) &  # 상장이 workday 이전
             (df_codelist['ListingDate'] <= df_business_days['date'].iloc[-1])  # 상장이 마지막 business day 이전
         ]
 
-        codes = set(df_codelist['Code'])  # Ticker 파일에서 가져온 Code column
+        codes = set(df_codelist_filtered['Code'])  # Ticker 파일에서 가져온 Code column
 
         ## db에서 파일 읽어오기
         #  불러올 데이터 db 경로
@@ -80,6 +80,24 @@ class VerifyData:
         stock_codes = pd.read_sql(query, conn_data)['stock_code'].tolist()
         stock_codes = set(stock_codes)
 
+        # 1) 검증 대상 행 추출 - df_codelist 중 stock_codes에 해당되는 행
+        mask_target = df_codelist['Code'].isin(stock_codes)
+        df_target = df_codelist.loc[mask_target].copy()
+
+        # 2) 조건식 구성
+        cond_valid = (
+                (df_target['DelistingDate'] >= datemanage.startday) &
+                (df_target['ListingDate'] <= datemanage.workday) &
+                (df_target['ListingDate'] <= df_business_days['date'].iloc[-1])
+        )
+
+        # 3) 조건을 통과하지 못한 코드 식별
+        invalid_codes = set(df_target.loc[~cond_valid, 'Code'])
+
+        # 4) 집합에서 제거
+        stock_codes -= invalid_codes
+
+
         # 두 set이 다를 경우에만 각 set에만 존재하는 값 계산 후 파일에 저장
         if codes != stock_codes:
             only_in_codes = codes - stock_codes
@@ -91,23 +109,24 @@ class VerifyData:
                 for value in only_in_codes:
                     file.write(str(value) + "\n")
 
-                file.write("\ncompensation db에만 있는 값:\n")
+                file.write("\ndb에만 있는 값:\n")
                 for value in only_in_stock_codes:
                     file.write(str(value) + "\n")
 
             print(f"tickerlist와 db의 코드목록이 다름. {path} 파일에 결과가 저장되었습니다.")
             flag_no_error = False
+
             return flag_no_error
 
         column_load_from_data = self.db_columns #db 에서 읽어올 컬럼
 
-        df_modified_codes = pd.DataFrame(columns=['stock_code'])
-        for index, row in df_codelist.iterrows():
+        #df_modified_codes = pd.DataFrame(columns=['stock_code'])
+        for index, row in df_codelist_filtered.iterrows():
             listing_date = row['ListingDate']
             delisting_date = row['DelistingDate']
             # df_business_days에서 listing_date, startday 중 나중 날짜와 delisting_date 사이의 날짜 추출
             # df_b_day_ref = df_business_days[(df_business_days['Date'] >= listing_date) & (df_business_days['Date'] <= delisting_date)]
-            df_b_day_ref = df_business_days[  (df_business_days['date'] >= listing_date) & (df_business_days['date'] <= delisting_date)].copy()
+            df_b_day_ref = df_business_days[(df_business_days['date'] >= listing_date) & (df_business_days['date'] <= delisting_date)].copy()
 
             ''' # 2025.3.24 위의 줄에서 startday ~ workday 이내로 한정시키니까 이 부분은 필요없어 보인다.
             # 시작일과 종료일 조정 --> 변경 필요
@@ -117,6 +136,9 @@ class VerifyData:
 
             # 코드에 해당하는 데이터 불러와서 무결성 검사
             code = row['Code']
+
+            if code == '452400': # test 용
+                pass
 
             # db에서 파일 읽어오기
             query = f"SELECT {', '.join(column_load_from_data)} FROM '{table_name}' WHERE date >= '{datemanage.startday}' AND \
