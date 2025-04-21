@@ -12,6 +12,8 @@ class MergeOHLCV(MergeData):
         #flag_mod == True 사용하는 경우: #merge_dbs()시 ohlcv_mod를 붙일 때
         #check_continuity() 시는 flag_mode False 로 한다.
 
+        self.flag_mod = flag_mod
+
         self.suffix = 'combined_ohlcv'  # 파일 이름 저장시 사용하는 접미사
         if self.flag_mod:
             self.suffix_mod = 'OHLCV_intelliquant_mod'
