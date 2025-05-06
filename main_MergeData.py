@@ -32,13 +32,19 @@ logger.addHandler(file_handler_info)
 
 paths = LoadConfig()
 
-'''
+# combine 로 먼저 continuity  확인 후 merge
+#merge_ohlcv = MergeOHLCV(logger, paths, datemanage, flag_mod=False)
+#flag_error, flag_mod_stocks = merge_ohlcv.check_continuity(datemanage)
+#print(f' \n OHLCV merge continuity check')
+#print(f'flag_error: {flag_error}, flag_mod_stocks: {flag_mod_stocks}')
+#merge_ohlcv.merge_dbs()
+
+# flag_mode_stocks == True 인 경우, mod_stock 도 merge
 merge_ohlcv = MergeOHLCV(logger, paths, datemanage, flag_mod=True)
-flag_error, flag_mod_stocks = merge_ohlcv.check_continuity(datemanage)
-print(f'flag_error: {flag_error}, flag_mode_stocks: {flag_mod_stocks}')
+merge_ohlcv.merge_dbs()
+
+
 '''
-
-
 # Financial
 startday = date(2023, 12, 1) # 직전 financial 결과가 나오는 날부터로 함
 workday = date(2025, 1, 14)
@@ -47,11 +53,8 @@ datemanage_3.SetStartday(startday)
 datemanage_3.SetWorkday(workday)
 
 merge_financial = MergeFinancial(logger, paths, datemanage_3)
-flag_error, flag_mod_stocks = merge_financial.check_continuity(datemanage_3)
-print(f' \nFinancial merge continuity check')
-print(f'flag_error: {flag_error}, flag_mode_stocks: {flag_mod_stocks}\n')
+#flag_error, flag_mod_stocks = merge_financial.check_continuity(datemanage_3)
+#print(f' \nFinancial merge continuity check')
+#print(f'flag_error: {flag_error}, flag_mode_stocks: {flag_mod_stocks}\n')
 merge_financial.merge_dbs()
-
-# financial 용 함수 작성 필요
-workday, date_ref 를 제외한 날짜 데이터 삭제
-005790, 2024-03-04 은 뭐지?
+'''

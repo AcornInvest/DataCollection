@@ -55,6 +55,34 @@ class GetFinancialData(UseIntelliquant):
         );
         '''
 
+        # 코드리스트 읽어오기
+        codelist_path = f'{self.path_codeLists}\\Listed\\Listed_Ticker_{datemanage.workday_str}_modified.xlsx'
+        df_codelist_listed = pd.read_excel(codelist_path, index_col=0)
+        df_codelist_listed['Code'] = df_codelist_listed['Code'].astype(str)
+        df_codelist_listed['Code'] = df_codelist_listed['Code'].str.zfill(6)  # 코드가 6자리에 못 미치면 앞에 0 채워넣기
+        df_codelist_listed['ListingDate'] = pd.to_datetime(df_codelist_listed['ListingDate']).dt.date
+        df_codelist_listed['DelistingDate'] = pd.to_datetime(df_codelist_listed['DelistingDate']).dt.date
+
+        codelist_path = f'{self.path_codeLists}\\Delisted\\Delisted_Ticker_{datemanage.workday_str}_modified.xlsx'
+        df_codelist_delisted = pd.read_excel(codelist_path, index_col=0)
+        df_codelist_delisted['Code'] = df_codelist_delisted['Code'].astype(str)
+        df_codelist_delisted['Code'] = df_codelist_delisted['Code'].str.zfill(6)  # 코드가 6자리에 못 미치면 앞에 0 채워넣기
+        df_codelist_delisted['ListingDate'] = pd.to_datetime(df_codelist_delisted['ListingDate']).dt.date
+        df_codelist_delisted['DelistingDate'] = pd.to_datetime(df_codelist_delisted['DelistingDate']).dt.date
+
+        df_codelist = pd.concat([df_codelist_listed, df_codelist_delisted], ignore_index=True)
+
+        # 걸러낼 code 들의 set 만들기
+        df_codelist_filtered = df_codelist[
+            ~(
+            (df_codelist['DelistingDate'] >= datemanage.startday) &  # 상폐가 startday 이후
+            (df_codelist['ListingDate'] <= datemanage.workday) &  # 상장이 workday 이전
+            (df_codelist['DelistingDate'] >= self.df_business_days['date'].iloc[0]) &  # 상폐가 첫번째 business day 이후
+            (df_codelist['ListingDate'] <= self.df_business_days['date'].iloc[-1])  # 상장이 마지막 business day 이전
+            )
+            ]
+        self.codes_exclusion = set(df_codelist_filtered['Code'])  # Ticker 파일에서 가져온 Code column
+
     def load_config(self):
         super().load_config()
 
@@ -132,12 +160,24 @@ class GetFinancialData(UseIntelliquant):
             df = pd.DataFrame(data, columns=['date', 'rv', 'gp', 'oi', 'np', 'ev_evitda', 'per', 'pbr', 'psr', 'pcr', 'gpa', 'roa', 'roe'])
 
             # 재무 정보가 1개도 없는 종목 골라내기
-            # 상장일이 마지막 financial data update 날보다 뒤인 경우
+            # 상장일이 마지막 financial data update 날보다 뒤인 경우, 상폐일이 처음 financial ref day보다 빠를 때
             # 해당 코드의 financial data 가 1행 밖에 없으며 그 날짜가 financial ref date가 아닌 경우를 찾음
-            if len(df) == 1:
-                date_obj = datetime.strptime(df['date'].iloc[0], "%Y-%m-%d").date()
-                if date_obj not in set(self.df_business_days['date']):
+
+            date_obj = datetime.strptime(df['date'].iloc[0], "%Y-%m-%d").date() # 첫번째 행의 데이터가 ref day인지 확인
+            if date_obj not in set(self.df_business_days['date']):
+                if len(df) == 1: # 한줄만 있는 경우 재무 정보 없는 경우로 봄
                     continue
+                else: # 여러줄 있는 경우: 날짜를 최근의 ref day로 변경함
+                    business_dates = self.df_business_days['date']  # Series
+                    mask_past = business_dates < date_obj  # Boolean mask
+
+                    if mask_past.any():  # 과거 영업일 존재
+                        closest_prev_business_day = business_dates[mask_past].max()
+                    else:  # 존재하지 않으면 None
+                        closest_prev_business_day = None
+
+                    if closest_prev_business_day is not None:
+                        df.at[df.index[0], 'date'] = closest_prev_business_day
 
             # 날짜순으로 정렬
             df['date'] = pd.to_datetime(df['date']).dt.strftime('%Y-%m-%d')
@@ -147,34 +187,6 @@ class GetFinancialData(UseIntelliquant):
             dataframes[code] = df
 
         return dataframes
-
-
-    '''
-    수정 필요
-    날짜가 self.df_business_days 에 속하지 않는 경우 처리하기
-
-    값이 모두 0인 경우: 없애기...아닌가?
-
-    1) 상장일이 특정 self.df_business_days 보다 뒤인데 값이 있는 경우가 있다. 상장 하자마자 financial data가 있다. 왜 그렇지?
-    어쨋든 이 경우는 해당 값을 직전 df_business_days 로 옮겨야 하나?
-    그렇게 하자. 그리고 나중에 데이터 로딩할 때 listing date, delisting date 고려해서 읽으면 된다.
-
-    2) 상장일이 마지막 self.df_business_days 보다 뒤. workday 에 값이 모두 0 이다.
-    데이터 삭제할 것
-
-    3) 상폐일이 첫 df_business_days 이전인 경우
-    데이터 삭제할 것
-
-     근데 기존의 verify 에 왜 2024.3.29 는 체크가 안되지? --> verifyData 에서 df_codelist_filtered 작업할 때 상장이 마지막 business day 이전인
-     코드만 가져온다.
-     음...애초에 그런 값들은 저장을 안한다? 그렇게 하자
-    '''
-
-
-
-
-
-
 
     ''' # 2024.3.31 과거에 사용하던 코드. 이제는 UseIntelliquant 로 통합함
     def make_sql(self, datemanage):

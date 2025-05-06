@@ -62,6 +62,7 @@ class VerifyData:
         df_codelist_filtered = df_codelist[
             (df_codelist['DelistingDate'] >= datemanage.startday) & # 상폐가 startday 이후
             (df_codelist['ListingDate'] <= datemanage.workday) &  # 상장이 workday 이전
+            (df_codelist['DelistingDate'] >= df_business_days['date'].iloc[0]) &  # 상폐가 첫번째 business day 이후
             (df_codelist['ListingDate'] <= df_business_days['date'].iloc[-1])  # 상장이 마지막 business day 이전
         ]
 
@@ -88,6 +89,7 @@ class VerifyData:
         cond_valid = (
                 (df_target['DelistingDate'] >= datemanage.startday) &
                 (df_target['ListingDate'] <= datemanage.workday) &
+                (df_codelist['DelistingDate'] >= df_business_days['date'].iloc[0]) &  # 상폐가 첫번째 business day 이후
                 (df_target['ListingDate'] <= df_business_days['date'].iloc[-1])
         )
 
