@@ -1,9 +1,54 @@
+//Dataset Begin
+var StartDate = new Date('2023-12-01');
+var FinalDate = new Date('2025-01-14');
+
+var code = [
+'A025440'
+];
+var ListingDate = [
+new Date('1995-05-22')
+];
+var DelistingDate = [
+new Date('2100-01-01')
+];
+//Dataset End
+
 // Parameters
 var target_stock = [];
 var ListingDate_stock = [];
 var DelistingDate_stock = [];
 var code_modified = [];
 var target_stock_code =[];
+
+var target_sector = [];
+var eps = []; // 천원
+var price = []; // 원
+var te = []; // total equity, 천원, PBR 계산시 사용
+var marketcap = []; // 시가총액, 백만원, PBR 계산시 사용
+var rv = []; // 매출, 천원
+var cfo = []; // 영업현금흐름, 천원
+var cogs = []; // 매출원가, 천원, gp = rv - cogs로 계산한다.
+var ta = []; // total asset, 천원
+var np = []; // net profit, 천원
+var tl = []; // Total Liability, 천원
+var oi = []; // operating income, 천원
+var ie = []; //interest expense, 천원
+var ev = []; // EV,  천원
+var ebitda = []; // EBITDA, 천원
+var ebit = []; // 천원
+var nl= []; // net liability, 천원
+var cfo = []; // operating cash flow(cash from operation), 천원
+var capex = []; // capex, 천원
+var depre = []; // depreciation(감가상각비(판관비)), 천원
+var rnd = []; // 연구개발비, 천원
+var inven = []; // 재고자산, 천원
+var ca = []; // current asset(유동자산), 천원
+var cl = []; // current liability(유동부채), 천원
+var re = []; // retained earn(이익잉여금), 천원
+
+
+
+
 var revenue = [];
 var GP = [];
 var operating_income =[];
@@ -16,6 +61,11 @@ var PCR = [];
 var GPA = [];
 var ROA = [];
 var ROE = [];
+var DER = [];
+var ICR = [];
+var ND_EBITDA = [];
+var FCFY = [];
+
 var code_listed = 'A005930'; // 삼성전자. 2000년부터 계속 상장된 회사
 var stock_listed;
 var load_failure_list = [];  // 상폐일, 상장일이 기준일 조건을 충족하는데 종목 조회 실패한 데이터들의 인덱스
@@ -134,6 +184,69 @@ function get_ROE(stock){ //ROE
     }
 }
 
+function get_DER(stock){ // Debt to Equity Ratio
+    var TL = stock.getFundamentalTotalLiability();
+    var SE = stock.getFundamentalTotalEquity(); // 자본총계, Shareholders’ Equity
+    if (SE <=0 ) { //자기자본이 0이하인 경우. 기업 상태를 최악으로 본다. 자기자본이 0인 경우는 재무제표가 누락된 것
+        return -999999999;
+    }
+    var DER = TL/SE;
+    return DER;
+    // 작을수록 좋다.
+}
+function get_ICR(stock){ // Interest Coverage Ratio
+    var OI = stock.getFundamentalOperatingIncome(); // 영업이익
+    var IE = stock.getFundamentalInterestExpense(); // 이자비용
+
+    if (OI <= 0){	// 영업 이익이 음수라면 이 지표는 해석이 안된다.
+         return -999999999;
+    }
+    var ICR = OI/IE;
+    return ICR;
+    // 클수록 좋다
+
+    이것도 TTM 으로 해야 하나? 아닌가? 흠..
+
+}
+function get_ND_EBITDA(stock){ // Net-Debt/EBITDA
+    var ebitda_3 = stock.getFundamentalEBITDA(3);
+    var ebitda_2 = stock.getFundamentalEBITDA(2);
+    var ebitda_1 = stock.getFundamentalEBITDA(1);
+    var ebitda_0 = stock.getFundamentalEBITDA();
+    var ebitda = ebitda_3 + ebitda_2 + ebitda_1 + ebitda_0;
+    if (ebitda <=0 ){
+        return 999999999;
+    }
+
+    var nd = stock.getFundamentalTotalLiability() - stock.getFundamentalCashAsset();
+
+    return nd/ebitda ;
+    // 작을수록 좋다.
+    // nd가 음수이면 좋다
+    // ebitda가 음수인 경우는 이 지표가 해석이 안된다.
+}
+function get_FCFY(stock){ // fcfy = fcf(ttm)/marketcap
+    //FCF = CFO - CapEX
+    var cfo_3 = stock.getFundamentalOperatingCashFlow(3);
+    var cfo_2 = stock.getFundamentalOperatingCashFlow(2);
+    var cfo_1 = stock.getFundamentalOperatingCashFlow(1);
+    var cfo_0 = stock.getFundamentalOperatingCashFlow(0);
+    var cfo = cfo_3 + cfo_2 + cfo_1 + cfo_0;
+
+    var capex_3 = stock.getFundamentalCAPEX(3);
+    var capex_2 = stock.getFundamentalCAPEX(2);
+    var capex_1 = stock.getFundamentalCAPEX(1);
+    var capex_0 = stock.getFundamentalCAPEX(0);
+    var capex = capex_3 + capex_2 + capex_1 + capex_0;
+
+    logger.info(stock + ', capex_3: ' + capex_3 + ', capex_2: ' + capex_2 + ', capex_1: ' + capex_1 + ', capex_0: ' + capex_0);
+
+    var fcf = cfo - capex;
+    return fcf*1000/(stock.getMarketCapital()*1000000);
+    // 클수록 좋다.
+    // 음이어도 판단 가능.
+}
+
 function initialize() {
     for (var i = 0; i < len_data; i++) {
     	code_modified[i] = code[i].substring(0, code[i].length - 1) + '0'; // 코드명 마지막 글자 '0'으로 변경
@@ -159,6 +272,7 @@ function initialize() {
                 DelistingDate_stock[NumOfStocks] = DelistingDate[list_index]; // target stock의 상폐일 맵핑
                 NumOfStocks++;
                 logger.info('_stock: ' + _stock.name + ', ' + NumOfStocks );
+                //_stock.loadPrevData(1,0,0);
             }
             else
             {
@@ -188,6 +302,8 @@ function onDayClose(now){
             {
                 target_stock[NumOfStocks] = _stock;
                 target_stock_code[NumOfStocks] = code[list_index]; // target stock의 original 코드명 맵핑
+                //target_sector[NumOfStocks] = _stock.sector; // targe stock의 sector
+                //target_sector[NumOfStocks] = _stock.sector324; // targe stock의 sector
                 ListingDate_stock[NumOfStocks] = ListingDate[list_index]; // target stock의 상장일 맵핑
                 DelistingDate_stock[NumOfStocks] = DelistingDate[list_index]; // target stock의 상폐일 맵핑
                 NumOfStocks++;
@@ -220,9 +336,14 @@ function onDayClose(now){
                 GPA[i] = roundToDecimal(get_GPA(target_stock[i]),4);
                 ROA[i] = roundToDecimal(get_ROA(target_stock[i]),3);
                 ROE[i] = roundToDecimal(get_ROE(target_stock[i]),3);
-				logger.info(removeA(target_stock_code[i]) + ', rv: ' + revenue[i] + ', gp: ' + GP[i] + ', oi: ' + operating_income[i] + ', np: ' + net_profit[i]
+                DER[i] = roundToDecimal(get_DER(target_stock[i]),3);
+                ICR[i] = roundToDecimal(get_ICR(target_stock[i]),3);
+                ND_EBITDA[i] = roundToDecimal(get_ND_EBITDA(target_stock[i]),3);
+                FCFY[i] = roundToDecimal(get_FCFY(target_stock[i]),3);
+				logger.info(removeA(target_stock_code[i]) + ', sector: ' + target_stock[i].sector + ', rv: ' + revenue[i] + ', gp: ' + GP[i] + ', oi: ' + operating_income[i] + ', np: ' + net_profit[i]
                            + ', ev_evitda: ' +  EV_EVITDA[i] + ', per: ' + PER[i] + ', pbr: ' + PBR[i] + ', psr: ' + PSR[i]
-                            + ', pcr: ' +  PCR[i] + ', gpa: ' + GPA[i] + ', roa: ' + ROA[i] + ', roe: ' + ROE[i]);
+                            + ', pcr: ' +  PCR[i] + ', gpa: ' + GPA[i] + ', roa: ' + ROA[i] + ', roe: ' + ROE[i]
+                           + ', der: ' + DER[i] + ', icr: ' + ICR[i] + ', nd_ebitda: ' + ND_EBITDA[i] + ', fcfy: ' + FCFY[i]);
 			}
 		}
 		last_quarter_1_rebal_year = thisYear;
@@ -243,9 +364,14 @@ function onDayClose(now){
                 GPA[i] = roundToDecimal(get_GPA(target_stock[i]),4);
                 ROA[i] = roundToDecimal(get_ROA(target_stock[i]),3);
                 ROE[i] = roundToDecimal(get_ROE(target_stock[i]),3);
-				logger.info(removeA(target_stock_code[i]) + ', rv: ' + revenue[i] + ', gp: ' + GP[i] + ', oi: ' + operating_income[i] + ', np: ' + net_profit[i]
+				DER[i] = roundToDecimal(get_DER(target_stock[i]),3);
+                ICR[i] = roundToDecimal(get_ICR(target_stock[i]),3);
+                ND_EBITDA[i] = roundToDecimal(get_ND_EBITDA(target_stock[i]),3);
+                FCFY[i] = roundToDecimal(get_FCFY(target_stock[i]),3);
+				logger.info(removeA(target_stock_code[i]) + ', sector: ' + target_stock[i].sector + ', rv: ' + revenue[i] + ', gp: ' + GP[i] + ', oi: ' + operating_income[i] + ', np: ' + net_profit[i]
                            + ', ev_evitda: ' +  EV_EVITDA[i] + ', per: ' + PER[i] + ', pbr: ' + PBR[i] + ', psr: ' + PSR[i]
-                            + ', pcr: ' +  PCR[i] + ', gpa: ' + GPA[i] + ', roa: ' + ROA[i] + ', roe: ' + ROE[i]);
+                            + ', pcr: ' +  PCR[i] + ', gpa: ' + GPA[i] + ', roa: ' + ROA[i] + ', roe: ' + ROE[i]
+                           + ', der: ' + DER[i] + ', icr: ' + ICR[i] + ', nd_ebitda: ' + ND_EBITDA[i] + ', fcfy: ' + FCFY[i]);
 			}
 		}
 		last_quarter_2_rebal_year = thisYear;
@@ -266,9 +392,14 @@ function onDayClose(now){
                 GPA[i] = roundToDecimal(get_GPA(target_stock[i]),4);
                 ROA[i] = roundToDecimal(get_ROA(target_stock[i]),3);
                 ROE[i] = roundToDecimal(get_ROE(target_stock[i]),3);
-				logger.info(removeA(target_stock_code[i]) + ', rv: ' + revenue[i] + ', gp: ' + GP[i] + ', oi: ' + operating_income[i] + ', np: ' + net_profit[i]
+				DER[i] = roundToDecimal(get_DER(target_stock[i]),3);
+                ICR[i] = roundToDecimal(get_ICR(target_stock[i]),3);
+                ND_EBITDA[i] = roundToDecimal(get_ND_EBITDA(target_stock[i]),3);
+                FCFY[i] = roundToDecimal(get_FCFY(target_stock[i]),3);
+				logger.info(removeA(target_stock_code[i]) + ', sector: ' + target_stock[i].sector + ', rv: ' + revenue[i] + ', gp: ' + GP[i] + ', oi: ' + operating_income[i] + ', np: ' + net_profit[i]
                            + ', ev_evitda: ' +  EV_EVITDA[i] + ', per: ' + PER[i] + ', pbr: ' + PBR[i] + ', psr: ' + PSR[i]
-                            + ', pcr: ' +  PCR[i] + ', gpa: ' + GPA[i] + ', roa: ' + ROA[i] + ', roe: ' + ROE[i]);
+                            + ', pcr: ' +  PCR[i] + ', gpa: ' + GPA[i] + ', roa: ' + ROA[i] + ', roe: ' + ROE[i]
+                           + ', der: ' + DER[i] + ', icr: ' + ICR[i] + ', nd_ebitda: ' + ND_EBITDA[i] + ', fcfy: ' + FCFY[i]);
 			}
 		}
 		last_quarter_3_rebal_year = thisYear;
@@ -289,9 +420,14 @@ function onDayClose(now){
                 GPA[i] = roundToDecimal(get_GPA(target_stock[i]),4);
                 ROA[i] = roundToDecimal(get_ROA(target_stock[i]),3);
                 ROE[i] = roundToDecimal(get_ROE(target_stock[i]),3);
-				logger.info(removeA(target_stock_code[i]) + ', rv: ' + revenue[i] + ', gp: ' + GP[i] + ', oi: ' + operating_income[i] + ', np: ' + net_profit[i]
+				DER[i] = roundToDecimal(get_DER(target_stock[i]),3);
+                ICR[i] = roundToDecimal(get_ICR(target_stock[i]),3);
+                ND_EBITDA[i] = roundToDecimal(get_ND_EBITDA(target_stock[i]),3);
+                FCFY[i] = roundToDecimal(get_FCFY(target_stock[i]),3);
+				logger.info(removeA(target_stock_code[i]) + ', sector: ' + target_stock[i].sector + ', rv: ' + revenue[i] + ', gp: ' + GP[i] + ', oi: ' + operating_income[i] + ', np: ' + net_profit[i]
                            + ', ev_evitda: ' +  EV_EVITDA[i] + ', per: ' + PER[i] + ', pbr: ' + PBR[i] + ', psr: ' + PSR[i]
-                            + ', pcr: ' +  PCR[i] + ', gpa: ' + GPA[i] + ', roa: ' + ROA[i] + ', roe: ' + ROE[i]);
+                            + ', pcr: ' +  PCR[i] + ', gpa: ' + GPA[i] + ', roa: ' + ROA[i] + ', roe: ' + ROE[i]
+                           + ', der: ' + DER[i] + ', icr: ' + ICR[i] + ', nd_ebitda: ' + ND_EBITDA[i] + ', fcfy: ' + FCFY[i]);
 			}
 		}
 		last_quarter_4_rebal_year = thisYear;
@@ -301,10 +437,10 @@ function onDayClose(now){
     if (today >= FinalDate){ // 백테스트 마지막날
         for (var i=0;  i<NumOfStocks; i++){
             if( ListingDate_stock[i]>last_data_day){ // 상장일이 마지막 fiancial data 습득일보다 뒤인 경우
-				logger.info(removeA(target_stock_code[i]) + ', rv: 0, gp: 0, oi: 0, np: 0, ev_evitda: 0, per: 0, pbr: 0, psr: 0, pcr: 0, gpa: 0, roa: 0, roe: 0' + ' 상장일이 마지막 fiancial data 습득일보다 뒤');
+				logger.info(removeA(target_stock_code[i]) + ', rv: 0, gp: 0, oi: 0, np: 0, ev_evitda: 0, per: 0, pbr: 0, psr: 0, pcr: 0, gpa: 0, roa: 0, roe: 0, der: 0, icr: 0, nd_ebitda: 0, fcfy: 0' + ' 상장일이 마지막 fiancial data 습득일보다 뒤');
 			}
 			else if ( DelistingDate_stock[i] < first_data_day){ // 상폐일이 첫번째 fiancial data 습득일보다 먼저인 경우
-				logger.info(removeA(target_stock_code[i]) + ', rv: 0, gp: 0, oi: 0, np: 0, ev_evitda: 0, per: 0, pbr: 0, psr: 0, pcr: 0, gpa: 0, roa: 0, roe: 0' + '상폐일이 첫번째 fiancial data 습득일보다 먼저');
+				logger.info(removeA(target_stock_code[i]) + ', rv: 0, gp: 0, oi: 0, np: 0, ev_evitda: 0, per: 0, pbr: 0, psr: 0, pcr: 0, gpa: 0, roa: 0, roe: 0, der: 0, icr: 0, nd_ebitda: 0, fcfy: 0' + '상폐일이 첫번째 fiancial data 습득일보다 먼저');
 			}
 		}
         logger.info('list_index: ' + list_index);
