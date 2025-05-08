@@ -21,8 +21,6 @@ var code_modified = [];
 var target_stock_code =[];
 
 var target_sector = [];
-var eps = []; // 천원
-var price = []; // 원
 var te = []; // total equity, 천원, PBR 계산시 사용
 var marketcap = []; // 시가총액, 백만원, PBR 계산시 사용
 var rv = []; // 매출, 천원
@@ -46,25 +44,7 @@ var ca = []; // current asset(유동자산), 천원
 var cl = []; // current liability(유동부채), 천원
 var re = []; // retained earn(이익잉여금), 천원
 
-
-
-
-var revenue = [];
-var GP = [];
-var operating_income =[];
-var net_profit = [];
-var EV_EVITDA = [];
-var PER = [];
-var PBR = [];
-var PSR = [];
-var PCR = [];
-var GPA = [];
-var ROA = [];
-var ROE = [];
-var DER = [];
-var ICR = [];
-var ND_EBITDA = [];
-var FCFY = [];
+//var GP = [];
 
 var code_listed = 'A005930'; // 삼성전자. 2000년부터 계속 상장된 회사
 var stock_listed;
@@ -268,6 +248,7 @@ function initialize() {
             {
                 target_stock[NumOfStocks] = _stock;
                 target_stock_code[NumOfStocks] = code[list_index]; // target stock의 original 코드명 맵핑
+                target_sector[NumOfStocks] = _stock.sector; // targe stock의 sector
                 ListingDate_stock[NumOfStocks] = ListingDate[list_index]; // target stock의 상장일 맵핑
                 DelistingDate_stock[NumOfStocks] = DelistingDate[list_index]; // target stock의 상폐일 맵핑
                 NumOfStocks++;
@@ -302,8 +283,7 @@ function onDayClose(now){
             {
                 target_stock[NumOfStocks] = _stock;
                 target_stock_code[NumOfStocks] = code[list_index]; // target stock의 original 코드명 맵핑
-                //target_sector[NumOfStocks] = _stock.sector; // targe stock의 sector
-                //target_sector[NumOfStocks] = _stock.sector324; // targe stock의 sector
+                target_sector[NumOfStocks] = _stock.sector; // targe stock의 sector
                 ListingDate_stock[NumOfStocks] = ListingDate[list_index]; // target stock의 상장일 맵핑
                 DelistingDate_stock[NumOfStocks] = DelistingDate[list_index]; // target stock의 상폐일 맵핑
                 NumOfStocks++;
@@ -324,8 +304,11 @@ function onDayClose(now){
 	if( thisMonth == month_quarter_1 && thisDate>=1 && thisYear > last_quarter_1_rebal_year){ // 6월 첫째날
 		for (var i=0;  i<NumOfStocks; i++){
 			if (DelistingDate_stock[i] >= today){ // 상폐일이 오늘 이후인 경우만 데이터 읽음
-				revenue[i] = target_stock[i].getFundamentalRevenue(); // 매출액 [천원]
-				GP[i] = target_stock[i].getFundamentalGrossProfit(); // 매출총이익 [천원]
+                var te = []; // total equity, 천원, PBR 계산시 사용
+                var marketcap = []; // 시가총액, 백만원, PBR 계산시 사용
+			    price[i] =
+				rv[i] = target_stock[i].getFundamentalRevenue(); // 매출액 [천원]
+
 				operating_income[i] = target_stock[i].getFundamentalOperatingIncome(); // 영업이익 [천원]
 				net_profit[i] = target_stock[i].getFundamentalNetProfit(); // 당기순이익 [천원]
 				EV_EVITDA[i] = roundToDecimal(get_EV_EBITDA(target_stock[i]),3);
