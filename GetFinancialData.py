@@ -20,7 +20,8 @@ class GetFinancialData(UseIntelliquant):
         super().__init__(logger, paths, num_process, datemanage)
         # 인텔리퀀트 시뮬레이션 종목수 조회시 한번에 돌리는 종목 수.
         #self.max_unit_year = 1500  # 한 종목, 1년을 시뮬레이션할 때가 1 유닛. 100유닛만큼 끊어서 시뮬레이션 하겠다는 의미. 특성 4가지 할 때의 값
-        self.max_unit_year = 500 # 특성 12가지일 때.
+        #self.max_unit_year = 500 # 특성 12가지일 때.
+        self.max_unit_year = 150  # 특성 22가지일 때.
         self.path_base_code = self.cur_dir + '\\' + 'get_financials_base.js'
         self.suffix = 'financial'  # 파일 이름 저장시 사용하는 접미사
         self.date_prefix = 'financial_day_ref'  # date reference 파일의 접미사
@@ -39,18 +40,28 @@ class GetFinancialData(UseIntelliquant):
         CREATE TABLE IF NOT EXISTS {self.suffix} (
             stock_code TEXT,
             date TEXT,
+            sec TEXT,
+            te REAL,
+            cap REAL,
             rv REAL,
-            gp REAL,
+            cfo REAL,
+            cogs REAL,
+            t_a REAL,
+            np REAL,
+            tl REAL,
             oi REAL,
-            np REAL,            
-            ev_evitda REAL,
-            per REAL,
-            pbr REAL,            
-            psr REAL,
-            pcr REAL,
-            gpa REAL,
-            roa REAL,
-            roe REAL,
+            ie REAL,
+            ev REAL,
+            ebitda REAL,
+            ebit REAL,
+            nl REAL,
+            capex REAL,
+            depre REAL,
+            rnd REAL,
+            inven REAL,
+            ca REAL,
+            cl REAL,
+            r_e REAL,
             PRIMARY KEY (stock_code, date)                  
         );
         '''
@@ -102,18 +113,28 @@ class GetFinancialData(UseIntelliquant):
         data_pattern = r'\[\d{4}-\d{2}-\d{2}\]\s\d{5,6}[A-Za-z]?,'
         date_pattern = r'\[(\d{4}-\d{2}-\d{2})\]'
         code_pattern = r'\] (\d{5}[A-Za-z]?|\d{6}),'
+        sec_pattern = r'[A-Z]\d{3},'
+        te_pattern = r'te: (-?\d+),'
+        cap_pattern = r'cap: (-?\d+),'
         rv_pattern = r'rv: (-?\d+),'
-        gp_pattern = r'gp: (-?\d+),'
-        oi_pattern = r'oi: (-?\d+),'
+        cfo_pattern = r'cfo: (-?\d+),'
+        cogs_pattern = r'cogs: (-?\d+),'
+        t_a_pattern = r't_a: (-?\d+),'
         np_pattern = r'np: (-?\d+),'
-        ev_evitda_pattern = r'ev_evitda: (-?\d+(\.\d+)?),'
-        per_pattern = r'per: (-?\d+(\.\d+)?),'
-        pbr_pattern = r'pbr: (-?\d+(\.\d+)?),'
-        psr_pattern = r'psr: (-?\d+(\.\d+)?),'
-        pcr_pattern = r'pcr: (-?\d+(\.\d+)?),'
-        gpa_pattern = r'gpa: (-?\d+(\.\d+)?),'
-        roa_pattern = r'roa: (-?\d+(\.\d+)?),'
-        roe_pattern = r'roe: (-?\d+(\.\d+)?)'
+        tl_pattern = r'tl: (-?\d+),'
+        oi_pattern = r'oi: (-?\d+),'
+        ie_pattern = r'ie: (-?\d+),'
+        ev_pattern = r'ev: (-?\d+),'
+        ebitda_pattern = r'ebitda: (-?\d+),'
+        ebit_pattern = r'ebit: (-?\d+),'
+        nl_pattern = r'nl: (-?\d+),'
+        capex_pattern = r'capex: (-?\d+),'
+        depre_pattern = r'depre: (-?\d+),'
+        rnd_pattern = r'rnd: (-?\d+),'
+        inven_pattern = r'inven: (-?\d+),'
+        ca_pattern = r'ca: (-?\d+),'
+        cl_pattern = r'cl: (-?\d+),'
+        r_e_pattern = r'r_e: (-?\d+),'
 
         with open(path_file, 'r', encoding='utf-8') as file:
             for line in file:
@@ -132,23 +153,34 @@ class GetFinancialData(UseIntelliquant):
                 elif re.search(data_pattern, line): # 일반 데이터 처리
                     date = re.search(date_pattern, line).group(1)
                     code = re.search(code_pattern, line).group(1)
+                    sec = re.search(sec_pattern, line).group(1)
+                    te = re.search(te_pattern, line).group(1)
+                    cap = re.search(cap_pattern, line).group(1)
                     rv = re.search(rv_pattern, line).group(1)
-                    gp = re.search(gp_pattern, line).group(1)
-                    oi = re.search(oi_pattern, line).group(1)
+                    cfo = re.search(cfo_pattern, line).group(1)
+                    cogs = re.search(cogs_pattern, line).group(1)
+                    t_a = re.search(t_a_pattern, line).group(1)
                     np = re.search(np_pattern, line).group(1)
-                    ev_evitda = re.search(ev_evitda_pattern, line).group(1)
-                    per = re.search(per_pattern, line).group(1)
-                    pbr = re.search(pbr_pattern, line).group(1)
-                    psr = re.search(psr_pattern, line).group(1)
-                    pcr = re.search(pcr_pattern, line).group(1)
-                    gpa = re.search(gpa_pattern, line).group(1)
-                    roa = re.search(roa_pattern, line).group(1)
-                    roe = re.search(roe_pattern, line).group(1)
+                    tl = re.search(tl_pattern, line).group(1)
+                    oi = re.search(oi_pattern, line).group(1)
+                    ie = re.search(ie_pattern, line).group(1)
+                    ev = re.search(ev_pattern, line).group(1)
+                    ebitda = re.search(ebitda_pattern, line).group(1)
+                    ebit = re.search(ebit_pattern, line).group(1)
+                    nl = re.search(nl_pattern, line).group(1)
+                    capex = re.search(capex_pattern, line).group(1)
+                    depre = re.search(depre_pattern, line).group(1)
+                    rnd = re.search(rnd_pattern, line).group(1)
+                    inven = re.search(inven_pattern, line).group(1)
+                    ca = re.search(ca_pattern, line).group(1)
+                    cl = re.search(cl_pattern, line).group(1)
+                    r_e = re.search(r_e_pattern, line).group(1)
 
                     # 코드에 따라 데이터 묶기
                     if code not in data_by_code:
                         data_by_code[code] = []
-                    data_by_code[code].append((date, rv, gp, oi, np, ev_evitda, per, pbr, psr, pcr, gpa, roa, roe))
+                    #data_by_code[code].append((date, rv, gp, oi, np, ev_evitda, per, pbr, psr, pcr, gpa, roa, roe))
+                    data_by_code[code].append((date, sec, te, cap, rv, cfo, cogs, t_a, np, tl, oi, ie, ev, ebitda, ebit, nl, capex, depre, rnd, inven, ca, cl, r_e))
 
         if num_codes != (num_stocks + num_load_failure_stocks + num_delisting_data_error_stocks):
             print('backtest 결과 이상. num_code != num_stock + num_load_failure_stocks + num_delisting_data_error_stocks')
@@ -157,7 +189,7 @@ class GetFinancialData(UseIntelliquant):
         # 각 코드별로 DataFrame 객체 생성
         dataframes = {}
         for code, data in data_by_code.items():
-            df = pd.DataFrame(data, columns=['date', 'rv', 'gp', 'oi', 'np', 'ev_evitda', 'per', 'pbr', 'psr', 'pcr', 'gpa', 'roa', 'roe'])
+            df = pd.DataFrame(data, columns=['date', 'sec', 'te', 'cap', 'rv', 'cfo', 'cogs', 't_a', 'np', 'tl', 'oi', 'ie', 'ev', 'ebitda', 'ebit', 'nl', 'capex', 'depre', 'rnd', 'inven', 'ca', 'cl', 'r_e'])
 
             # 재무 정보가 1개도 없는 종목 골라내기
             # 상장일이 마지막 financial data update 날보다 뒤인 경우, 상폐일이 처음 financial ref day보다 빠를 때
