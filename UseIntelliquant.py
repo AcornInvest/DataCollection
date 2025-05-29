@@ -32,7 +32,8 @@ class UseIntelliquant:
         # 거래일 목록 ref 읽어오기. 기본. 전체 영업일.
         path_date_ref = f'{self.path_date_ref}\\{self.date_prefix}_{datemanage.workday_str}.xlsx'
         self.df_business_days = pd.read_excel(path_date_ref)
-        self.df_business_days['date'] = pd.to_datetime(self.df_business_days['date']).dt.date
+        #self.df_business_days['date'] = pd.to_datetime(self.df_business_days['date']).dt.date
+        self.df_business_days['date'] = pd.to_datetime(self.df_business_days['date'])
         self.df_business_days = self.df_business_days[(self.df_business_days['date'] >= datemanage.startday) & (self.df_business_days['date'] <= datemanage.workday)]
 
     def load_config(self):

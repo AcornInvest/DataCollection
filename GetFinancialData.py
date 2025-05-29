@@ -32,7 +32,8 @@ class GetFinancialData(UseIntelliquant):
         # financial date용 거래일 목록 ref 읽어오기
         path_date_ref = f'{self.path_date_ref}\\{self.date_prefix}_{datemanage.workday_str}.xlsx'
         self.df_business_days = pd.read_excel(path_date_ref)
-        self.df_business_days['date'] = pd.to_datetime(self.df_business_days['date']).dt.date
+        #self.df_business_days['date'] = pd.to_datetime(self.df_business_days['date']).dt.date
+        self.df_business_days['date'] = pd.to_datetime(self.df_business_days['date'])
         self.df_business_days = self.df_business_days[(self.df_business_days['date'] >= datemanage.startday) & (self.df_business_days['date'] <= datemanage.workday)]
 
         # 테이블 생성 쿼리.
@@ -71,15 +72,19 @@ class GetFinancialData(UseIntelliquant):
         df_codelist_listed = pd.read_excel(codelist_path, index_col=0)
         df_codelist_listed['Code'] = df_codelist_listed['Code'].astype(str)
         df_codelist_listed['Code'] = df_codelist_listed['Code'].str.zfill(6)  # 코드가 6자리에 못 미치면 앞에 0 채워넣기
-        df_codelist_listed['ListingDate'] = pd.to_datetime(df_codelist_listed['ListingDate']).dt.date
-        df_codelist_listed['DelistingDate'] = pd.to_datetime(df_codelist_listed['DelistingDate']).dt.date
+        #df_codelist_listed['ListingDate'] = pd.to_datetime(df_codelist_listed['ListingDate']).dt.date
+        #df_codelist_listed['DelistingDate'] = pd.to_datetime(df_codelist_listed['DelistingDate']).dt.date
+        df_codelist_listed['ListingDate'] = pd.to_datetime(df_codelist_listed['ListingDate'])
+        df_codelist_listed['DelistingDate'] = pd.to_datetime(df_codelist_listed['DelistingDate'])
 
         codelist_path = f'{self.path_codeLists}\\Delisted\\Delisted_Ticker_{datemanage.workday_str}_modified.xlsx'
         df_codelist_delisted = pd.read_excel(codelist_path, index_col=0)
         df_codelist_delisted['Code'] = df_codelist_delisted['Code'].astype(str)
         df_codelist_delisted['Code'] = df_codelist_delisted['Code'].str.zfill(6)  # 코드가 6자리에 못 미치면 앞에 0 채워넣기
-        df_codelist_delisted['ListingDate'] = pd.to_datetime(df_codelist_delisted['ListingDate']).dt.date
-        df_codelist_delisted['DelistingDate'] = pd.to_datetime(df_codelist_delisted['DelistingDate']).dt.date
+        #df_codelist_delisted['ListingDate'] = pd.to_datetime(df_codelist_delisted['ListingDate']).dt.date
+        #df_codelist_delisted['DelistingDate'] = pd.to_datetime(df_codelist_delisted['DelistingDate']).dt.date
+        df_codelist_delisted['ListingDate'] = pd.to_datetime(df_codelist_delisted['ListingDate'])
+        df_codelist_delisted['DelistingDate'] = pd.to_datetime(df_codelist_delisted['DelistingDate'])
 
         df_codelist = pd.concat([df_codelist_listed, df_codelist_delisted], ignore_index=True)
 

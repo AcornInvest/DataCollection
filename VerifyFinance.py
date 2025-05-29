@@ -26,7 +26,8 @@ class VerifyFinance(VerifyData):
 
     def check_integrity(self, code, df_b_day_ref, df_data, datemanage):
         df_data.reset_index(inplace=True)
-        df_data['date'] = pd.to_datetime(df_data['date']).dt.date
+        #df_data['date'] = pd.to_datetime(df_data['date']).dt.date
+        df_data['date'] = pd.to_datetime(df_data['date'])
         no_error = True
 
         # 무결성 검사 1. NaN 있는지 확인
