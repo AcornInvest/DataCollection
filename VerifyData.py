@@ -129,6 +129,12 @@ class VerifyData:
 
         #df_modified_codes = pd.DataFrame(columns=['stock_code'])
         for index, row in df_codelist_filtered.iterrows():
+            # 코드에 해당하는 데이터 불러와서 무결성 검사
+            code = row['Code']
+
+            if code == '003480': # test 용
+                pass
+
             listing_date = row['ListingDate']
             delisting_date = row['DelistingDate']
             # df_business_days에서 listing_date, startday 중 나중 날짜와 delisting_date 사이의 날짜 추출
@@ -140,16 +146,9 @@ class VerifyData:
             df_b_day_ref['date'] = df_b_day_ref['date'].apply(lambda x: max(x, datemanage.startday))
             df_b_day_ref['date'] = df_b_day_ref['date'].apply(lambda x: min(x, datemanage.workday))
             '''
-
-            # 코드에 해당하는 데이터 불러와서 무결성 검사
-            code = row['Code']
-
-            if code == '452400': # test 용
-                pass
-
             # db에서 파일 읽어오기
-            query = f"SELECT {', '.join(column_load_from_data)} FROM '{table_name}' WHERE date >= '{datemanage.startday}' AND \
-                                    date <= '{datemanage.workday}' AND stock_code = '{code}'"
+            query = f"SELECT {', '.join(column_load_from_data)} FROM '{table_name}' WHERE date >= '{datemanage.startday_str}' AND \
+                                    date <= '{datemanage.workday_str}' AND stock_code = '{code}'"
             df_data = pd.read_sql(query, conn_data)
 
             #no_error = self.check_integrity(code, df_b_day_ref, df_data, datemanage, listed_status)  # 무결성 검사. 자식클래스에서 선언할 것

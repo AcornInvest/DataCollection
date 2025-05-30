@@ -267,8 +267,10 @@ class UseIntelliquant:
             for listed_status in category:
                 codelist_path = self.path_codeLists + '\\' + listed_status + '\\' + listed_status + '_Ticker_' + datemanage.workday_str + '_modified.xlsx'
                 codelist = pd.read_excel(codelist_path, index_col=0)
-                codelist['ListingDate'] = pd.to_datetime(codelist['ListingDate']).apply(lambda x: x.date())
-                codelist['DelistingDate'] = pd.to_datetime(codelist['DelistingDate']).apply(lambda x: x.date())
+                #codelist['ListingDate'] = pd.to_datetime(codelist['ListingDate']).apply(lambda x: x.date())
+                #codelist['DelistingDate'] = pd.to_datetime(codelist['DelistingDate']).apply(lambda x: x.date())
+                codelist['ListingDate'] = pd.to_datetime(codelist['ListingDate'])
+                codelist['DelistingDate'] = pd.to_datetime(codelist['DelistingDate'])
                 codelist['Code'] = codelist['Code'].astype(str)
                 codelist['Code'] = codelist['Code'].str.zfill(6)  # 코드가 6자리에 못 미치면 앞에 0 채워넣기
                 # codelist.loc[:, 'Code'] = codelist['Code'].apply(lambda x: f"{x:06d}")  # Code 열 str, 6글자로 맞추기
@@ -414,7 +416,7 @@ class UseIntelliquant:
 
         # SQLite 데이터베이스 파일 연결 (없으면 새로 생성)
         #filename_db = f'{self.suffix}_{listed_status}_{datemanage.workday}.db'
-        filename_db = f'{self.suffix}_{datemanage.workday}.db'
+        filename_db = f'{self.suffix}_{datemanage.workday_str}.db'
         file_path_db = process_result_folder + filename_db
         conn = sqlite3.connect(file_path_db)
         conn.execute(self.create_table_query)  # 테이블 생성
@@ -430,7 +432,7 @@ class UseIntelliquant:
     def add_data_to_sql(self, datemanage, df_processed_stock_data):
         #  불러올 데이터 db 경로
         folder_data = f'{self.path_backtest_save}\\{datemanage.workday_str}\\'
-        file_data = f'{self.suffix}_{datemanage.workday}.db'
+        file_data = f'{self.suffix}_{datemanage.workday_str}.db'
         path_data = folder_data + file_data
         conn_data = sqlite3.connect(path_data)
         #table_name = 'compensation'
@@ -446,7 +448,7 @@ class UseIntelliquant:
     def load_df_codes(self, datemanage):
         #  불러올 데이터 db 경로
         folder_data = f'{self.path_backtest_save}\\{datemanage.workday_str}\\'
-        file_data = f'{self.suffix}_{datemanage.workday}.db'
+        file_data = f'{self.suffix}_{datemanage.workday_str}.db'
         path_data = folder_data + file_data
         conn = sqlite3.connect(path_data)
 

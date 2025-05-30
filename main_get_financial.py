@@ -14,10 +14,10 @@ filename = os.path.splitext(os.path.basename(__file__))[0]  # 실행하고 있�
 startday = date(2023, 12, 1) # 직전 financial 결과가 나오는 날부터로 함
 workday = date(2025, 1, 14)
 '''
-startday = datetime(2000, 1, 4)
-workday = datetime(2024, 3, 29)
-#startday = datetime(2023, 12, 1) # 직전 financial 결과가 나오는 날부터로 함
-#workday = datetime(2025, 1, 14)
+#startday = datetime(2000, 1, 4)
+#workday = datetime(2024, 3, 29)
+startday = datetime(2023, 12, 1) # 직전 financial 결과가 나오는 날부터로 함
+workday = datetime(2025, 1, 14)
 datemanage = DateManage(filename)
 datemanage.SetStartday(startday)
 datemanage.SetWorkday(workday)

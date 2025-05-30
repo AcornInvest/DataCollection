@@ -199,12 +199,16 @@ class GetFinancialData(UseIntelliquant):
         # 각 코드별로 DataFrame 객체 생성
         dataframes = {}
         for code, data in data_by_code.items():
+            if code == '445180':
+                pass
+
             df = pd.DataFrame(data, columns=['date', 'sec', 'te', 'cap', 'rv', 'cfo', 'cogs', 't_a', 'np', 'tl', 'oi', 'ie', 'ev', 'ebitda', 'ebit', 'nl', 'capex', 'depre', 'rnd', 'inven', 'ca', 'cl', 'r_e'])
 
             # 재무 정보가 1개도 없는 종목 골라내기
             # 상장일이 마지막 financial data update 날보다 뒤인 경우, 상폐일이 처음 financial ref day보다 빠를 때
             # 해당 코드의 financial data 가 1행 밖에 없으며 그 날짜가 financial ref date가 아닌 경우를 찾음
 
+            '''
             date_obj = datetime.strptime(df['date'].iloc[0], "%Y-%m-%d").date() # 첫번째 행의 데이터가 ref day인지 확인
             if date_obj not in set(self.df_business_days['date']):
                 if len(df) == 1: # 한줄만 있는 경우 재무 정보 없는 경우로 봄
@@ -220,6 +224,19 @@ class GetFinancialData(UseIntelliquant):
 
                     if closest_prev_business_day is not None:
                         df.at[df.index[0], 'date'] = closest_prev_business_day
+            '''
+
+            # 첫 번째 행의 날짜가 ref day 목록에 포함되는지 확인
+            date_obj = datetime.strptime(df['date'].iloc[0], "%Y-%m-%d")
+
+            if date_obj not in set(self.df_business_days['date']):
+                if len(df) == 1:
+                    # 재무 정보가 한 줄뿐이면 해당 종목은 건너뜀
+                    continue
+                else:
+                    # 여러 줄이 있는데 첫 행이 ref day가 아니라면,
+                    # 날짜를 보정하는 대신 첫 행 자체를 삭제
+                    df = df.iloc[1:]
 
             # 날짜순으로 정렬
             df['date'] = pd.to_datetime(df['date']).dt.strftime('%Y-%m-%d')

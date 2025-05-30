@@ -109,7 +109,7 @@ class VerifyFinance(VerifyData):
 
         # 무결성 검사 4. # 연속적으로 같은 값을 가지는지 여부를 판별
         # 값이 두번 연속 같은 경우 검출
-        check_cols  = ['rv', 'cogs', 'oi', 'ebit', 'ebitda', 'np', 'cfo', 'cap', 'ev']
+        check_cols  = ['rv', 'cogs', 'oi', 'ebit', 'ebitda', 'np', 'cfo', 'ev']
 
         consecutive_same_values_list = []
 
