@@ -125,9 +125,12 @@ class GetDateRef:
         df_financial_date_ref_old = pd.read_excel(path_financial_date_ref_old)
         df_financial_date_ref_old['date'] = pd.to_datetime(df_financial_date_ref_old['date']).dt.date
 
-        # 조건 1: 마지막 값과 첫 번째 값이 동일한지 확인
+        # 조건 1: old의 마지막 값과 new의 첫 번째 값이 동일한지 확인
         last_date_old = df_financial_date_ref_old['date'].iloc[-1]
         first_date_new = df_financial_date_ref_new['date'].iloc[0]
+
+
+        old 의 마지막 값과 new 의 마지막 값이 동일한지 확인 필요
 
         # 조건 2: 다음 분기 순서인지 확인
         def is_next_quarter(last_date, first_date):
