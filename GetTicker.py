@@ -214,13 +214,14 @@ class GetTicker:
                 stocks.loc[stocks['ListingDate_spac'].notna(), 'ListingDate'] = stocks['ListingDate_spac']
                 stocks.loc[stocks['DelistingDate_spac'].notna(), 'DelistingDate'] = stocks['DelistingDate_spac']
 
-                # stocks_spac에만 있는 Code와 Name 찾기: exception list update 필요
+                # stocks_spac에만 있는 Code와 Name 찾기: exception list update 필요. exception list에서 제거할 것
                 missing_in_stocks = stocks_spac[~stocks_spac['Code'].isin(stocks['Code'])]
                 if not missing_in_stocks.empty:
                     print(f"exception list 업데이트 필요")
                     print(f"{file_name}에만 있고 codelist에는 없는 종목들:")
                     print(missing_in_stocks[['Code', 'Name']])
-                    print('\n\n')
+                    print('\n')
+                    self.logger.info(f"exception list 업데이트 필요: {file_name}에만 있고 codelist에는 없는 종목들: {missing_in_stocks[['Code', 'Name']]}")
 
                 # 불필요한 열 삭제
                 stocks = stocks.drop(columns=['Name_spac', 'ListingDate_spac', 'DelistingDate_spac', '설명'])
@@ -245,7 +246,9 @@ class GetTicker:
                     print(f"exception list 업데이트 필요")
                     print(f"{file_name}에만 있고 codelist에는 없는 종목들:")
                     print(missing_in_stocks[['Code', 'Name']])
-                    print('\n\n')
+                    print('\n')
+                    self.logger.info(
+                        f"exception list 업데이트 필요: {file_name}에만 있고 codelist에는 없는 종목들: {missing_in_stocks[['Code', 'Name']]}")
 
                 #  제외 목록을 원래 list에서 삭제
                 stocks = stocks[~stocks['Code'].isin(stocks_excepted['Code'])]
@@ -271,6 +274,8 @@ class GetTicker:
                     print(f"{file_name}에만 있고 codelist에는 없는 종목들:")
                     print(missing_in_stocks[['Code', 'Name']])
                     print('\n\n')
+                    self.logger.info(
+                        f"exception list 업데이트 필요: {file_name}에만 있고 codelist에는 없는 종목들: {missing_in_stocks[['Code', 'Name']]}")
 
                 #  KONEX 에 해당하는 기록의 목록을 원래 list에서 삭제
                 stocks_KONEX_filtered = stocks_KONEX[stocks_KONEX['설명'].str.contains('KONEX')] # stocks_KONEX에서 '설명' 칼럼에 'KONEX'가 포함된 행들을 찾음
@@ -324,6 +329,8 @@ class GetTicker:
                     print(f"{file_name}에만 있고 codelist에는 없는 종목들:")
                     print(missing_in_stocks[['Code', 'Name']])
                     print('\n\n')
+                    self.logger.info(
+                        f"exception list 업데이트 필요: {file_name}에만 있고 codelist에는 없는 종목들: {missing_in_stocks[['Code', 'Name']]}")
 
                 # stocks_KOSDAQ_merged에서 stocks에 없는 Code를 제거
                 stocks_KOSDAQ_merged = stocks_KOSDAQ_merged[stocks_KOSDAQ_merged['Code'].isin(stocks['Code'])]
@@ -355,6 +362,8 @@ class GetTicker:
                     print(f"{file_name}에만 있고 codelist에는 없는 종목들:")
                     print(missing_in_stocks[['Code', 'Name']])
                     print('\n\n')
+                    self.logger.info(
+                        f"exception list 업데이트 필요: {file_name}에만 있고 codelist에는 없는 종목들: {missing_in_stocks[['Code', 'Name']]}")
 
                 # 동일한 Code를 갖는 그룹에 modify_code 함수 적용
                 # stocks_relisted = stocks_relisted.groupby('Code').apply(self.modify_code).reset_index(drop=True)
@@ -402,6 +411,8 @@ class GetTicker:
                     print(f"{type_list}_Ticker_{datemanage.workday_str} 에 복수개 코드가 있는 종목들:")
                     print(duplicate_codes[['Code', 'Name']])
                     print('\n\n')
+                    self.logger.info(
+                        f"{type_list}_Ticker_{datemanage.workday_str} 에 복수개 코드가 있는 종목들: {duplicate_codes[['Code', 'Name']]}")
 
             ## 누락된 코드 추가하기
             keyword = f'{type_list}_Ticker_코드누락'
@@ -495,9 +506,11 @@ class GetTicker:
 
         if diff_delisted.empty:
             print("Differences between Delisted_old and Delisted_workday: 특이사항 없음")
+            self.logger.info(f"Differences between Delisted_old and Delisted_workday: 특이사항 없음")
         else:
             print("Differences between Delisted_old and Delisted_workday:")
             print(diff_delisted)
+            self.logger.info(f"Differences between Delisted_old and Delisted_workday: {diff_delisted}")
 
         # 1-2. 상장 리스트의 같은 코드 중 listingdate/delistingdate이 변한게 있는지 - spac 우회 상장 가능성, kosdaq에서 이전 상장 검토 필요
         listed_old = ticker_lists['Listed_old']
@@ -514,9 +527,11 @@ class GetTicker:
 
         if diff_listed.empty:
             print("Differences between Listed_old and Listed_workday: 특이사항 없음")
+            self.logger.info(f"Differences between Listed_old and Listed_workday: 특이사항 없음")
         else:
             print("Differences between Listed_old and Listed_workday:")
             print(diff_listed)
+            self.logger.info(f"Differences between Listed_old and Listed_workday: {diff_listed}")
 
         ## 2. 예전에 상폐 후 현재 재상장 중인 것이 있는지?
         # workday의 상폐 리스트와 상장 리스트에 겹치는 코드가 있는지
@@ -527,9 +542,11 @@ class GetTicker:
 
         if common_codes.empty:
             print("Common codes between Listed_workday and Delisted_workday: 특이사항 없음")
+            self.logger.info("Common codes between Listed_workday and Delisted_workday: 특이사항 없음")
         else:
             print("Common codes between Listed_workday and Delisted_workday:")
             print(common_codes)
+            self.logger.info(f"Common codes between Listed_workday and Delisted_workday: {common_codes}")
 
         ## 새로운 제외목록? 이건 ticker list에서 알기 어렵다. ohlcv 에서 verify 해야 한다.
 
@@ -547,8 +564,10 @@ class GetTicker:
             print('ticker_list 누락 발견됨')
             print(f'old_stock_list 에만 있는 종목 {len(only_in_old)}개')
             print(f'{only_in_old}')
+            self.logger.info(f'ticker_list 누락 발견됨. old_stock_list 에만 있는 종목 {len(only_in_old)}개. {only_in_old}')
         else:
             print(f'old_stock_list 에만 있는 종목 없음')
+            self.logger.info('old_stock_list 에만 있는 종목 없음')
 
     def make_txt_from_ticker(self, datemanage):
         category = ['Listed', 'Delisted']

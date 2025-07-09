@@ -6,8 +6,8 @@ class LoadConfig:
         self.load_config()
 
     def load_config(self):
-        # self.cur_dir = os.getcwd() # 부모 클래스에서 선언됨
-        self.cur_dir = os.getcwd()
+        # self.cur_dir = os.getcwd()
+        self.cur_dir = os.path.dirname(os.path.abspath(__file__))
         path = self.cur_dir + '\\' + 'config_DataCollection.ini'
 
         # 설정파일 읽기
