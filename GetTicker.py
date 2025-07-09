@@ -94,7 +94,8 @@ class GetTicker:
 
         delisted_stocks = self.get_delistingstocks()
 
-        base_path = "C:\\Work_Dotori\\StockDataset\\CodeLists\\Delisted\\"
+        #base_path = "C:\\Work_Dotori\\StockDataset\\CodeLists\\Delisted\\"
+        self.path_codeLists + '\\DeListed\\'
         if not os.path.exists(base_path):
             os.makedirs(base_path)
         delisted_stocks.to_excel(base_path + f"Delisted_Ticker_{date_str}.xlsx")
