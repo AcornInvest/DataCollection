@@ -174,8 +174,9 @@ class GetTicker:
         return latest_file
 
     def process_tickerlist(self, datemanage): # 1차 생성된 tickerlist 엑셀 파일을 받아와서 예외처리하여 엑셀로 저장함
-        #category = ['Delisted'] # 상폐일이 시뮬레이션 시작일보다 늦고, 상장일이 시뮬레이션 마지막 날보다 빠른 것만 남기기
-        #category = ['Listed']
+        # 로그 메시지를 저장할 리스트
+        error_msg = []
+
         category = ['Listed', 'Delisted']
         for type_list in category:
             # original ticker list loading
@@ -217,11 +218,10 @@ class GetTicker:
                 # stocks_spac에만 있는 Code와 Name 찾기: exception list update 필요. exception list에서 제거할 것
                 missing_in_stocks = stocks_spac[~stocks_spac['Code'].isin(stocks['Code'])]
                 if not missing_in_stocks.empty:
-                    print(f"exception list 업데이트 필요")
-                    print(f"{file_name}에만 있고 codelist에는 없는 종목들:")
-                    print(missing_in_stocks[['Code', 'Name']])
-                    print('\n')
-                    self.logger.info(f"exception list 업데이트 필요: {file_name}에만 있고 codelist에는 없는 종목들: {missing_in_stocks[['Code', 'Name']]}")
+                    log_msg = f"exception list 업데이트 필요: {file_name}에만 있고 codelist에는 없는 종목들: {missing_in_stocks[['Code', 'Name']]}"
+                    print(log_msg)
+                    self.logger.info(log_msg)
+                    error_msg.append(log_msg)
 
                 # 불필요한 열 삭제
                 stocks = stocks.drop(columns=['Name_spac', 'ListingDate_spac', 'DelistingDate_spac', '설명'])
@@ -243,12 +243,10 @@ class GetTicker:
                 # stocks_excepted에만 있는 Code와 Name 찾기: exception list update 필요
                 missing_in_stocks = stocks_excepted[~stocks_excepted['Code'].isin(stocks['Code'])]
                 if not missing_in_stocks.empty:
-                    print(f"exception list 업데이트 필요")
-                    print(f"{file_name}에만 있고 codelist에는 없는 종목들:")
-                    print(missing_in_stocks[['Code', 'Name']])
-                    print('\n')
-                    self.logger.info(
-                        f"exception list 업데이트 필요: {file_name}에만 있고 codelist에는 없는 종목들: {missing_in_stocks[['Code', 'Name']]}")
+                    log_msg = f"exception list 업데이트 필요: {file_name}에만 있고 codelist에는 없는 종목들: {missing_in_stocks[['Code', 'Name']]}"
+                    print(log_msg)
+                    self.logger.info(log_msg)
+                    error_msg.append(log_msg)
 
                 #  제외 목록을 원래 list에서 삭제
                 stocks = stocks[~stocks['Code'].isin(stocks_excepted['Code'])]
@@ -270,12 +268,10 @@ class GetTicker:
                 # stocks_KONEX 에만 있는 Code와 Name 찾기: exception list update 필요
                 missing_in_stocks = stocks_KONEX[~stocks_KONEX['Code'].isin(stocks['Code'])]
                 if not missing_in_stocks.empty:
-                    print(f"exception list 업데이트 필요")
-                    print(f"{file_name}에만 있고 codelist에는 없는 종목들:")
-                    print(missing_in_stocks[['Code', 'Name']])
-                    print('\n\n')
-                    self.logger.info(
-                        f"exception list 업데이트 필요: {file_name}에만 있고 codelist에는 없는 종목들: {missing_in_stocks[['Code', 'Name']]}")
+                    log_msg = f"exception list 업데이트 필요: {file_name}에만 있고 codelist에는 없는 종목들: {missing_in_stocks[['Code', 'Name']]}"
+                    print(log_msg)
+                    self.logger.info(log_msg)
+                    error_msg.append(log_msg)
 
                 #  KONEX 에 해당하는 기록의 목록을 원래 list에서 삭제
                 stocks_KONEX_filtered = stocks_KONEX[stocks_KONEX['설명'].str.contains('KONEX')] # stocks_KONEX에서 '설명' 칼럼에 'KONEX'가 포함된 행들을 찾음
@@ -325,12 +321,10 @@ class GetTicker:
                 # stocks_KOSDAQ_merged 에만 있는 Code와 Name 찾기: exception list update 필요
                 missing_in_stocks = stocks_KOSDAQ_merged[~stocks_KOSDAQ_merged['Code'].isin(stocks['Code'])]
                 if not missing_in_stocks.empty:
-                    print(f"exception list 업데이트 필요")
-                    print(f"{file_name}에만 있고 codelist에는 없는 종목들:")
-                    print(missing_in_stocks[['Code', 'Name']])
-                    print('\n\n')
-                    self.logger.info(
-                        f"exception list 업데이트 필요: {file_name}에만 있고 codelist에는 없는 종목들: {missing_in_stocks[['Code', 'Name']]}")
+                    log_msg = f"exception list 업데이트 필요: {file_name}에만 있고 codelist에는 없는 종목들: {missing_in_stocks[['Code', 'Name']]}"
+                    print(log_msg)
+                    self.logger.info(log_msg)
+                    error_msg.append(log_msg)
 
                 # stocks_KOSDAQ_merged에서 stocks에 없는 Code를 제거
                 stocks_KOSDAQ_merged = stocks_KOSDAQ_merged[stocks_KOSDAQ_merged['Code'].isin(stocks['Code'])]
@@ -358,12 +352,10 @@ class GetTicker:
                 # stocks_relisted 에만 있는 Code와 Name 찾기: exception list update 필요
                 missing_in_stocks = stocks_relisted[~stocks_relisted['Code'].isin(stocks['Code'])]
                 if not missing_in_stocks.empty:
-                    print(f"exception list 업데이트 필요")
-                    print(f"{file_name}에만 있고 codelist에는 없는 종목들:")
-                    print(missing_in_stocks[['Code', 'Name']])
-                    print('\n\n')
-                    self.logger.info(
-                        f"exception list 업데이트 필요: {file_name}에만 있고 codelist에는 없는 종목들: {missing_in_stocks[['Code', 'Name']]}")
+                    log_msg = f"exception list 업데이트 필요: {file_name}에만 있고 codelist에는 없는 종목들: {missing_in_stocks[['Code', 'Name']]}"
+                    print(log_msg)
+                    self.logger.info(log_msg)
+                    error_msg.append(log_msg)
 
                 # 동일한 Code를 갖는 그룹에 modify_code 함수 적용
                 # stocks_relisted = stocks_relisted.groupby('Code').apply(self.modify_code).reset_index(drop=True)
@@ -435,6 +427,9 @@ class GetTicker:
             file_save_path = self.path_codeLists + f'\\{type_list}\\{type_list}_Ticker_{date_str}_modified.xlsx'
             stocks.to_excel(file_save_path)
             print(f'Ticker List 파일 저장: {type_list}_Ticker_{date_str}_modified.xlsx')
+            self.logger.info(f'Ticker List 파일 저장: {type_list}_Ticker_{date_str}_modified.xlsx')
+
+        return error_msg
 
     def check_code_list(self, datemanage):
         '''
@@ -450,7 +445,8 @@ class GetTicker:
         # 새롭게 상폐 후 재상장 되었다가 상폐
         # 기존에는 있었는데(delisted + listed) 최근(delisted + listed)에는 조회가 안되는 종목이 있는지 - code 누락
         '''
-
+        # 로그 메시지를 저장할 리스트
+        error_msg = []
         category = ['Listed', 'Delisted']
 
         ticker_lists = {}
@@ -505,12 +501,14 @@ class GetTicker:
                                       (diff_delisted['DelistingDate_old'] != diff_delisted['DelistingDate_workday'])]
 
         if diff_delisted.empty:
-            print("Differences between Delisted_old and Delisted_workday: 특이사항 없음")
-            self.logger.info(f"Differences between Delisted_old and Delisted_workday: 특이사항 없음")
+            log_msg = "Differences between Delisted_old and Delisted_workday: 특이사항 없음"
+            print(log_msg)
+            self.logger.info(log_msg)
         else:
-            print("Differences between Delisted_old and Delisted_workday:")
-            print(diff_delisted)
-            self.logger.info(f"Differences between Delisted_old and Delisted_workday: {diff_delisted}")
+            log_msg = f"Differences between Delisted_old and Delisted_workday: {diff_delisted}"
+            print(log_msg)
+            self.logger.info(log_msg)
+            error_msg.append(log_msg)
 
         # 1-2. 상장 리스트의 같은 코드 중 listingdate/delistingdate이 변한게 있는지 - spac 우회 상장 가능성, kosdaq에서 이전 상장 검토 필요
         listed_old = ticker_lists['Listed_old']
@@ -526,12 +524,14 @@ class GetTicker:
                                   (diff_listed['DelistingDate_old'] != diff_listed['DelistingDate_workday'])]
 
         if diff_listed.empty:
-            print("Differences between Listed_old and Listed_workday: 특이사항 없음")
-            self.logger.info(f"Differences between Listed_old and Listed_workday: 특이사항 없음")
+            log_msg = "Differences between listed_old and listed_workday: 특이사항 없음"
+            print(log_msg)
+            self.logger.info(log_msg)
         else:
-            print("Differences between Listed_old and Listed_workday:")
-            print(diff_listed)
-            self.logger.info(f"Differences between Listed_old and Listed_workday: {diff_listed}")
+            log_msg = f"Differences between listed_old and listed_workday: {diff_listed}"
+            print(log_msg)
+            self.logger.info(log_msg)
+            error_msg.append(log_msg)
 
         ## 2. 예전에 상폐 후 현재 재상장 중인 것이 있는지?
         # workday의 상폐 리스트와 상장 리스트에 겹치는 코드가 있는지
@@ -541,12 +541,14 @@ class GetTicker:
         common_codes = listed_workday.merge(delisted_workday, on='Code')
 
         if common_codes.empty:
-            print("Common codes between Listed_workday and Delisted_workday: 특이사항 없음")
-            self.logger.info("Common codes between Listed_workday and Delisted_workday: 특이사항 없음")
+            log_msg = "Common codes between Listed_workday and Delisted_workday: 특이사항 없음"
+            print(log_msg)
+            self.logger.info(log_msg)
         else:
-            print("Common codes between Listed_workday and Delisted_workday:")
-            print(common_codes)
-            self.logger.info(f"Common codes between Listed_workday and Delisted_workday: {common_codes}")
+            log_msg = f"Common codes between Listed_workday and Delisted_workday: {common_codes}"
+            print(log_msg)
+            self.logger.info(log_msg)
+            error_msg.append(log_msg)
 
         ## 새로운 제외목록? 이건 ticker list에서 알기 어렵다. ohlcv 에서 verify 해야 한다.
 
@@ -561,13 +563,16 @@ class GetTicker:
 
         only_in_old = set_old - set_workday
         if only_in_old:
-            print('ticker_list 누락 발견됨')
-            print(f'old_stock_list 에만 있는 종목 {len(only_in_old)}개')
-            print(f'{only_in_old}')
-            self.logger.info(f'ticker_list 누락 발견됨. old_stock_list 에만 있는 종목 {len(only_in_old)}개. {only_in_old}')
+            log_msg = f'ticker_list 누락 발견됨. old_stock_list 에만 있는 종목 {len(only_in_old)}개. {only_in_old}'
+            print(log_msg)
+            self.logger.info(log_msg)
+            error_msg.append(log_msg)
         else:
-            print(f'old_stock_list 에만 있는 종목 없음')
-            self.logger.info('old_stock_list 에만 있는 종목 없음')
+            log_msg = f'old_stock_list 에만 있는 종목 없음'
+            print(log_msg)
+            self.logger.info(log_msg)
+
+        return error_msg
 
     def make_txt_from_ticker(self, datemanage):
         category = ['Listed', 'Delisted']
