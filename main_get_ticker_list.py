@@ -1,6 +1,6 @@
 import os
 import logging
-from datetime import date
+from datetime import date, datetime
 from DateManage import DateManage
 from GetCompensationData import GetCompensationData
 from GetFinancialData import GetFinancialData
@@ -11,10 +11,10 @@ filename = os.path.splitext(os.path.basename(__file__))[0]  # 실행하고 있�
 
 paths = LoadConfig()
 
-startday = date(2000, 1, 4) # get ticker list 에서는 start 는 2000, 1, 4 로 고정함
-#startday = date(2024, 3, 29)
-workday = date(2025, 1, 14)
-#workday = date(2025, 4, 10)
+startday = datetime(2000, 1, 4) # get ticker list 에서는 start 는 2000, 1, 4 로 고정함
+#startday = datetime(2024, 3, 29)
+#workday = datetime(2025, 1, 14)
+workday = datetime(2025, 7, 11)
 datemanage = DateManage(filename, paths)
 datemanage.SetStartday(startday)
 datemanage.SetWorkday(workday)

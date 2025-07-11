@@ -24,7 +24,8 @@ class GetTicker:
         self.load_config()
 
     def load_config(self):
-        self.cur_dir = os.getcwd() # 부모 클래스에서 선언됨
+        #self.cur_dir = os.getcwd()  # 부모 클래스에서 선언됨
+        self.cur_dir = os.path.dirname(os.path.abspath(__file__))
         path = self.cur_dir + '\\' + 'config_GetTicker.ini'
 
         # 설정파일 읽기
@@ -95,7 +96,7 @@ class GetTicker:
         delisted_stocks = self.get_delistingstocks()
 
         #base_path = "C:\\Work_Dotori\\StockDataset\\CodeLists\\Delisted\\"
-        self.path_codeLists + '\\DeListed\\'
+        base_path = self.path_codeLists + '\\DeListed\\'
         if not os.path.exists(base_path):
             os.makedirs(base_path)
         delisted_stocks.to_excel(base_path + f"Delisted_Ticker_{date_str}.xlsx")
@@ -183,8 +184,10 @@ class GetTicker:
             file_read_path = self.path_codeLists + f'\\{type_list}\\{type_list}_Ticker_{datemanage.workday_str}.xlsx'
             stocks = pd.read_excel(file_read_path, index_col=0)
 
-            stocks['ListingDate'] = pd.to_datetime(stocks['ListingDate']).apply(lambda x: x.date())
-            stocks['DelistingDate'] = pd.to_datetime(stocks['DelistingDate']).apply(lambda x: x.date())
+            #stocks['ListingDate'] = pd.to_datetime(stocks['ListingDate']).apply(lambda x: x.date())
+            #stocks['DelistingDate'] = pd.to_datetime(stocks['DelistingDate']).apply(lambda x: x.date())
+            stocks['ListingDate'] = pd.to_datetime(stocks['ListingDate'])
+            stocks['DelistingDate'] = pd.to_datetime(stocks['DelistingDate'])
             stocks = stocks[(stocks['DelistingDate'] >= datemanage.startday) & (stocks['ListingDate'] <= datemanage.workday)]
 
             stocks['Code'] = stocks['Code'].astype(str)
@@ -358,9 +361,13 @@ class GetTicker:
                     error_msg.append(log_msg)
 
                 # 동일한 Code를 갖는 그룹에 modify_code 함수 적용
-                # stocks_relisted = stocks_relisted.groupby('Code').apply(self.modify_code).reset_index(drop=True)
-                stocks_relisted = stocks_relisted.groupby('Code', group_keys=False).apply(
-                    self.modify_code).reset_index(drop=True)
+                #stocks_relisted = stocks_relisted.groupby('Code', group_keys=False).apply(self.modify_code).reset_index(drop=True)
+                stocks_relisted = (
+                    stocks_relisted
+                    .groupby("Code", group_keys=False)  # 그룹핑
+                    .apply(self.modify_code, include_groups=True)  # 🔑 그룹 열 유지
+                    .reset_index(drop=True)
+                )
                 stocks_relisted = stocks_relisted.drop(columns=['설명'])
 
                 # stocks에서 해당 Code를 모두 제거하고 Name 값을 저장
@@ -458,8 +465,8 @@ class GetTicker:
             file_read_path = folder_read_path + '\\' + file_name
 
             stocks = pd.read_excel(file_read_path, index_col=0)
-            stocks['ListingDate'] = pd.to_datetime(stocks['ListingDate']).apply(lambda x: x.date())
-            stocks['DelistingDate'] = pd.to_datetime(stocks['DelistingDate']).apply(lambda x: x.date())
+            stocks['ListingDate'] = pd.to_datetime(stocks['ListingDate'])
+            stocks['DelistingDate'] = pd.to_datetime(stocks['DelistingDate'])
             stocks = stocks[
                 (stocks['DelistingDate'] >= datemanage.startday) & (stocks['ListingDate'] <= datemanage.workday)]
             stocks['Code'] = stocks['Code'].astype(str)
@@ -476,8 +483,8 @@ class GetTicker:
             file_read_path = folder_read_path + '\\' + file_name
 
             stocks = pd.read_excel(file_read_path, index_col=0)
-            stocks['ListingDate'] = pd.to_datetime(stocks['ListingDate']).apply(lambda x: x.date())
-            stocks['DelistingDate'] = pd.to_datetime(stocks['DelistingDate']).apply(lambda x: x.date())
+            stocks['ListingDate'] = pd.to_datetime(stocks['ListingDate'])
+            stocks['DelistingDate'] = pd.to_datetime(stocks['DelistingDate'])
             stocks = stocks[
                 (stocks['DelistingDate'] >= datemanage.startday) & (stocks['ListingDate'] <= datemanage.workday)]
             stocks['Code'] = stocks['Code'].astype(str)
