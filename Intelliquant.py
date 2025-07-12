@@ -29,7 +29,9 @@ class Intelliquant:
         '''
 
     def load_config(self): # 설정 불러오기
-        self.path = os.getcwd() + '\\' + 'config_Intelliquant.ini'
+        # self.path = os.getcwd() + '\\' + 'config_Intelliquant.ini'
+        self.cur_dir = os.path.dirname(os.path.abspath(__file__))
+        self.path = self.cur_dir + '\\' + 'config_Intelliquant.ini'
 
         # 설정파일 읽기
         config = configparser.ConfigParser()

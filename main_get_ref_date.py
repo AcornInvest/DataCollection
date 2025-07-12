@@ -32,6 +32,7 @@ file_handler_info = logging.FileHandler(filename=datemanage.path_log)
 file_handler_info.setFormatter(formatter)
 logger.addHandler(file_handler_info)
 
+
 get_ref_date = GetDateRef(logger, i)
 date_prefix = 'bussiness_day_ref'
 get_ref_date.intel.chrome_on(logger, get_ref_date.page, get_ref_date.name)

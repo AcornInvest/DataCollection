@@ -22,7 +22,8 @@ class GetDateRef:
         #self.suffix = 'data'  # 파일 이름 저장시 사용하는 접미사
 
     def load_config(self):
-        self.cur_dir = os.getcwd()
+        #self.cur_dir = os.getcwd()
+        self.cur_dir = os.path.dirname(os.path.abspath(__file__))
         path = self.cur_dir + '\\' + 'config_GetDateRef.ini'
 
         # 설정파일 읽기
