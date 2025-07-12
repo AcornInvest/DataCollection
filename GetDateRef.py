@@ -130,9 +130,6 @@ class GetDateRef:
         last_date_old = df_financial_date_ref_old['date'].iloc[-1]
         first_date_new = df_financial_date_ref_new['date'].iloc[0]
 
-
-        old 의 마지막 값과 new 의 마지막 값이 동일한지 확인 필요
-
         # 조건 2: 다음 분기 순서인지 확인
         def is_next_quarter(last_date, first_date):
             # 현재 분기에서 다음 분기로 이동 확인
@@ -166,6 +163,8 @@ class GetDateRef:
         return df_combined
 
     def make_financial_date_ref(self, df_date_ref):
+        old 의 마지막 값과 new 의 마지막 값이 동일한지 확인 필요 --> 업데이트 자체가 필요없는지. make_financial_date_ref 에서 검사하는게 낫겠다
+
         # 'date' 열을 datetime 형식으로 변환 후 datetime.date로 변환
         df_date_ref['date'] = pd.to_datetime(df_date_ref['date'])
 
