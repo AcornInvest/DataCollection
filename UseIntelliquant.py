@@ -311,7 +311,10 @@ class UseIntelliquant:
                 for item in extra_in_files:
                     f.write("%s\n" % item)
 
+            이거 결과가 있을때만 저장하도록. log.info
             print("결과가 'missing_in_files.txt'와 'extra_in_files.txt'에 저장되었습니다.")
+
+
             return False
         else:
             print("모든 DataFrame의 칼럼 값이 파일 이름에 있습니다.")
