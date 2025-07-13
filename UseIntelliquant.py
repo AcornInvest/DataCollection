@@ -156,10 +156,14 @@ class UseIntelliquant:
                 # 각 종목별로 시뮬레이션 결과가 출력되는 기간의 날짜 계산(상장일, 상폐일을 startday, workday와 비교)
                 listingdate_list_datetime = pd.to_datetime(listingdate_list)
                 delistingdate_list_datetime = pd.to_datetime(delistingdate_list)
-                listingdate_list_date = [dt.date() for dt in listingdate_list_datetime]
-                delistingdate_list_date = [dt.date() for dt in delistingdate_list_datetime]
-                adjusted_listingdate_list_date = [ts if ts >= datemanage.startday else datemanage.startday for ts in listingdate_list_date]
-                adjusted_delistingdate_list_date = [ts if ts <= datemanage.workday else datemanage.workday for ts in delistingdate_list_date]
+                #listingdate_list_date = [dt.date() for dt in listingdate_list_datetime]
+                #delistingdate_list_date = [dt.date() for dt in delistingdate_list_datetime]
+                #adjusted_listingdate_list_date = [ts if ts >= datemanage.startday else datemanage.startday for ts in listingdate_list_date]
+                #adjusted_delistingdate_list_date = [ts if ts <= datemanage.workday else datemanage.workday for ts in delistingdate_list_date]
+                adjusted_listingdate_list_date = [ts if ts >= datemanage.startday else datemanage.startday for ts in
+                                              listingdate_list_datetime]
+                adjusted_delistingdate_list_date = [ts if ts <= datemanage.workday else datemanage.workday for ts in
+                                                delistingdate_list_datetime]
 
                 # 상장일과 상폐일에 따라 시뮬레이션 시작일과 마지막 날 정하기.
                 earliest_date = min(adjusted_listingdate_list_date) # 가장 빠른 날짜 추출
@@ -335,8 +339,8 @@ class UseIntelliquant:
             if self.flag_mod:
                 stocks = stocks[stocks['Code'].isin(stocks_mod['stock_code'])]
 
-            stocks['ListingDate'] = pd.to_datetime(stocks['ListingDate']).dt.date
-            stocks['DelistingDate'] = pd.to_datetime(stocks['DelistingDate']).dt.date
+            stocks['ListingDate'] = pd.to_datetime(stocks['ListingDate'])
+            stocks['DelistingDate'] = pd.to_datetime(stocks['DelistingDate'])
 
             # 상폐일이 startday 보다 빠르거나 상장일이 workday 보다 늦은 행은 제외
             stocks = stocks[(stocks['DelistingDate'] >= datemanage.startday) & (stocks['ListingDate'] <= datemanage.workday)]
