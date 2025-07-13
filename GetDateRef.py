@@ -43,7 +43,8 @@ class GetDateRef:
         start_date_str = datemanage.startday_str
         end_date_str = datemanage.workday_str
         backtest_list = self.intel.backtest(start_date_str, end_date_str, '10000000', self.logger)
-        self.save_backtest_result(self.path_backtest_save, backtest_list, datemanage)
+        path_backtest_result = self.save_backtest_result(self.path_backtest_save, backtest_list, datemanage)
+        return path_backtest_result
 
     def save_backtest_result(self, path_backtest_save, backtest_list, datemanage):
         # backtest 파일 저장 경로
@@ -60,11 +61,12 @@ class GetDateRef:
                 file.write(text + '\n')
             '''
             file.write('\n'.join(backtest_list) + '\n')
-        self.logger.info("Backtest 결과 저장 완료: %s" % self.path_backtest_result)
+        self.logger.info("Date Ref Backtest 결과 저장 완료: %s" % self.path_backtest_result)
 
         return self.path_backtest_result
 
-    def process_backtest_result(self, path_file):  # backtest result 를 처리하여 df로 반환
+    def process_backtest_result(self, datemanage):  # backtest result 를 처리하여 df로 반환
+        path_file = self.path_backtest_save + '\\' + 'backtest_result_' + datemanage.workday_str + '.txt'
         # 결과를 저장할 리스트
         ref_date = []
 
@@ -92,13 +94,40 @@ class GetDateRef:
         return df_date_ref
 
     def merge_date_ref(self, datemanage, df_date_ref_new, date_prefix):
-        # 기존 거래일 목록 ref 읽어오기
-        filename_old = f'{date_prefix}_{datemanage.startday_str}.xlsx'
-        path_date_ref_old = f'{self.path_data}\\{filename_old}'
-        df_date_ref_old = pd.read_excel(path_date_ref_old)
-        df_date_ref_old = df_date_ref_old.reset_index()
+        """
+            두 Date-Reference DataFrame을 이어 붙이고,
+            마지막 날짜가 분기 결산월(4·6·9·12)인지와
+            직전 파일의 마지막 월과 다른지를 확인해 flag를 반환한다.
 
-        # 조건 확인 및 합치기
+            Returns
+            -------
+            (df_date_ref_combined | None, flag_financial_ref_date_update)
+        """
+
+        # 기존 거래일 목록 ref 읽어오기
+        filename_old = f"{date_prefix}_{datemanage.startday_str}.xlsx"
+        path_date_ref_old = f"{self.path_data}\\{filename_old}"
+        df_date_ref_old = pd.read_excel(path_date_ref_old).reset_index()
+
+        # ── 2. 월(month) 추출 및 분기-결산월 플래그 계산 ────────
+        financial_quarters = {4, 6, 9, 12}
+
+        old_last_date = pd.to_datetime(df_date_ref_old.iloc[-1]["date"])
+        new_last_date = pd.to_datetime(df_date_ref_new.iloc[-1]["date"])
+
+        old_period = old_last_date.to_period("M")  # 예: 2000-04
+        periods = pd.period_range(old_last_date,  # old → new 구간의
+                                  new_last_date,  # 모든 '년-월' 기간 생성
+                                  freq="M")  # (월 단위)
+
+        flag_financial_ref_date_update = any(
+            (p.month in financial_quarters)  # (1) 4·6·9·12월 중 하나이고
+            and (p != old_period)  # (2) old 마지막 '년-월'과 다른 경우
+            for p in periods
+        )
+
+        # 연속성 조건 확인 및 합치기
+        # 과거의 ref date 마지막 날이 현재 작업하는 ref date의 처음날과 같으면 작업함
         if df_date_ref_old.iloc[-1]['date'] == df_date_ref_new.iloc[0]['date']:
             # 행 방향으로 합치기
             df_date_ref_combined = pd.concat([df_date_ref_old, df_date_ref_new.iloc[1:]], ignore_index=True)
@@ -114,10 +143,12 @@ class GetDateRef:
             print(f"Combined DataFrame saved to {filename_combined}")
             self.logger.info(f"Combined DataFrame saved to {filename_combined}")
 
-            return df_date_ref_combined
+            return df_date_ref_combined, flag_financial_ref_date_update
 
         else:
             print(f"Error: {filename_old}의 마지막 행 값이 새로운 df_date_ref의 첫번째 값과 다름")
+            self.logger.info(f"Error: {filename_old}의 마지막 행 값이 새로운 df_date_ref의 첫번째 값과 다름")
+            return None, flag_financial_ref_date_update
 
     def merge_financial_date_ref(self, datemanage, df_financial_date_ref_new, date_prefix):
         # 기존 거래일 목록 ref 읽어오기
@@ -163,8 +194,6 @@ class GetDateRef:
         return df_combined
 
     def make_financial_date_ref(self, df_date_ref):
-        old 의 마지막 값과 new 의 마지막 값이 동일한지 확인 필요 --> 업데이트 자체가 필요없는지. make_financial_date_ref 에서 검사하는게 낫겠다
-
         # 'date' 열을 datetime 형식으로 변환 후 datetime.date로 변환
         df_date_ref['date'] = pd.to_datetime(df_date_ref['date'])
 
@@ -213,5 +242,5 @@ class GetDateRef:
         path_date_ref_combined = f'{self.path_data}\\{filename_combined}'
         df_financial_date_ref_combined.to_excel(path_date_ref_combined, index=False)
         print(f"Combined DataFrame saved to {filename_combined}")
-        self.logger.info(f"Combined DataFrame saved to {filename_combined}")
+        self.logger.info(f"Financial Ref saved to {filename_combined}")
         pass
