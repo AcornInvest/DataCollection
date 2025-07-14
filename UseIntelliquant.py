@@ -301,21 +301,21 @@ class UseIntelliquant:
             process_result_folder = f'{self.path_backtest_save}\\{datemanage.workday_str}\\'
 
             # 결과를 텍스트 파일로 저장
-            missing_in_files_path = process_result_folder + 'missing_in_files_' + datemanage.workday_str + '.txt'
-            with open(missing_in_files_path, 'w') as f:
-                for item in missing_in_files:
-                    f.write("%s\n" % item)
+            if len(missing_in_files) >0:
+                missing_in_files_path = process_result_folder + 'missing_in_files_' + datemanage.workday_str + '.txt'
+                with open(missing_in_files_path, 'w') as f:
+                    for item in missing_in_files:
+                        f.write("%s\n" % item)
+                self.logger.info("결과가 'missing_in_files.txt'에 저장되었습니다.")
 
-            extra_in_files_path = process_result_folder + 'extra_in_files_' + datemanage.workday_str + '.txt'
-            with open(extra_in_files_path, 'w') as f:
-                for item in extra_in_files:
-                    f.write("%s\n" % item)
-
-            이거 결과가 있을때만 저장하도록. log.info
-            print("결과가 'missing_in_files.txt'와 'extra_in_files.txt'에 저장되었습니다.")
-
-
+            if len(extra_in_files) > 0:
+                extra_in_files_path = process_result_folder + 'extra_in_files_' + datemanage.workday_str + '.txt'
+                with open(extra_in_files_path, 'w') as f:
+                    for item in extra_in_files:
+                        f.write("%s\n" % item)
+                self.logger.info("결과가 'extra_in_files.txt'에 저장되었습니다.")
             return False
+
         else:
             print("모든 DataFrame의 칼럼 값이 파일 이름에 있습니다.")
             return True

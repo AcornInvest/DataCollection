@@ -37,16 +37,17 @@ file_handler_info.setFormatter(formatter)
 logger.addHandler(file_handler_info)
 
 
-
+'''
 get_OHLCV_Intelliquant = GetOHLCV_Intelliquant(logger, paths, i, datemanage, flag_mod=False)
 get_OHLCV_Intelliquant.make_txt_from_ticker(datemanage)
 get_OHLCV_Intelliquant.intel.chrome_on(logger, get_OHLCV_Intelliquant.page, get_OHLCV_Intelliquant.name)
-#get_OHLCV_Intelliquant.run_backtest_rep(datemanage, all_files=False, first_index=1, final_index=1)
-get_OHLCV_Intelliquant.run_backtest_rep(datemanage, all_files=True)
+get_OHLCV_Intelliquant.run_backtest_rep(datemanage, all_files=False, first_index=1, final_index=1)
+#get_OHLCV_Intelliquant.run_backtest_rep(datemanage, all_files=True)
 get_OHLCV_Intelliquant.run_backtest_process(datemanage) # 인텔리퀀트로 얻은 백테스트 raw 데이터 처리
+'''
 
-#verify_ohlcv = VerifyOHLCV(logger, datemanage, flag_mod=False)
-#verify_ohlcv.check_data(datemanage)
+verify_ohlcv = VerifyOHLCV(logger, paths, datemanage, flag_mod=False)
+verify_ohlcv.check_data(datemanage)
 
 '''
 startday = datetime(2000, 1, 4)

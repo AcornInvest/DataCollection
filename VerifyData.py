@@ -121,6 +121,7 @@ class VerifyData:
                     file.write(str(value) + "\n")
 
             print(f"tickerlist와 db의 코드목록이 다름. {path} 파일에 결과가 저장되었습니다.")
+            self.logger.info(f"tickerlist와 db의 코드목록이 다름. {path} 파일에 결과가 저장되었습니다.")
             flag_no_error = False
 
             return flag_no_error
@@ -167,6 +168,7 @@ class VerifyData:
             print(f"{self.suffix} Verificaion No Error")
         else:
             print(f"{self.suffix} Verificaion Error")
+            self.logger.info(f"{self.suffix} Verificaion Error")
 
         ''' # 2024.4.17 이거 따로 체크하지 않는다. 어차피 combine할 때 ohlc 변동을 모든 종목에 대해 체크한다.
         if len(df_modified_codes) > 0:

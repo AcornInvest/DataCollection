@@ -21,7 +21,8 @@ class VerifyOHLCV(VerifyData):
             self.suffix = 'OHLCV_intelliquant'  # 파일 이름 저장시 사용하는 접미사
             self.path_data = paths.OHLCV_Intelliquant
 
-        self.limit_change_day = date(2015, 6, 15)  # 가격제한폭이 30%로 확대된 날
+        #self.limit_change_day = date(2015, 6, 15)  # 가격제한폭이 30%로 확대된 날
+        self.limit_change_day = datetime(2015, 6, 15)  # 가격제한폭이 30%로 확대된 날
         self.clearance_days = 17 # 정리매매 기간 최대 15일 + 상폐직전 마진 2일
         self.date_prefix = 'bussiness_day_ref'  # date reference 파일의 접미사
         self.db_columns = ['date', 'open', 'high', 'low', 'close', 'volume', 'cap']
@@ -36,7 +37,8 @@ class VerifyOHLCV(VerifyData):
 
     def check_integrity(self, code, df_b_day_ref, df_data, datemanage):
         df_data.reset_index(inplace=True)
-        df_data['date'] = pd.to_datetime(df_data['date']).dt.date
+        #df_data['date'] = pd.to_datetime(df_data['date']).dt.date
+        df_data['date'] = pd.to_datetime(df_data['date'])
         no_error = True
 
         # 무결성 검사 2. NaN 있는지 확인
