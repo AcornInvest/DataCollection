@@ -115,9 +115,40 @@ class GetFinancialData(UseIntelliquant):
         data_by_code = {}
 
         # financial backtest 일반 데이터 패턴: 숫자가 5개 또는 6개 연속으로 있고, 그 뒤에 옵셔널하게 알파벳 문자가 1개 있는 것
-        data_pattern = r'\[\d{4}-\d{2}-\d{2}\]\s\d{5,6}[A-Za-z]?,'
+        # data_pattern = r'\[\d{4}-\d{2}-\d{2}\]\s\d{5,6}[A-Za-z]?,'
+
+        # ▣ 날짜 + 종목코드(4가지 케이스) + 쉼표 를 한 번에 잡는 패턴
+        data_pattern = (
+            r"\["  # 여는 대괄호 [
+            r"\d{4}-\d{2}-\d{2}"  # YYYY-MM-DD
+            r"\]\s"  # 닫는 대괄호 ] + 공백
+            r"(?:"  # ▼ 종목코드 4가지 형태
+            r"\d{6}"  # ① 숫자 6개        (예: 005930)
+            r"|"  # ────────
+            r"\d{5}[A-Za-z]"  # ② 숫자 5개 + 알파  (예: 12345A)
+            r"|"  # ────────
+            r"\d{4}[A-Za-z]\d"  # ③ 숫자 4 + 알파 + 숫자 (예: 0030R0)
+            r"|"  # ────────
+            r"\d{4}[A-Za-z]{2}"  # ④ 숫자 4 + 알파 2   (예: 0030RT)
+            r")"
+            r","  # 끝의 쉼표
+        )
         date_pattern = r'\[(\d{4}-\d{2}-\d{2})\]'
-        code_pattern = r'\] (\d{5}[A-Za-z]?|\d{6}),'
+        # code_pattern = r'\] (\d{5}[A-Za-z]?|\d{6}),'
+        # 날짜 뒤에 나오는 종목코드 4가지 형태(6·5+1·4+1+1·4+2)를 매칭
+        code_pattern = (
+            r"\]\s+"  # ']' 다음 한 개 이상 공백
+            r"("
+            r"\d{6}"
+            r"|"
+            r"\d{5}[A-Za-z]"
+            r"|"
+            r"\d{4}[A-Za-z]\d"
+            r"|"
+            r"\d{4}[A-Za-z]{2}"
+            r")"
+            r","  # ← 쉼표까지 반드시 포함
+        )
         #sec_pattern = r'sector: ([A-Z]\d{3}),'
         sec_pattern = r'sector:\s([A-Z]\d{3})?,'
         te_pattern = r'te: (-?\d+),'
