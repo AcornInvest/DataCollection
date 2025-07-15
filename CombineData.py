@@ -28,7 +28,8 @@ class CombineData:
         # 거래일 목록 ref 읽어오기. 기본. 전체 영업일.
         path_date_ref = f'{self.path_date_ref}\\{self.date_prefix}_{datemanage.workday_str}.xlsx'
         self.df_business_days = pd.read_excel(path_date_ref)
-        self.df_business_days['date'] = pd.to_datetime(self.df_business_days['date']).dt.date
+        #self.df_business_days['date'] = pd.to_datetime(self.df_business_days['date']).dt.date
+        self.df_business_days['date'] = pd.to_datetime(self.df_business_days['date'])
         self.df_business_days = self.df_business_days[(self.df_business_days['date'] >= datemanage.startday) & (
                     self.df_business_days['date'] <= datemanage.workday)]
 
@@ -36,8 +37,8 @@ class CombineData:
         # 설정
         self.path_data = self.paths.StockDataSet
         self.path_codeLists = self.paths.CodeLists
-        self.path_savedata = self.paths.Combined
-        self.path_date_ref = self.paths.ref
+        self.path_savedata = self.paths.OHLCV_Combined
+        self.path_date_ref = self.paths.date_ref
         self.suffix = 'combined_ohlcv'
 
     def combine_data(self, datemanage): # 각 폴더의 데이터가 codelist의 모든 목록을 포함하는지 확인
@@ -66,8 +67,10 @@ class CombineData:
         for listed_status in category:
             codelist_path = self.path_codeLists + '\\' + listed_status + '\\' + listed_status + '_Ticker_' + datemanage.workday_str + '_modified.xlsx'
             codelist = pd.read_excel(codelist_path, index_col=0)
-            codelist['ListingDate'] = pd.to_datetime(codelist['ListingDate']).apply(lambda x: x.date())
-            codelist['DelistingDate'] = pd.to_datetime(codelist['DelistingDate']).apply(lambda x: x.date())
+            #codelist['ListingDate'] = pd.to_datetime(codelist['ListingDate']).apply(lambda x: x.date())
+            #codelist['DelistingDate'] = pd.to_datetime(codelist['DelistingDate']).apply(lambda x: x.date())
+            codelist['ListingDate'] = pd.to_datetime(codelist['ListingDate'])
+            codelist['DelistingDate'] = pd.to_datetime(codelist['DelistingDate'])
             codelist['Code'] = codelist['Code'].astype(str)
             codelist['Code'] = codelist['Code'].str.zfill(6)  # 코드가 6자리에 못 미치면 앞에 0 채워넣기
 
@@ -185,7 +188,7 @@ class CombineData:
         merged_df_reset = merged_df.reset_index()
 
         # SQLite 데이터베이스 파일 연결 (없으면 새로 생성)
-        filename_db = f'{self.suffix}_{datemanage.workday}.db'
+        filename_db = f'{self.suffix}_{datemanage.workday_str}.db'
         file_path_db = savedata_folder + filename_db
 
         with sqlite3.connect(file_path_db) as conn:
