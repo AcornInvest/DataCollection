@@ -41,10 +41,8 @@ class GetCombinedData(UseIntelliquant): # 인텔리퀀트에서 ohlcv, num of sh
         # 설정파일 읽기
         config = configparser.ConfigParser()
         config.read(path, encoding='utf-8')
-        self.page_list = [config['intelliquant']['page_0'], config['intelliquant']['page_1'], config['intelliquant']['page_2'], config['intelliquant']['page_3']]
-        self.name_list = [config['intelliquant']['name_0'], config['intelliquant']['name_1'], config['intelliquant']['name_2'], config['intelliquant']['name_3']]
-        self.page = self.page_list[self.num_process]
-        self.name = self.name_list[self.num_process]
+        self.page = config['intelliquant']['page_0']
+        self.name = config['intelliquant']['name_0']
 
     def process_backtest_result(self, path_file):  # backtest result 를 처리하여 df로 반환
         # 각 코드별 데이터를 저장할 딕셔너리
