@@ -7,7 +7,7 @@ from GetFinancialData import GetFinancialData
 from GetTicker import GetTicker
 from GetOHLCV import GetOHLCV
 from GetOHLCV_Intelliquant import GetOHLCV_Intelliquant
-from VerifyOHLCV import VerifyOHLCV
+from VerifyCombinedData import VerifyCombinedData
 from multiprocessing import Process
 from LoadConfig import LoadConfig
 
@@ -36,15 +36,15 @@ file_handler_info = logging.FileHandler(filename=datemanage.path_log)
 file_handler_info.setFormatter(formatter)
 logger.addHandler(file_handler_info)
 
-
+'''
 get_combined_data_Intelliquant = GetCombinedData(logger, paths, i, datemanage, flag_mod=False)
 get_combined_data_Intelliquant.make_txt_from_ticker(datemanage)
 get_combined_data_Intelliquant.intel.chrome_on(logger, get_combined_data_Intelliquant.page, get_combined_data_Intelliquant.name)
-get_combined_data_Intelliquant.run_backtest_rep(datemanage, all_files=False, first_index=76, final_index=79)
-#get_combined_data_Intelliquant.run_backtest_rep(datemanage, all_files=True)
+#get_combined_data_Intelliquant.run_backtest_rep(datemanage, all_files=False, first_index=8, final_index=8)
+get_combined_data_Intelliquant.run_backtest_rep(datemanage, all_files=True)
 get_combined_data_Intelliquant.run_backtest_process(datemanage) # 인텔리퀀트로 얻은 백테스트 raw 데이터 처리
+'''
 
-'''
-verify_ohlcv = VerifyOHLCV(logger, paths, datemanage, flag_mod=False)
-verify_ohlcv.check_data(datemanage)
-'''
+
+verify_combined_data = VerifyCombinedData(logger, paths, datemanage, flag_mod=False)
+verify_combined_data.check_data(datemanage)

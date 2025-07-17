@@ -103,7 +103,7 @@ class GetCombinedData(UseIntelliquant): # 인텔리퀀트에서 ohlcv, num of sh
                 if re.search(data_pattern, line):  # 일반 데이터 처리
                     date = re.search(date_pattern, line).group(1)
                     code = re.search(code_pattern, line).group(1)
-                    open = re.search(open_pattern, line).group(1)
+                    Open = re.search(open_pattern, line).group(1) # open 이 내장 함수명이기 때문에 비켜가기 위해 변수명 바꿈
                     high = re.search(high_pattern, line).group(1)
                     low = re.search(low_pattern, line).group(1)
                     close = re.search(close_pattern, line).group(1)
@@ -118,7 +118,7 @@ class GetCombinedData(UseIntelliquant): # 인텔리퀀트에서 ohlcv, num of sh
                     if code not in data_by_code:
                         data_by_code[code] = []
                     # volume 은 get volume 에서도 구하지만 verify ohlcv 할 때 거래 정지 여부를 판단하는데 필요해서 넣는다.
-                    data_by_code[code].append((date, open, high, low, close, volume, volume_forn, volume_inst, volume_retail, cap, share))
+                    data_by_code[code].append((date, Open, high, low, close, volume, volume_forn, volume_inst, volume_retail, cap, share))
 
                 elif 'list_index:' in line:
                     num_codes = int(line.split('list_index:')[1].strip())

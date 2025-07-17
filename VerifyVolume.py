@@ -128,10 +128,10 @@ class VerifyVolume(VerifyData):
             result_indices = sorted(set(result_indices))
             return df.iloc[result_indices]
 
-        # 최소 연속 값의 수
+        # 최소 연속적으로 같은 열의 수
         n = 4
 
-        # 연속된 동일한 값이 n개 이상인 행 찾기
+        # 2개 행에서 연속된 동일한 값(열)이 n개 이상인 행 찾기
         consecutive_same_values = has_n_consecutive_same_values(df_data, n)
 
         if not consecutive_same_values.empty:

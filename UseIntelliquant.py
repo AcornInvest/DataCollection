@@ -112,9 +112,9 @@ class UseIntelliquant:
         # 데이터를 하나씩 추출해서 인텔리퀀트의 코드 수정해가면서 백테스트 수행.
         #chrome_on()은 되어 있는 상태에서 호출
 
-        category = ['Delisted', 'Listed']
+        #category = ['Delisted', 'Listed']
         #category = ['Delisted']
-        #category = ['Listed']
+        category = ['Listed']
         for listed_status in category:
             #self.path_for_intelliquant_dir = self.path_backtest_save + '\\' + listed_status + '\\For_Intelliquant\\' + datemanage.workday_str + '\\'
             self.path_for_intelliquant_dir = self.path_backtest_save + '\\' + datemanage.workday_str + '\\' + listed_status + '\\For_Intelliquant\\'

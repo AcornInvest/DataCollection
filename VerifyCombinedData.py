@@ -208,7 +208,7 @@ class VerifyCombinedData(VerifyData):
         '''
 
         ## 무결성 검사 8. # volume 연속적으로 같은 값을 가지는지 여부를 판별
-        # 각 행에서 [volume, vf, vi, vr] 열의 값이 2행 동안 연속적으로 동일한 값이 n개 이상인 행을 찾는 함수
+        # 각 행에서 [volume, vf, vi, vr] 열의 값이 2행 동안 연속적으로 동일한 값(열)이 n개 이상인 행을 찾는 함수
         # n=3 인 경우도 많다. 네이버 증권에서 검색해도 동일하다
         def has_n_consecutive_same_values(df, n):
             result_indices = []
@@ -229,12 +229,13 @@ class VerifyCombinedData(VerifyData):
         # 최소 연속 값의 수
         n = 4
 
+        volume_columns = ['volume', 'vf', 'vi', 'vr']
         # 연속된 동일한 값이 n개 이상인 행 찾기
-        volume_consecutive_same_values = has_n_consecutive_same_values(df_data, n)
+        volume_consecutive_same_values = has_n_consecutive_same_values(df_data[volume_columns], n)
 
         if not volume_consecutive_same_values.empty:
             volume_consecutive_same_values = volume_consecutive_same_values['date'].apply(lambda d: d.strftime('%Y-%m-%d')).tolist()
-            volume_consecutive_same_values_list = [f'{code}, 값이 2일 연속 같은 경우: {volume_consecutive_same_values}']
+            volume_consecutive_same_values_list = [f'{code}, 값이 {n}일 연속 같은 경우: {volume_consecutive_same_values}']
             self.logger.info(volume_consecutive_same_values_list)
             path = f"{self.path_data}\\{datemanage.workday_str}\\volume_consecutive_same_values_list.txt"  # 임시
             utils.save_list_to_file_append(volume_consecutive_same_values_list, path)  # 텍스트 파일에 오류 부분 저장
