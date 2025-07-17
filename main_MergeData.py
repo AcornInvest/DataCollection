@@ -3,7 +3,7 @@ import os
 from MergeOHLCV import MergeOHLCV
 from MergeFinancial import MergeFinancial
 from DateManage import DateManage
-from datetime import date
+from datetime import datetime
 import logging
 from LoadConfig import LoadConfig
 
@@ -13,15 +13,17 @@ formatter = logging.Formatter("%(asctime)s - %(levelname)s - [%(funcName)s:%(lin
 i = 0
 
 filename = f'{os.path.splitext(os.path.basename(__file__))[0]}_Proc_{i}'  # 실행하고 있는 스크립트 파일 이름 가져오기
-#startday = date(2000, 1, 4)
-#workday = date(2007, 12, 31)
-#startday = date(2008, 1, 1)
-#workday = date(2015, 12, 31)
-#startday = date(2016, 1, 1)
-#workday = date(2024, 3, 29)
-startday = date(2024, 3, 29)
-workday = date(2025, 1, 14)
-datemanage = DateManage(filename)
+
+paths = LoadConfig()
+
+#startday = datetime(2000, 1, 4)
+#workday = datetime(2024, 3, 29)
+#startday = datetime(2024, 3, 29)
+#workday = datetime(2025, 1, 14)
+startday = datetime(2025, 1, 14)
+workday = datetime(2025, 7, 11)
+
+datemanage = DateManage(filename, paths)
 datemanage.SetStartday(startday)
 datemanage.SetWorkday(workday)
 logger = logging.getLogger('main')
@@ -30,22 +32,28 @@ file_handler_info = logging.FileHandler(filename=datemanage.path_log)
 file_handler_info.setFormatter(formatter)
 logger.addHandler(file_handler_info)
 
-paths = LoadConfig()
 
-'''
 # combine 로 먼저 continuity  확인 후 merge
-#merge_ohlcv = MergeOHLCV(logger, paths, datemanage, flag_mod=False)
-#flag_error, flag_mod_stocks = merge_ohlcv.check_continuity(datemanage)
-#print(f' \n OHLCV merge continuity check')
-#print(f'flag_error: {flag_error}, flag_mod_stocks: {flag_mod_stocks}')
+merge_ohlcv = MergeOHLCV(logger, paths, datemanage, flag_mod=False)
+flag_error, flag_mod_stocks = merge_ohlcv.check_continuity(datemanage)
+print(f' \n OHLCV merge continuity check')
+print(f'flag_error: {flag_error}, flag_mod_stocks: {flag_mod_stocks}')
 #merge_ohlcv.merge_dbs()
 
+
+#check_continuity() 를 해서 mod 가 필요하면 merge를 안한다.
+#merge_dbs() 를 실행할 때 flag_mod=False인데 combined 폴더에 mod_stock_codes 가 있으면 안한다. --> 에러 출력
+#이 경우, 사용자가 get ohlcv mod 를 해서 backtest를 하고, merge_ohlcv를 flag_mod=True 로 만들고 나서 merge_dbs()를 2회 호출해야 한다.
+
+
+
+'''
 # flag_mode_stocks == True 인 경우, mod_stock 도 merge
 merge_ohlcv = MergeOHLCV(logger, paths, datemanage, flag_mod=True)
 merge_ohlcv.merge_dbs()
 '''
 
-
+'''
 # Financial
 startday = date(2023, 12, 1) # 직전 financial 결과가 나오는 날부터로 함
 workday = date(2025, 1, 14)
@@ -58,3 +66,4 @@ flag_error, flag_mod_stocks = merge_financial.check_continuity(datemanage_3)
 print(f' \nFinancial merge continuity check')
 print(f'flag_error: {flag_error}, flag_mode_stocks: {flag_mod_stocks}\n')
 merge_financial.merge_dbs()
+'''

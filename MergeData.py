@@ -53,16 +53,24 @@ class MergeData:
 
             if not only_in_df1 and not only_in_df2:
                 print("✅ 두 DataFrame의 stock_code 값들이 완전히 동일합니다.")
+                self.logger.info("두 DataFrame의 stock_code 값들이 완전히 동일합니다.")
+
             else:
-                if only_in_df1:
-                    print(f"❌ df1에만 있고 df2에는 없는 stock_code들 ({len(only_in_df1)}개):")
-                    print(sorted(only_in_df1))
+                path = self.folder_new + '\\' + f"unique_codes.txt"
+                with open(path, "w", encoding="utf-8") as file:
+                    if only_in_df1:
+                        file.write("merged에만 있는 값:\n")
+                        for value in only_in_df1:
+                            file.write(str(value) + "\n")
 
-                if only_in_df2:
-                    print(f"❌ df2에만 있고 df1에는 없는 stock_code들 ({len(only_in_df2)}개):")
-                    print(sorted(only_in_df2))
+                    if only_in_df2:
+                        file.write("new에만 있는 값:\n")
+                        for value in only_in_df2:
+                            file.write(str(value) + "\n")
 
-        compare_stock_codes(df1, df2)
+                self.logger.info(f"두 DataFrame의 stock_code 값들이 다름. {path} 에 저장")
+
+        compare_stock_codes(df1, df2) # 여기서 에러가 있으면 return 해야 하나?
 
         flag_error = False
         flag_mod_stocks = False
@@ -102,10 +110,12 @@ class MergeData:
 
         if diff_merged.empty:
             print(f"[{self.file_new}] 공통된 stock codes 의 startday에서의 모든 데이터가 일치합니다.")
+            self.logger.info(f"[{self.file_new}] 공통된 stock codes 의 startday에서의 모든 데이터가 일치합니다.")
             return flag_error, flag_mod_stocks
 
         # 데이터에 차이가 있는 경우
         print(f"[{self.file_new}] 차이 발생!")
+        self.logger.info(f"[{self.file_new}] 차이 발생!")
 
         check_columns = ['open', 'high', 'low', 'close']
         # share 차이가 생긴 종목들 중 수정종가 변경이 생긴 종목들 찾는 조건
@@ -127,13 +137,19 @@ class MergeData:
                 #path = self.folder_new + f"mod_stock_codes_{datemanage.workday_str}.xlsx"
                 output_df.to_excel(path, index=False)
                 print(f"\n종가 변경 stock_code를 Excel로 저장했습니다: mod_stock_codes_{datemanage.workday_str}.xlsx")
+                self.logger.info(f"\n종가 변경 stock_code를 Excel로 저장했습니다: mod_stock_codes_{datemanage.workday_str}.xlsx")
                 flag_mod_stocks = True
 
         if not invalid_rows.empty: # 수정종가 외에 다른 열에 차이가 있는 종목이 하나라도 있는 경우
-            print(f"\n조건을 만족하지 않는 차이 행:")
+            print(f"\n수정종가 외에 다른 열에 차이가 있음.")
             display_cols = ['stock_code', 'date', 'diff_cols'] + [f"{col}_{sfx}" for col in compare_columns for sfx
                                                                   in ['1', '2']]
             print(invalid_rows[display_cols])
+
+            path = self.folder_new + '\\' + f"invalid_difference_{datemanage.workday_str}.xlsx"
+            invalid_rows[display_cols].to_excel(path, index=False)
+
+            self.logger.info(f"\n수정종가 외에 다른 열에 차이가 있음: {path}")
             flag_error = True
 
         return flag_error, flag_mod_stocks
