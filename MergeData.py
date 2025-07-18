@@ -44,6 +44,9 @@ class MergeData:
         conn1.close()
         conn2.close()
 
+        flag_error = False
+        flag_mod_stocks = False
+
         def compare_stock_codes(df1, df2):
             set1 = set(df1['stock_code'])
             set2 = set(df2['stock_code'])
@@ -53,7 +56,7 @@ class MergeData:
 
             if not only_in_df1 and not only_in_df2:
                 print("✅ 두 DataFrame의 stock_code 값들이 완전히 동일합니다.")
-                self.logger.info("두 DataFrame의 stock_code 값들이 완전히 동일합니다.")
+                self.logger.info("check_continuity: 두 DataFrame의 stock_code 값들이 완전히 동일합니다.")
 
             else:
                 path = self.folder_new + '\\' + f"unique_codes.txt"
@@ -69,11 +72,9 @@ class MergeData:
                             file.write(str(value) + "\n")
 
                 self.logger.info(f"두 DataFrame의 stock_code 값들이 다름. {path} 에 저장")
+                flag_error = True
 
         compare_stock_codes(df1, df2) # 여기서 에러가 있으면 return 해야 하나?
-
-        flag_error = False
-        flag_mod_stocks = False
 
         # 병합
         merged = pd.merge(df1, df2, on=["stock_code", "date"], suffixes=('_1', '_2'))

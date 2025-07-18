@@ -38,10 +38,10 @@ merge_ohlcv = MergeOHLCV(logger, paths, datemanage, flag_mod=False)
 flag_error, flag_mod_stocks = merge_ohlcv.check_continuity(datemanage)
 print(f' \n OHLCV merge continuity check')
 print(f'flag_error: {flag_error}, flag_mod_stocks: {flag_mod_stocks}')
-#merge_ohlcv.merge_dbs()
+merge_ohlcv.merge_dbs()
 
 
-#check_continuity() 를 해서 mod 가 필요하면 merge를 안한다.
+#check_continuity() 를 해서 mod 가 필요하면 merge를 안한다. --> 아니다, 일단 한다.
 #merge_dbs() 를 실행할 때 flag_mod=False인데 combined 폴더에 mod_stock_codes 가 있으면 안한다. --> 에러 출력
 #이 경우, 사용자가 get ohlcv mod 를 해서 backtest를 하고, merge_ohlcv를 flag_mod=True 로 만들고 나서 merge_dbs()를 2회 호출해야 한다.
 

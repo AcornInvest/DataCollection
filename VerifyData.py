@@ -170,6 +170,8 @@ class VerifyData:
             print(f"{self.suffix} Verificaion Error")
             self.logger.info(f"{self.suffix} Verificaion Error")
 
+        return flag_no_error
+
         ''' # 2024.4.17 이거 따로 체크하지 않는다. 어차피 combine할 때 ohlc 변동을 모든 종목에 대해 체크한다.
         if len(df_modified_codes) > 0:
             path = folder_data + f"share_modified_codes_{datemanage.workday_str}.xlsx"
