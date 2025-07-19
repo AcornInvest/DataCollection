@@ -27,6 +27,7 @@ class VerifyOHLCV(VerifyData):
         self.date_prefix = 'bussiness_day_ref'  # date reference 파일의 접미사
         self.db_columns = ['date', 'open', 'high', 'low', 'close', 'volume', 'cap']
 
+    def load_delisted_codelist(self, datemanage):
         codelist_path = f'{self.path_codeLists}\\Delisted\\Delisted_Ticker_{datemanage.workday_str}_modified.xlsx'
         self.df_codelist_delisted = pd.read_excel(codelist_path, index_col=0)
         self.df_codelist_delisted['Code'] = self.df_codelist_delisted['Code'].astype(str)

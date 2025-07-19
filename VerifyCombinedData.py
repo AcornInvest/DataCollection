@@ -21,6 +21,7 @@ class VerifyCombinedData(VerifyData):
         self.db_columns = ['date', 'open', 'high', 'low', 'close', 'volume', 'vf', 'vi', 'vr', 'cap', 'share']
         self.path_data = paths.OHLCV_Combined
 
+    def load_delisted_codelist(self, datemanage):
         codelist_path = f'{self.path_codeLists}\\Delisted\\Delisted_Ticker_{datemanage.workday_str}_modified.xlsx'
         self.df_codelist_delisted = pd.read_excel(codelist_path, index_col=0)
         self.df_codelist_delisted['Code'] = self.df_codelist_delisted['Code'].astype(str)

@@ -29,6 +29,7 @@ class UseIntelliquant:
         self.suffix = 'data' # 파일 이름 저장시 사용하는 접미사
         self.date_prefix = 'bussiness_day_ref'  # date reference 파일의 접미사
 
+    def load_date_ref(self, datemanage):
         # 거래일 목록 ref 읽어오기. 기본. 전체 영업일.
         path_date_ref = f'{self.path_date_ref}\\{self.date_prefix}_{datemanage.workday_str}.xlsx'
         self.df_business_days = pd.read_excel(path_date_ref)
@@ -37,7 +38,8 @@ class UseIntelliquant:
         self.df_business_days = self.df_business_days[(self.df_business_days['date'] >= datemanage.startday) & (self.df_business_days['date'] <= datemanage.workday)]
 
     def load_config(self):
-        self.cur_dir = os.getcwd()
+        #self.cur_dir = os.getcwd()
+        self.cur_dir = os.path.dirname(os.path.abspath(__file__))
 
     def load_base_code(self, path_base_code):
         with open(path_base_code, 'r', encoding='utf-8') as file:
